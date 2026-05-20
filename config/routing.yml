@@ -1,0 +1,56 @@
+mundophpbb_downloadcenter_index:
+    path: /downloadcenter
+    defaults: { _controller: mundophpbb.downloadcenter.controller.main:index }
+
+mundophpbb_downloadcenter_item:
+    path: /downloadcenter/item/{item_id}
+    defaults: { _controller: mundophpbb.downloadcenter.controller.main:item }
+    requirements:
+        item_id: \d+
+
+mundophpbb_downloadcenter_download:
+    path: /downloadcenter/download/{version_id}
+    defaults: { _controller: mundophpbb.downloadcenter.controller.download:download }
+    requirements:
+        version_id: \d+
+
+
+
+mundophpbb_downloadcenter_mine:
+    path: /downloadcenter/mine
+    defaults: { _controller: mundophpbb.downloadcenter.controller.main:mine }
+
+mundophpbb_downloadcenter_submit:
+    path: /downloadcenter/submit
+    defaults: { _controller: mundophpbb.downloadcenter.controller.main:submit }
+
+
+mundophpbb_downloadcenter_edit:
+    path: /downloadcenter/mine/edit/{item_id}
+    defaults: { _controller: mundophpbb.downloadcenter.controller.main:edit }
+    requirements:
+        item_id: \d+
+
+
+mundophpbb_downloadcenter_rules:
+    path: /downloadcenter/rules
+    defaults: { _controller: mundophpbb.downloadcenter.controller.main:rules }
+
+
+mundophpbb_downloadcenter_screenshot:
+    path: /downloadcenter/screenshot/{screenshot_id}
+    defaults: { _controller: mundophpbb.downloadcenter.controller.download:screenshot }
+    requirements:
+        screenshot_id: \d+
+
+
+mundophpbb_downloadcenter_item_image:
+    path: /downloadcenter/item-image/{file_name}
+    defaults: { _controller: mundophpbb.downloadcenter.controller.download:item_image }
+    requirements:
+        file_name: '[^/]+'
+
+
+mundophpbb_downloadcenter_feed:
+    path: /downloadcenter/feed
+    defaults: { _controller: mundophpbb.downloadcenter.controller.main:feed }

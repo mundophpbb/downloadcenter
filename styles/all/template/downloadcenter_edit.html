@@ -1,0 +1,245 @@
+<!-- INCLUDE overall_header.html -->
+
+<div class="downloadcenter-wrap">
+    <p class="downloadcenter-breadcrumb"><a href="{U_DOWNLOADCENTER_MINE}">&laquo; {L_DOWNLOADCENTER_MY_SUBMISSIONS}</a> &bull; <a href="{U_DOWNLOADCENTER_RULES}">{L_DOWNLOADCENTER_RULES_TITLE}</a></p>
+
+    <div class="downloadcenter-hero">
+        <h2>{L_DOWNLOADCENTER_EDIT_ITEM}</h2>
+        <p>{L_DOWNLOADCENTER_EDIT_ITEM_EXPLAIN}</p>
+        <!-- IF S_ITEM_APPROVED --><div class="downloadcenter-review-notice"><strong>{L_INFORMATION}{L_COLON}</strong><span>{L_DOWNLOADCENTER_EDIT_REAPPROVAL_WARNING}</span></div><!-- ENDIF -->
+    </div>
+
+    <form class="downloadcenter-submit panel" method="post" action="{U_ACTION}" enctype="multipart/form-data">
+        <div class="inner">
+            <fieldset>
+                <legend>{L_DOWNLOADCENTER_SUBMIT_ITEM_DATA}</legend>
+                <dl>
+                    <dt><label for="item_name">{L_DOWNLOADCENTER_ITEM_NAME}{L_COLON}</label></dt>
+                    <dd><input type="text" name="item_name" id="item_name" maxlength="255" value="{ITEM_NAME}" required></dd>
+                </dl>
+                <dl>
+                    <dt><label for="category_id">{L_DOWNLOADCENTER_CATEGORY}{L_COLON}</label></dt>
+                    <dd>
+                        <select name="category_id" id="category_id">
+                            <option value="0">{L_DOWNLOADCENTER_ALL_CATEGORIES}</option>
+                            <!-- BEGIN edit_categories -->
+                                <option value="{edit_categories.CATEGORY_ID}"<!-- IF edit_categories.S_SELECTED --> selected="selected"<!-- ENDIF -->>{edit_categories.CATEGORY_NAME}</option>
+                            <!-- END edit_categories -->
+                        </select>
+                    </dd>
+                </dl>
+                <dl>
+                    <dt><label for="item_short_desc">{L_DOWNLOADCENTER_SHORT_DESC}{L_COLON}</label></dt>
+                    <dd><textarea name="item_short_desc" id="item_short_desc" rows="3">{ITEM_SHORT_DESC}</textarea></dd>
+                </dl>
+                <dl>
+                    <dt><label for="item_desc">{L_DOWNLOADCENTER_FULL_DESC}{L_COLON}</label></dt>
+                    <dd><!-- INCLUDE downloadcenter_bbcode_toolbar.html --><textarea name="item_desc" id="item_desc" rows="8">{ITEM_DESC}</textarea></dd>
+                </dl>
+                <dl>
+                    <dt><label for="item_icon">{L_DOWNLOADCENTER_ICON_URL}{L_COLON}</label></dt>
+                    <dd><input type="text" name="item_icon" id="item_icon" maxlength="255" value="{ITEM_ICON}"></dd>
+                </dl>
+            </fieldset>
+
+            <fieldset>
+                <legend>{L_DOWNLOADCENTER_AUTHOR_VERSION_HISTORY}</legend>
+                <!-- IF .edit_versions -->
+                    <div class="downloadcenter-table-wrap">
+                    <table class="table1 zebra-table downloadcenter-table">
+                        <thead>
+                            <tr>
+                                <th>{L_DOWNLOADCENTER_VERSION_NUMBER}</th>
+                                <th>{L_DOWNLOADCENTER_PHPBB_VERSION}</th>
+                                <th>{L_DOWNLOADCENTER_PHP_VERSION}</th>
+                                <th>{L_DOWNLOADCENTER_FILE_SIZE}</th>
+                                <th>{L_DOWNLOADCENTER_DOWNLOADS}</th>
+                                <th>{L_DOWNLOADCENTER_RELEASED}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <!-- BEGIN edit_versions -->
+                            <tr>
+                                <td>{edit_versions.VERSION_NUMBER}</td>
+                                <td>{edit_versions.PHPBB_VERSION}</td>
+                                <td>{edit_versions.PHP_VERSION}</td>
+                                <td>{edit_versions.FILE_SIZE}</td>
+                                <td>{edit_versions.DOWNLOADS}</td>
+                                <td>{edit_versions.CREATED}</td>
+                            </tr>
+                        <!-- END edit_versions -->
+                        </tbody>
+                    </table>
+                    </div>
+                <!-- ELSE -->
+                    <div class="downloadcenter-empty-state"><p>{L_DOWNLOADCENTER_NO_VERSIONS}</p></div>
+                <!-- ENDIF -->
+            </fieldset>
+
+            <!-- IF S_HAS_LATEST_VERSION -->
+            <fieldset class="downloadcenter-submit-section downloadcenter-current-version-edit">
+                <legend>{L_DOWNLOADCENTER_CURRENT_VERSION_EDIT}</legend>
+                <p>{L_DOWNLOADCENTER_CURRENT_VERSION_EDIT_EXPLAIN}</p>
+                <input type="hidden" name="latest_version_id" value="{LATEST_VERSION_ID}">
+                <dl>
+                    <dt><label for="update_latest_version">{L_DOWNLOADCENTER_UPDATE_CURRENT_VERSION}{L_COLON}</label></dt>
+                    <dd><label><input type="checkbox" name="update_latest_version" id="update_latest_version" value="1"> {L_YES}</label></dd>
+                </dl>
+                <div class="downloadcenter-field-grid">
+                    <dl>
+                        <dt><label for="latest_version_number">{L_DOWNLOADCENTER_VERSION_NUMBER}{L_COLON}</label></dt>
+                        <dd><input type="text" name="latest_version_number" id="latest_version_number" maxlength="64" value="{LATEST_VERSION_NUMBER}"></dd>
+                    </dl>
+                    <dl>
+                        <dt><label for="latest_phpbb_version">{L_DOWNLOADCENTER_PHPBB_VERSION}{L_COLON}</label></dt>
+                        <dd><input type="text" name="latest_phpbb_version" id="latest_phpbb_version" maxlength="255" value="{LATEST_PHPBB_VERSION}" placeholder="phpBB 3.3.x"></dd>
+                    </dl>
+                    <dl>
+                        <dt><label for="latest_php_version">{L_DOWNLOADCENTER_PHP_VERSION}{L_COLON}</label></dt>
+                        <dd><input type="text" name="latest_php_version" id="latest_php_version" maxlength="255" value="{LATEST_PHP_VERSION}" placeholder="PHP &gt;= 8.1"></dd>
+                    </dl>
+                </div>
+                <dl>
+                    <dt><label for="latest_download_type">{L_DOWNLOADCENTER_DOWNLOAD_TYPE}{L_COLON}</label></dt>
+                    <dd>
+                        <select name="latest_download_type" id="latest_download_type">
+                            <option value="external"<!-- IF S_LATEST_VERSION_EXTERNAL --> selected="selected"<!-- ENDIF -->>{L_DOWNLOADCENTER_DOWNLOAD_TYPE_EXTERNAL}</option>
+                            <option value="local"<!-- IF S_LATEST_VERSION_LOCAL --> selected="selected"<!-- ENDIF -->>{L_DOWNLOADCENTER_DOWNLOAD_TYPE_LOCAL}</option>
+                        </select>
+                    </dd>
+                </dl>
+                <dl>
+                    <dt><label for="latest_download_url">{L_DOWNLOADCENTER_EXTERNAL_URL}{L_COLON}</label><br><span>{L_DOWNLOADCENTER_EXTERNAL_URL_EXPLAIN}</span></dt>
+                    <dd><input type="url" name="latest_download_url" id="latest_download_url" value="{LATEST_DOWNLOAD_URL}" placeholder="https://..."></dd>
+                </dl>
+                <dl>
+                    <dt><label for="latest_download_upload">{L_DOWNLOADCENTER_LOCAL_FILE}{L_COLON}</label><br><span>{L_DOWNLOADCENTER_LOCAL_FILE_EXPLAIN}</span></dt>
+                    <dd>
+                        <!-- IF S_HAS_LATEST_DOWNLOAD_FILE --><p class="downloadcenter-file-picker-help">{L_DOWNLOADCENTER_CURRENT_FILE}{L_COLON} {LATEST_DOWNLOAD_FILE}<!-- IF LATEST_FILE_SIZE --> — {LATEST_FILE_SIZE}<!-- ENDIF --></p><!-- ENDIF -->
+                        <input type="file" name="latest_download_upload" id="latest_download_upload"><p class="downloadcenter-file-size-preview" data-downloadcenter-file-size-preview>{L_DOWNLOADCENTER_FILE_SIZE_AUTOMATIC}</p><p class="downloadcenter-file-picker-help">{DOWNLOADCENTER_UPLOAD_RULES}</p>
+                    </dd>
+                </dl>
+                <dl>
+                    <dt><label for="latest_version_changelog">{L_DOWNLOADCENTER_CURRENT_CHANGELOG}{L_COLON}</label><br><span>{L_DOWNLOADCENTER_CURRENT_CHANGELOG_EXPLAIN}</span></dt>
+                    <dd><!-- INCLUDE downloadcenter_bbcode_toolbar.html --><textarea name="latest_version_changelog" id="latest_version_changelog" rows="6">{LATEST_VERSION_CHANGELOG}</textarea></dd>
+                </dl>
+            </fieldset>
+            <!-- ENDIF -->
+
+            <fieldset id="downloadcenter-screenshots" class="downloadcenter-author-screenshot-manager">
+                <legend>{L_DOWNLOADCENTER_SCREENSHOTS}</legend>
+                <p>{L_DOWNLOADCENTER_AUTHOR_SCREENSHOTS_EXPLAIN}</p>
+
+                <!-- IF S_SCREENSHOT_ADDED -->
+                    <div class="downloadcenter-inline-success">{L_DOWNLOADCENTER_SCREENSHOT_ADDED}</div>
+                <!-- ENDIF -->
+                <!-- IF S_SCREENSHOT_UPDATED -->
+                    <div class="downloadcenter-inline-success">{L_DOWNLOADCENTER_SCREENSHOT_UPDATED}</div>
+                <!-- ENDIF -->
+                <!-- IF S_SCREENSHOT_DELETED -->
+                    <div class="downloadcenter-inline-success">{L_DOWNLOADCENTER_SCREENSHOT_DELETED}</div>
+                <!-- ENDIF -->
+
+                <!-- IF .edit_screenshots -->
+                    <div class="downloadcenter-screenshot-grid downloadcenter-author-screenshot-grid downloadcenter-screenshot-manage-grid">
+                    <!-- BEGIN edit_screenshots -->
+                        <figure class="downloadcenter-screenshot-card downloadcenter-screenshot-manage-card">
+                            <a href="{edit_screenshots.U_IMAGE}" target="_blank"><img src="{edit_screenshots.U_IMAGE}" alt="{edit_screenshots.CAPTION}"></a>
+                            <figcaption>
+                                <strong><!-- IF edit_screenshots.CAPTION -->{edit_screenshots.CAPTION}<!-- ELSE -->{L_DOWNLOADCENTER_SCREENSHOTS}<!-- ENDIF --></strong>
+                                <span>{L_DOWNLOADCENTER_SCREENSHOT_ORDER}{L_COLON} {edit_screenshots.ORDER}</span>
+                                <!-- IF edit_screenshots.CREATED --><span>{edit_screenshots.CREATED}</span><!-- ENDIF -->
+                            </figcaption>
+                            <div class="downloadcenter-screenshot-edit-fields">
+                                <label>
+                                    {L_DOWNLOADCENTER_SCREENSHOT_CAPTION}{L_COLON}
+                                    <input type="text" name="screenshot_caption[{edit_screenshots.SCREENSHOT_ID}]" value="{edit_screenshots.CAPTION}" maxlength="255">
+                                </label>
+                                <label>
+                                    {L_DOWNLOADCENTER_SCREENSHOT_ORDER}{L_COLON}
+                                    <input type="number" name="screenshot_order[{edit_screenshots.SCREENSHOT_ID}]" value="{edit_screenshots.ORDER}" min="0">
+                                </label>
+                            </div>
+                            <button class="button2 downloadcenter-danger-button" type="submit" name="delete_screenshot" value="{edit_screenshots.SCREENSHOT_ID}" onclick="return confirm('{LA_DOWNLOADCENTER_SCREENSHOT_DELETE_CONFIRM}');">{L_DELETE}</button>
+                        </figure>
+                    <!-- END edit_screenshots -->
+                    </div>
+                    <p class="submit-buttons downloadcenter-screenshot-actions">
+                        <input class="button2" type="submit" name="update_screenshots" value="{L_DOWNLOADCENTER_SCREENSHOT_SAVE_CHANGES}">
+                    </p>
+                <!-- ELSE -->
+                    <div class="downloadcenter-empty-state"><p>{L_DOWNLOADCENTER_NO_SCREENSHOTS}</p></div>
+                <!-- ENDIF -->
+
+                <div class="downloadcenter-screenshot-upload-box">
+                    <h3>{L_DOWNLOADCENTER_SCREENSHOT_ADD_NEW}</h3>
+                    <p>{L_DOWNLOADCENTER_SCREENSHOT_AUTHOR_SAVE_IMMEDIATE}</p>
+                    <dl>
+                        <dt><label for="screenshot_upload">{L_DOWNLOADCENTER_SCREENSHOT_UPLOAD}{L_COLON}</label><br><span>{L_DOWNLOADCENTER_SCREENSHOT_UPLOAD_EXPLAIN}</span></dt>
+                        <dd><input type="file" name="screenshot_upload" id="screenshot_upload" accept="image/jpeg,image/png,image/gif,image/webp"></dd>
+                    </dl>
+                    <dl>
+                        <dt><label for="new_screenshot_caption">{L_DOWNLOADCENTER_SCREENSHOT_CAPTION}{L_COLON}</label></dt>
+                        <dd><input type="text" name="new_screenshot_caption" id="new_screenshot_caption" maxlength="255"></dd>
+                    </dl>
+                    <dl>
+                        <dt><label for="new_screenshot_order">{L_DOWNLOADCENTER_SCREENSHOT_ORDER}{L_COLON}</label></dt>
+                        <dd><input type="number" name="new_screenshot_order" id="new_screenshot_order" min="0" value="0"></dd>
+                    </dl>
+                    <p class="submit-buttons">
+                        <input class="button2" type="submit" name="add_screenshot" value="{L_DOWNLOADCENTER_SCREENSHOT_ADD_BUTTON}">
+                    </p>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>{L_DOWNLOADCENTER_ADD_NEW_VERSION}</legend>
+                <p>{L_DOWNLOADCENTER_ADD_NEW_VERSION_EXPLAIN}</p>
+                <dl>
+                    <dt><label for="add_new_version">{L_DOWNLOADCENTER_ADD_NEW_VERSION}{L_COLON}</label></dt>
+                    <dd><label><input type="checkbox" name="add_new_version" id="add_new_version" value="1"> {L_YES}</label></dd>
+                </dl>
+                <dl>
+                    <dt><label for="version_number">{L_DOWNLOADCENTER_VERSION_NUMBER}{L_COLON}</label></dt>
+                    <dd><input type="text" name="version_number" id="version_number" maxlength="64"></dd>
+                </dl>
+                <dl>
+                    <dt><label for="phpbb_version">{L_DOWNLOADCENTER_PHPBB_VERSION}{L_COLON}</label></dt>
+                    <dd><input type="text" name="phpbb_version" id="phpbb_version" maxlength="255" placeholder="phpBB 3.3.x"></dd>
+                </dl>
+                <dl>
+                    <dt><label for="php_version">{L_DOWNLOADCENTER_PHP_VERSION}{L_COLON}</label></dt>
+                    <dd><input type="text" name="php_version" id="php_version" maxlength="255" placeholder="PHP &gt;= 8.1"></dd>
+                </dl>
+                <dl>
+                    <dt><label for="download_type">{L_DOWNLOADCENTER_DOWNLOAD_TYPE}{L_COLON}</label></dt>
+                    <dd>
+                        <select name="download_type" id="download_type">
+                            <option value="external">{L_DOWNLOADCENTER_DOWNLOAD_TYPE_EXTERNAL}</option>
+                            <option value="local">{L_DOWNLOADCENTER_DOWNLOAD_TYPE_LOCAL}</option>
+                        </select>
+                    </dd>
+                </dl>
+                <dl>
+                    <dt><label for="download_url">{L_DOWNLOADCENTER_EXTERNAL_URL}{L_COLON}</label><br><span>{L_DOWNLOADCENTER_EXTERNAL_URL_EXPLAIN}</span></dt>
+                    <dd><input type="url" name="download_url" id="download_url"></dd>
+                </dl>
+                <dl>
+                    <dt><label for="download_upload">{L_DOWNLOADCENTER_LOCAL_FILE}{L_COLON}</label><br><span>{L_DOWNLOADCENTER_LOCAL_FILE_EXPLAIN}</span></dt>
+                    <dd><input type="file" name="download_upload" id="download_upload"><p class="downloadcenter-file-size-preview" data-downloadcenter-file-size-preview>{L_DOWNLOADCENTER_FILE_SIZE_AUTOMATIC}</p><p class="downloadcenter-file-picker-help">{DOWNLOADCENTER_UPLOAD_RULES}</p></dd>
+                </dl>
+                <dl>
+                    <dt><label for="version_changelog">{L_DOWNLOADCENTER_CHANGELOG_FIELD}{L_COLON}</label></dt>
+                    <dd><!-- INCLUDE downloadcenter_bbcode_toolbar.html --><textarea name="version_changelog" id="version_changelog" rows="6"></textarea></dd>
+                </dl>
+            </fieldset>
+
+            <fieldset class="submit-buttons">
+                <input class="button1" type="submit" name="save_item" value="{L_SUBMIT}">
+                {S_FORM_TOKEN}
+            </fieldset>
+        </div>
+    </form>
+</div>
+
+<!-- INCLUDE overall_footer.html -->

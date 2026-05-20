@@ -1,0 +1,169 @@
+<!-- INCLUDE overall_header.html -->
+
+<div class="downloadcenter-wrap downloadcenter-submit-wrap">
+    <div class="downloadcenter-hero downloadcenter-submit-hero">
+        <div>
+            <h2>{L_DOWNLOADCENTER_SUBMIT_ITEM}</h2>
+            <p>{L_DOWNLOADCENTER_SUBMIT_EXPLAIN}</p>
+        </div>
+        <div class="downloadcenter-submit-hero-status">
+            <strong>{L_DOWNLOADCENTER_SUBMIT_STATUS_REVIEW}</strong>
+            <span>{L_DOWNLOADCENTER_SUBMIT_STATUS_REVIEW_EXPLAIN}</span>
+        </div>
+    </div>
+
+    <div class="downloadcenter-submit-steps" aria-label="{L_DOWNLOADCENTER_SUBMIT_STEPS_TITLE}">
+        <div class="downloadcenter-submit-step is-active">
+            <span>1</span>
+            <strong>{L_DOWNLOADCENTER_SUBMIT_STEP_ITEM}</strong>
+            <em>{L_DOWNLOADCENTER_SUBMIT_STEP_ITEM_EXPLAIN}</em>
+        </div>
+        <div class="downloadcenter-submit-step">
+            <span>2</span>
+            <strong>{L_DOWNLOADCENTER_SUBMIT_STEP_VERSION}</strong>
+            <em>{L_DOWNLOADCENTER_SUBMIT_STEP_VERSION_EXPLAIN}</em>
+        </div>
+        <div class="downloadcenter-submit-step">
+            <span>3</span>
+            <strong>{L_DOWNLOADCENTER_SUBMIT_STEP_REVIEW}</strong>
+            <em>{L_DOWNLOADCENTER_SUBMIT_STEP_REVIEW_EXPLAIN}</em>
+        </div>
+    </div>
+
+    <div class="downloadcenter-rules-callout downloadcenter-submit-callout">
+        <strong>{L_DOWNLOADCENTER_RULES_TITLE}</strong>
+        <span>{L_DOWNLOADCENTER_RULES_SUBMIT_CALLOUT}</span>
+        <a href="{U_DOWNLOADCENTER_RULES}">{L_DOWNLOADCENTER_RULES_READ}</a>
+    </div>
+
+    <form class="downloadcenter-submit panel" method="post" action="{U_ACTION}" enctype="multipart/form-data">
+        <div class="inner">
+            <fieldset class="downloadcenter-submit-section">
+                <legend><span>1</span>{L_DOWNLOADCENTER_SUBMIT_ITEM_DATA}</legend>
+                <p class="downloadcenter-section-help">{L_DOWNLOADCENTER_SUBMIT_ITEM_DATA_EXPLAIN}</p>
+
+                <div class="downloadcenter-field-grid">
+                    <dl class="downloadcenter-field-wide">
+                        <dt><label for="item_name">{L_DOWNLOADCENTER_ITEM_NAME}{L_COLON}</label><br><span>{L_DOWNLOADCENTER_ITEM_NAME_EXPLAIN}</span></dt>
+                        <dd><input type="text" name="item_name" id="item_name" maxlength="255" required placeholder="{L_DOWNLOADCENTER_ITEM_NAME_PLACEHOLDER}"></dd>
+                    </dl>
+                    <dl>
+                        <dt><label for="category_id">{L_DOWNLOADCENTER_CATEGORY}{L_COLON}</label><br><span>{L_DOWNLOADCENTER_CATEGORY_SUBMIT_EXPLAIN}</span></dt>
+                        <dd>
+                            <select name="category_id" id="category_id">
+                                <option value="0">{L_DOWNLOADCENTER_ALL_CATEGORIES}</option>
+                                <!-- BEGIN submit_categories -->
+                                    <option value="{submit_categories.CATEGORY_ID}">{submit_categories.CATEGORY_NAME}</option>
+                                <!-- END submit_categories -->
+                            </select>
+                        </dd>
+                    </dl>
+                    <dl>
+                        <dt><label for="item_icon">{L_DOWNLOADCENTER_ICON_URL}{L_COLON}</label><br><span>{L_DOWNLOADCENTER_ICON_URL_EXPLAIN}</span></dt>
+                        <dd><input type="url" name="item_icon" id="item_icon" maxlength="255" placeholder="https://..."></dd>
+                    </dl>
+                </div>
+
+                <dl>
+                    <dt><label for="item_short_desc">{L_DOWNLOADCENTER_SHORT_DESC}{L_COLON}</label><br><span>{L_DOWNLOADCENTER_SHORT_DESC_EXPLAIN}</span></dt>
+                    <dd><textarea name="item_short_desc" id="item_short_desc" rows="3" maxlength="500" placeholder="{L_DOWNLOADCENTER_SHORT_DESC_PLACEHOLDER}"></textarea></dd>
+                </dl>
+                <dl>
+                    <dt><label for="item_desc">{L_DOWNLOADCENTER_FULL_DESC}{L_COLON}</label><br><span>{L_DOWNLOADCENTER_FULL_DESC_EXPLAIN}</span></dt>
+                    <dd><!-- INCLUDE downloadcenter_bbcode_toolbar.html --><textarea name="item_desc" id="item_desc" rows="8" placeholder="{L_DOWNLOADCENTER_FULL_DESC_PLACEHOLDER}"></textarea></dd>
+                </dl>
+            </fieldset>
+
+            <fieldset class="downloadcenter-submit-section">
+                <legend><span>2</span>{L_DOWNLOADCENTER_SUBMIT_VERSION_DATA}</legend>
+                <p class="downloadcenter-section-help">{L_DOWNLOADCENTER_SUBMIT_VERSION_DATA_EXPLAIN}</p>
+
+                <div class="downloadcenter-field-grid">
+                    <dl>
+                        <dt><label for="version_number">{L_DOWNLOADCENTER_VERSION_NUMBER}{L_COLON}</label><br><span>{L_DOWNLOADCENTER_VERSION_NUMBER_EXPLAIN}</span></dt>
+                        <dd><input type="text" name="version_number" id="version_number" maxlength="64" required placeholder="1.0.0"></dd>
+                    </dl>
+                    <dl>
+                        <dt><label for="phpbb_version">{L_DOWNLOADCENTER_PHPBB_VERSION}{L_COLON}</label><br><span>{L_DOWNLOADCENTER_PHPBB_VERSION_EXPLAIN}</span></dt>
+                        <dd><input type="text" name="phpbb_version" id="phpbb_version" maxlength="255" placeholder="phpBB 3.3.x"></dd>
+                    </dl>
+                    <dl>
+                        <dt><label for="php_version">{L_DOWNLOADCENTER_PHP_VERSION}{L_COLON}</label><br><span>{L_DOWNLOADCENTER_PHP_VERSION_EXPLAIN}</span></dt>
+                        <dd><input type="text" name="php_version" id="php_version" maxlength="255" placeholder="PHP &gt;= 8.1"></dd>
+                    </dl>
+                </div>
+
+                <div class="downloadcenter-source-panel" data-downloadcenter-source-panel>
+                    <div class="downloadcenter-source-header">
+                        <div>
+                            <strong>{L_DOWNLOADCENTER_DOWNLOAD_SOURCE_TITLE}</strong>
+                            <p>{L_DOWNLOADCENTER_DOWNLOAD_SOURCE_EXPLAIN}</p>
+                        </div>
+                        <select name="download_type" id="download_type" data-downloadcenter-source-select>
+                            <option value="external">{L_DOWNLOADCENTER_DOWNLOAD_TYPE_EXTERNAL}</option>
+                            <option value="local">{L_DOWNLOADCENTER_DOWNLOAD_TYPE_LOCAL}</option>
+                        </select>
+                    </div>
+
+                    <div class="downloadcenter-source-grid">
+                        <dl class="downloadcenter-source-card is-active" data-downloadcenter-source-card="external">
+                            <dt><label for="download_url">{L_DOWNLOADCENTER_EXTERNAL_URL}{L_COLON}</label><br><span>{L_DOWNLOADCENTER_EXTERNAL_URL_EXPLAIN}</span></dt>
+                            <dd><input type="url" name="download_url" id="download_url" placeholder="https://..."></dd>
+                        </dl>
+                        <dl class="downloadcenter-source-card" data-downloadcenter-source-card="local">
+                            <dt><label for="download_upload">{L_DOWNLOADCENTER_LOCAL_FILE}{L_COLON}</label><br><span>{L_DOWNLOADCENTER_LOCAL_FILE_EXPLAIN}</span></dt>
+                            <dd><input type="file" name="download_upload" id="download_upload"><p class="downloadcenter-file-size-preview" data-downloadcenter-file-size-preview>{L_DOWNLOADCENTER_FILE_SIZE_AUTOMATIC}</p><p class="downloadcenter-file-picker-help">{DOWNLOADCENTER_UPLOAD_RULES}</p></dd>
+                        </dl>
+                    </div>
+                </div>
+
+                <dl>
+                    <dt><label for="version_changelog">{L_DOWNLOADCENTER_CHANGELOG_FIELD}{L_COLON}</label><br><span>{L_DOWNLOADCENTER_CHANGELOG_FIELD_EXPLAIN}</span></dt>
+                    <dd><!-- INCLUDE downloadcenter_bbcode_toolbar.html --><textarea name="version_changelog" id="version_changelog" rows="6" placeholder="{L_DOWNLOADCENTER_CHANGELOG_PLACEHOLDER}"></textarea></dd>
+                </dl>
+            </fieldset>
+
+            <fieldset class="downloadcenter-submit-section downloadcenter-submit-section-muted">
+                <legend><span>3</span>{L_DOWNLOADCENTER_SUBMIT_SCREENSHOT_DATA}</legend>
+                <p class="downloadcenter-section-help">{L_DOWNLOADCENTER_SUBMIT_SCREENSHOT_DATA_EXPLAIN}</p>
+
+                <div class="downloadcenter-field-grid">
+                    <dl>
+                        <dt><label for="screenshot_upload">{L_DOWNLOADCENTER_SCREENSHOT_UPLOAD}{L_COLON}</label><br><span>{L_DOWNLOADCENTER_SCREENSHOT_UPLOAD_EXPLAIN}</span></dt>
+                        <dd><input type="file" name="screenshot_upload" id="screenshot_upload" accept="image/jpeg,image/png,image/gif,image/webp"></dd>
+                    </dl>
+                    <dl>
+                        <dt><label for="screenshot_caption">{L_DOWNLOADCENTER_SCREENSHOT_CAPTION}{L_COLON}</label></dt>
+                        <dd><input type="text" name="screenshot_caption" id="screenshot_caption" maxlength="255"></dd>
+                    </dl>
+                    <dl>
+                        <dt><label for="screenshot_order">{L_DOWNLOADCENTER_SCREENSHOT_ORDER}{L_COLON}</label></dt>
+                        <dd><input type="number" name="screenshot_order" id="screenshot_order" min="0" value="0"></dd>
+                    </dl>
+                </div>
+            </fieldset>
+
+            <fieldset class="downloadcenter-submit-review">
+                <legend>{L_DOWNLOADCENTER_SUBMIT_BEFORE_SEND}</legend>
+                <ul>
+                    <li>{L_DOWNLOADCENTER_SUBMIT_CHECKLIST_DESCRIPTION}</li>
+                    <li>{L_DOWNLOADCENTER_SUBMIT_CHECKLIST_VERSION}</li>
+                    <li>{L_DOWNLOADCENTER_SUBMIT_CHECKLIST_SOURCE}</li>
+                    <li>{L_DOWNLOADCENTER_SUBMIT_CHECKLIST_REVIEW}</li>
+                </ul>
+                <dl>
+                    <dt><label for="accept_rules">{L_DOWNLOADCENTER_RULES_ACCEPT}{L_COLON}</label></dt>
+                    <dd><label><input type="checkbox" name="accept_rules" id="accept_rules" value="1" required> {L_DOWNLOADCENTER_RULES_ACCEPT_EXPLAIN}</label></dd>
+                </dl>
+            </fieldset>
+
+            <fieldset class="submit-buttons downloadcenter-submit-actions">
+                <input class="button1" type="submit" name="submit_item" value="{L_DOWNLOADCENTER_SUBMIT_SEND_FOR_REVIEW}">
+                <a class="button2" href="{U_DOWNLOADCENTER_RULES}">{L_DOWNLOADCENTER_RULES_READ}</a>
+                {S_FORM_TOKEN}
+            </fieldset>
+        </div>
+    </form>
+</div>
+
+<!-- INCLUDE overall_footer.html -->
