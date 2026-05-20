@@ -1144,6 +1144,22 @@ class main_module
             $config->set('mundophpbb_downloadcenter_submit_access', $submit_access);
             $config->set('mundophpbb_downloadcenter_permission_mode', $request->variable('downloadcenter_permission_mode', 'global') === 'acl' ? 'acl' : 'global');
             $config->set('mundophpbb_downloadcenter_duplicate_window', max(0, $request->variable('downloadcenter_duplicate_window', 3600)));
+            $rules_topic_input = trim($request->variable('downloadcenter_rules_topic_id', '', true));
+            $rules_topic_id = 0;
+
+            if ($rules_topic_input !== '')
+            {
+                if (preg_match('#(?:^|[?&])t=([0-9]+)#', $rules_topic_input, $rules_topic_match))
+                {
+                    $rules_topic_id = (int) $rules_topic_match[1];
+                }
+                else
+                {
+                    $rules_topic_id = (int) $rules_topic_input;
+                }
+            }
+
+            $config->set('mundophpbb_downloadcenter_rules_topic_id', max(0, $rules_topic_id));
             $selected_support_forum_id = max(0, $request->variable('downloadcenter_support_forum_id', 0));
             if ($selected_support_forum_id > 0 && !$this->is_valid_support_forum($selected_support_forum_id))
             {
@@ -1198,6 +1214,7 @@ class main_module
             'S_SUBMIT_ACCESS_REGISTERED' => (!isset($config['mundophpbb_downloadcenter_submit_access']) || $config['mundophpbb_downloadcenter_submit_access'] === 'registered'),
             'S_SUBMIT_ACCESS_ADMIN' => (isset($config['mundophpbb_downloadcenter_submit_access']) && $config['mundophpbb_downloadcenter_submit_access'] === 'admin'),
             'DOWNLOADCENTER_DUPLICATE_WINDOW' => isset($config['mundophpbb_downloadcenter_duplicate_window']) ? (int) $config['mundophpbb_downloadcenter_duplicate_window'] : 3600,
+            'DOWNLOADCENTER_RULES_TOPIC_ID' => isset($config['mundophpbb_downloadcenter_rules_topic_id']) ? (int) $config['mundophpbb_downloadcenter_rules_topic_id'] : 0,
             'DOWNLOADCENTER_SUPPORT_FORUM_ID' => isset($config['mundophpbb_downloadcenter_support_forum_id']) ? (int) $config['mundophpbb_downloadcenter_support_forum_id'] : 0,
             'DOWNLOADCENTER_NOTIFICATIONS_ENABLED' => !isset($config['mundophpbb_downloadcenter_notifications_enabled']) || (bool) $config['mundophpbb_downloadcenter_notifications_enabled'],
             'DOWNLOADCENTER_PUBLIC_PER_PAGE' => isset($config['mundophpbb_downloadcenter_public_per_page']) ? (int) $config['mundophpbb_downloadcenter_public_per_page'] : 12,

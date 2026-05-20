@@ -23,6 +23,7 @@ class v_1_0_100 extends \phpbb\db\migration\migration
     {
         return [
             ['config.add', ['mundophpbb_downloadcenter_rules_url', '']],
+            ['config.add', ['mundophpbb_downloadcenter_rules_topic_id', 0]],
             ['config.update', ['mundophpbb_downloadcenter_version', '1.0.100']],
         ];
     }

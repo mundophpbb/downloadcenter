@@ -381,6 +381,9 @@ $lang = array_merge($lang, [
     'ACP_DOWNLOADCENTER_MAX_UPLOAD_MB' => 'Maximum upload size (MB)',
     'ACP_DOWNLOADCENTER_MAX_UPLOAD_MB_EXPLAIN' => 'Maximum size per file uploaded through the Download Center. Use a value compatible with PHP upload_max_filesize and post_max_size.',
     'ACP_DOWNLOADCENTER_UPLOAD_RULES_CURRENT' => 'Current upload rules',
+    'ACP_DOWNLOADCENTER_RULES_TOPIC_ID' => 'Submission rules topic link or ID',
+    'ACP_DOWNLOADCENTER_RULES_TOPIC_ID_EXPLAIN' => 'Enter the ID or full URL of an existing topic to use as the target for the Submission rules button. Use 0 or leave it blank to keep the extension internal rules page.',
+    'ACP_DOWNLOADCENTER_RULES_TOPIC_ID_HELP' => 'Optional. Accepts either a topic ID or a URL such as viewtopic.php?t=123. When saved, only the topic ID is stored.',
     'ACP_DOWNLOADCENTER_UPLOAD_RULES' => 'Allowed extensions: %1$s. Maximum size: %2$s.',
     'ACP_DOWNLOADCENTER_UPLOAD_TOO_LARGE' => 'The file exceeds the maximum allowed size: %s.',
 

@@ -255,7 +255,7 @@ class main_controller
             'TOTAL_PUBLIC_ITEMS' => array_sum($public_category_counts),
             'U_DOWNLOADCENTER_SUBMIT' => $this->helper->route('mundophpbb_downloadcenter_submit'),
             'U_DOWNLOADCENTER_MINE' => $this->helper->route('mundophpbb_downloadcenter_mine'),
-            'U_DOWNLOADCENTER_RULES' => $this->helper->route('mundophpbb_downloadcenter_rules'),
+            'U_DOWNLOADCENTER_RULES' => $this->rules_url(),
             'S_SHOW_MY_SUBMISSIONS' => !$this->is_anonymous(),
             'S_CAN_SUBMIT' => $this->can_submit(),
             'S_CAN_DOWNLOAD' => $can_download,
@@ -416,7 +416,7 @@ class main_controller
             'TOTAL_PUBLIC_ITEMS' => array_sum($public_category_counts),
             'U_DOWNLOADCENTER_SUBMIT' => $this->helper->route('mundophpbb_downloadcenter_submit'),
             'U_DOWNLOADCENTER_MINE' => $this->helper->route('mundophpbb_downloadcenter_mine'),
-            'U_DOWNLOADCENTER_RULES' => $this->helper->route('mundophpbb_downloadcenter_rules'),
+            'U_DOWNLOADCENTER_RULES' => $this->rules_url(),
             'S_SHOW_MY_SUBMISSIONS' => !$this->is_anonymous(),
             'S_CAN_SUBMIT' => $this->can_submit(),
             'S_CAN_DOWNLOAD' => $can_download,
@@ -515,7 +515,7 @@ class main_controller
             'U_DOWNLOADCENTER_INDEX' => $this->helper->route('mundophpbb_downloadcenter_index'),
             'U_DOWNLOADCENTER_SUBMIT' => $this->helper->route('mundophpbb_downloadcenter_submit'),
             'U_DOWNLOADCENTER_MINE' => $this->helper->route('mundophpbb_downloadcenter_mine'),
-            'U_DOWNLOADCENTER_RULES' => $this->helper->route('mundophpbb_downloadcenter_rules'),
+            'U_DOWNLOADCENTER_RULES' => $this->rules_url(),
             'S_CAN_SUBMIT' => $this->can_submit(),
             'S_SHOW_MY_SUBMISSIONS' => !$this->is_anonymous(),
             'DOWNLOADCENTER_UPLOAD_RULES' => $this->upload_rules_text(),
@@ -693,7 +693,7 @@ class main_controller
         $this->template->assign_vars([
             'U_DOWNLOADCENTER_INDEX' => $this->helper->route('mundophpbb_downloadcenter_index'),
             'U_DOWNLOADCENTER_SUBMIT' => $this->helper->route('mundophpbb_downloadcenter_submit'),
-            'U_DOWNLOADCENTER_RULES' => $this->helper->route('mundophpbb_downloadcenter_rules'),
+            'U_DOWNLOADCENTER_RULES' => $this->rules_url(),
             'U_DOWNLOADCENTER_MINE' => $this->helper->route('mundophpbb_downloadcenter_mine'),
             'U_MINE_ALL' => $this->pagination_url($this->helper->route('mundophpbb_downloadcenter_mine'), ['q' => $search, 'status' => 'all']),
             'U_MINE_PUBLISHED' => $this->pagination_url($this->helper->route('mundophpbb_downloadcenter_mine'), ['q' => $search, 'status' => 'published']),
@@ -1147,7 +1147,7 @@ class main_controller
         $this->template->assign_vars([
             'U_ACTION' => $this->helper->route('mundophpbb_downloadcenter_edit', ['item_id' => $item_id]),
             'U_DOWNLOADCENTER_MINE' => $this->helper->route('mundophpbb_downloadcenter_mine'),
-            'U_DOWNLOADCENTER_RULES' => $this->helper->route('mundophpbb_downloadcenter_rules'),
+            'U_DOWNLOADCENTER_RULES' => $this->rules_url(),
             'ITEM_NAME' => $item['item_name'],
             'ITEM_SHORT_DESC' => $item['item_short_desc'],
             'ITEM_DESC' => $item['item_desc'],
@@ -1335,7 +1335,7 @@ class main_controller
 
         $this->template->assign_vars([
             'U_ACTION' => $this->helper->route('mundophpbb_downloadcenter_submit'),
-            'U_DOWNLOADCENTER_RULES' => $this->helper->route('mundophpbb_downloadcenter_rules'),
+            'U_DOWNLOADCENTER_RULES' => $this->rules_url(),
             'DOWNLOADCENTER_UPLOAD_RULES' => $this->upload_rules_text(),
         ]);
 
@@ -2041,6 +2041,18 @@ class main_controller
     protected function get_max_upload_bytes()
     {
         return $this->get_max_upload_mb() * 1024 * 1024;
+    }
+
+    protected function rules_url()
+    {
+        $rules_topic_id = isset($this->config['mundophpbb_downloadcenter_rules_topic_id']) ? (int) $this->config['mundophpbb_downloadcenter_rules_topic_id'] : 0;
+
+        if ($rules_topic_id > 0)
+        {
+            return append_sid($this->root_path . 'viewtopic.' . $this->php_ext, 't=' . $rules_topic_id);
+        }
+
+        return $this->helper->route('mundophpbb_downloadcenter_rules');
     }
 
     protected function upload_rules_text()

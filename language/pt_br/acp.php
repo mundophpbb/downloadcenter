@@ -381,6 +381,9 @@ $lang = array_merge($lang, [
     'ACP_DOWNLOADCENTER_MAX_UPLOAD_MB' => 'Tamanho máximo de upload (MB)',
     'ACP_DOWNLOADCENTER_MAX_UPLOAD_MB_EXPLAIN' => 'Limite máximo por arquivo enviado pela Central de Downloads. Use um valor compatível com as configurações upload_max_filesize e post_max_size do PHP.',
     'ACP_DOWNLOADCENTER_UPLOAD_RULES_CURRENT' => 'Regras atuais de upload',
+    'ACP_DOWNLOADCENTER_RULES_TOPIC_ID' => 'Link ou ID do tópico das regras de envio',
+    'ACP_DOWNLOADCENTER_RULES_TOPIC_ID_EXPLAIN' => 'Informe o ID ou a URL completa de um tópico existente para usar como destino do botão Regras de envio. Use 0 ou deixe em branco para manter a página interna da extensão.',
+    'ACP_DOWNLOADCENTER_RULES_TOPIC_ID_HELP' => 'Opcional. Aceita somente o ID do tópico ou uma URL como viewtopic.php?t=123. Ao salvar, a extensão guarda apenas o ID do tópico.',
     'ACP_DOWNLOADCENTER_UPLOAD_RULES' => 'Extensões permitidas: %1$s. Tamanho máximo: %2$s.',
     'ACP_DOWNLOADCENTER_UPLOAD_TOO_LARGE' => 'O arquivo excede o limite máximo permitido: %s.',
 
