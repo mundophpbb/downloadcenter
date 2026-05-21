@@ -29,7 +29,7 @@
                     </dd>
                 </dl>
                 <dl>
-                    <dt><label for="item_short_desc">{L_DOWNLOADCENTER_SHORT_DESC}{L_COLON}</label></dt>
+                    <dt><label for="item_short_desc">{L_DOWNLOADCENTER_SHORT_DESC}{L_COLON}</label><br><span>{L_DOWNLOADCENTER_SHORT_DESC_EXPLAIN}</span></dt>
                     <dd><textarea name="item_short_desc" id="item_short_desc" rows="3">{ITEM_SHORT_DESC}</textarea></dd>
                 </dl>
                 <dl>
@@ -77,52 +77,12 @@
             </fieldset>
 
             <!-- IF S_HAS_LATEST_VERSION -->
-            <fieldset class="downloadcenter-submit-section downloadcenter-current-version-edit">
-                <legend>{L_DOWNLOADCENTER_CURRENT_VERSION_EDIT}</legend>
-                <p>{L_DOWNLOADCENTER_CURRENT_VERSION_EDIT_EXPLAIN}</p>
+            <fieldset>
+                <legend>{L_DOWNLOADCENTER_CURRENT_CHANGELOG}</legend>
+                <p>{L_DOWNLOADCENTER_CURRENT_CHANGELOG_EXPLAIN}</p>
                 <input type="hidden" name="latest_version_id" value="{LATEST_VERSION_ID}">
-                <dl>
-                    <dt><label for="update_latest_version">{L_DOWNLOADCENTER_UPDATE_CURRENT_VERSION}{L_COLON}</label></dt>
-                    <dd><label><input type="checkbox" name="update_latest_version" id="update_latest_version" value="1"> {L_YES}</label></dd>
-                </dl>
-                <div class="downloadcenter-field-grid">
-                    <dl>
-                        <dt><label for="latest_version_number">{L_DOWNLOADCENTER_VERSION_NUMBER}{L_COLON}</label></dt>
-                        <dd><input type="text" name="latest_version_number" id="latest_version_number" maxlength="64" value="{LATEST_VERSION_NUMBER}"></dd>
-                    </dl>
-                    <dl>
-                        <dt><label for="latest_phpbb_version">{L_DOWNLOADCENTER_PHPBB_VERSION}{L_COLON}</label></dt>
-                        <dd><input type="text" name="latest_phpbb_version" id="latest_phpbb_version" maxlength="255" value="{LATEST_PHPBB_VERSION}" placeholder="phpBB 3.3.x"></dd>
-                    </dl>
-                    <dl>
-                        <dt><label for="latest_php_version">{L_DOWNLOADCENTER_PHP_VERSION}{L_COLON}</label></dt>
-                        <dd><input type="text" name="latest_php_version" id="latest_php_version" maxlength="255" value="{LATEST_PHP_VERSION}" placeholder="PHP &gt;= 8.1"></dd>
-                    </dl>
-                </div>
-                <dl>
-                    <dt><label for="latest_download_type">{L_DOWNLOADCENTER_DOWNLOAD_TYPE}{L_COLON}</label></dt>
-                    <dd>
-                        <select name="latest_download_type" id="latest_download_type">
-                            <option value="external"<!-- IF S_LATEST_VERSION_EXTERNAL --> selected="selected"<!-- ENDIF -->>{L_DOWNLOADCENTER_DOWNLOAD_TYPE_EXTERNAL}</option>
-                            <option value="local"<!-- IF S_LATEST_VERSION_LOCAL --> selected="selected"<!-- ENDIF -->>{L_DOWNLOADCENTER_DOWNLOAD_TYPE_LOCAL}</option>
-                        </select>
-                    </dd>
-                </dl>
-                <dl>
-                    <dt><label for="latest_download_url">{L_DOWNLOADCENTER_EXTERNAL_URL}{L_COLON}</label><br><span>{L_DOWNLOADCENTER_EXTERNAL_URL_EXPLAIN}</span></dt>
-                    <dd><input type="url" name="latest_download_url" id="latest_download_url" value="{LATEST_DOWNLOAD_URL}" placeholder="https://..."></dd>
-                </dl>
-                <dl>
-                    <dt><label for="latest_download_upload">{L_DOWNLOADCENTER_LOCAL_FILE}{L_COLON}</label><br><span>{L_DOWNLOADCENTER_LOCAL_FILE_EXPLAIN}</span></dt>
-                    <dd>
-                        <!-- IF S_HAS_LATEST_DOWNLOAD_FILE --><p class="downloadcenter-file-picker-help">{L_DOWNLOADCENTER_CURRENT_FILE}{L_COLON} {LATEST_DOWNLOAD_FILE}<!-- IF LATEST_FILE_SIZE --> — {LATEST_FILE_SIZE}<!-- ENDIF --></p><!-- ENDIF -->
-                        <input type="file" name="latest_download_upload" id="latest_download_upload"><p class="downloadcenter-file-size-preview" data-downloadcenter-file-size-preview>{L_DOWNLOADCENTER_FILE_SIZE_AUTOMATIC}</p><p class="downloadcenter-file-picker-help">{DOWNLOADCENTER_UPLOAD_RULES}</p>
-                    </dd>
-                </dl>
-                <dl>
-                    <dt><label for="latest_version_changelog">{L_DOWNLOADCENTER_CURRENT_CHANGELOG}{L_COLON}</label><br><span>{L_DOWNLOADCENTER_CURRENT_CHANGELOG_EXPLAIN}</span></dt>
-                    <dd><!-- INCLUDE downloadcenter_bbcode_toolbar.html --><textarea name="latest_version_changelog" id="latest_version_changelog" rows="6">{LATEST_VERSION_CHANGELOG}</textarea></dd>
-                </dl>
+                <!-- INCLUDE downloadcenter_bbcode_toolbar.html -->
+                <textarea name="latest_version_changelog" id="latest_version_changelog" rows="6">{LATEST_VERSION_CHANGELOG}</textarea>
             </fieldset>
             <!-- ENDIF -->
 

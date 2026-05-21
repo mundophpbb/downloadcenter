@@ -16,6 +16,16 @@ class main_info
                     'auth'  => 'ext_mundophpbb/downloadcenter && acl_a_board',
                     'cat'   => ['ACP_DOWNLOADCENTER_TITLE'],
                 ],
+                'diagnostics' => [
+                    'title' => 'ACP_DOWNLOADCENTER_DIAGNOSTICS',
+                    'auth'  => 'ext_mundophpbb/downloadcenter && acl_a_board',
+                    'cat'   => ['ACP_DOWNLOADCENTER_TITLE'],
+                ],
+                'integrity' => [
+                    'title' => 'ACP_DOWNLOADCENTER_INTEGRITY',
+                    'auth'  => 'ext_mundophpbb/downloadcenter && acl_a_board',
+                    'cat'   => ['ACP_DOWNLOADCENTER_TITLE'],
+                ],
                 'settings' => [
                     'title' => 'ACP_DOWNLOADCENTER_SETTINGS',
                     'auth'  => 'ext_mundophpbb/downloadcenter && acl_a_board',
@@ -38,16 +48,6 @@ class main_info
                 ],
                 'files' => [
                     'title' => 'ACP_DOWNLOADCENTER_FILES',
-                    'auth'  => 'ext_mundophpbb/downloadcenter && acl_a_board',
-                    'cat'   => ['ACP_DOWNLOADCENTER_TITLE'],
-                ],
-                'integrity' => [
-                    'title' => 'ACP_DOWNLOADCENTER_INTEGRITY',
-                    'auth'  => 'ext_mundophpbb/downloadcenter && acl_a_board',
-                    'cat'   => ['ACP_DOWNLOADCENTER_TITLE'],
-                ],
-                'diagnostics' => [
-                    'title' => 'ACP_DOWNLOADCENTER_DIAGNOSTICS',
                     'auth'  => 'ext_mundophpbb/downloadcenter && acl_a_board',
                     'cat'   => ['ACP_DOWNLOADCENTER_TITLE'],
                 ],

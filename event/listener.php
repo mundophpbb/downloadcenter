@@ -38,21 +38,11 @@ class listener implements EventSubscriberInterface
         $this->user->add_lang_ext('mundophpbb/downloadcenter', 'common');
 
         $this->template->assign_vars([
-            'S_DOWNLOADCENTER_ENABLED' => !empty($this->config['mundophpbb_downloadcenter_enabled']) && $this->can_view(),
+            'S_DOWNLOADCENTER_ENABLED' => !empty($this->config['mundophpbb_downloadcenter_enabled']) && $this->access_allowed(isset($this->config['mundophpbb_downloadcenter_view_access']) ? $this->config['mundophpbb_downloadcenter_view_access'] : 'all'),
             'U_DOWNLOADCENTER' => $this->helper->route('mundophpbb_downloadcenter_index'),
         ]);
     }
 
-
-    protected function can_view()
-    {
-        if (isset($this->config['mundophpbb_downloadcenter_permission_mode']) && $this->config['mundophpbb_downloadcenter_permission_mode'] === 'acl')
-        {
-            return $this->is_admin() || $this->auth->acl_get('u_downloadcenter_view');
-        }
-
-        return $this->access_allowed(isset($this->config['mundophpbb_downloadcenter_view_access']) ? $this->config['mundophpbb_downloadcenter_view_access'] : 'all');
-    }
 
     protected function access_allowed($mode)
     {
@@ -72,6 +62,6 @@ class listener implements EventSubscriberInterface
 
     protected function is_admin()
     {
-        return ((int) $this->user->data['user_type'] === USER_FOUNDER) || $this->auth->acl_get('a_board') || $this->auth->acl_get('a_downloadcenter_manage');
+        return ((int) $this->user->data['user_type'] === USER_FOUNDER) || $this->auth->acl_get('a_board');
     }
 }

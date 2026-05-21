@@ -4,8 +4,8 @@ Extensão `mundophpbb/downloadcenter` para criar uma central de downloads, ferra
 
 ## Estado
 
-Versão: 1.0.93  
-Estado: beta técnico avançado / em validação
+Versão: 1.0.49  
+Estado: beta técnico / em validação
 
 ## Requisitos
 
@@ -30,20 +30,8 @@ Estado: beta técnico avançado / em validação
 - Tópico de suporte automático
 - Logs administrativos
 - Painel estatístico
-- Diagnóstico beta com manutenção segura
-- Integridade dos dados com correções automáticas
+- Diagnóstico beta
 - Regras públicas de submissão
-- Modo de permissões global ou ACL do phpBB
-- Busca, filtros e categorias públicas aprimoradas
-- Cards públicos responsivos
-
-## Documentação
-
-- `docs/INSTALL.md`: instalação e atualização.
-- `docs/ADMIN_GUIDE.md`: fluxo administrativo recomendado.
-- `docs/UPDATE_CHECKLIST.md`: checklist de atualização.
-- `docs/TROUBLESHOOTING.md`: solução de problemas comuns.
-- `docs/BETA_CHECKLIST.md`: validações antes de produção.
 
 ## Instalação
 
@@ -68,13 +56,3 @@ O acesso direto deve ser bloqueado pelo `.htaccess`; os downloads devem ocorrer 
 ## Observações de beta
 
 Antes de usar em produção, teste upload, download, aprovação, exclusão de versões, biblioteca de arquivos e submissão pública em ambiente controlado.
-
-
-## Recursos adicionados na versão 1.0.99
-
-- Verificação pré-lançamento no ACP.
-- Exportação de relatório de diagnóstico.
-- Estatísticas públicas opcionais.
-- Feed RSS opcional.
-- Rate limit básico de downloads.
-- Auditoria documentada das migrations.

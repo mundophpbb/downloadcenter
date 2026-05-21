@@ -13,9 +13,9 @@
     --dc-green: #428842;
     --dc-orange: #d67b00;
     --dc-red: #b12b24;
-    --dc-shadow: 0 1px 0 rgba(0, 0, 0, .025), 0 5px 14px rgba(24, 42, 62, .055);
+    --dc-shadow: 0 2px 0 rgba(0, 0, 0, .03), 0 10px 24px rgba(24, 42, 62, .07);
     color: var(--dc-text);
-    margin: 10px 0 16px;
+    margin: 12px 0 20px;
 }
 
 .downloadcenter-wrap *,
@@ -37,7 +37,7 @@
 .downloadcenter-detail-head {
     background: linear-gradient(#ffffff, #f7fafc);
     border: 1px solid var(--dc-border);
-    border-radius: 4px;
+    border-radius: 7px;
     box-shadow: var(--dc-shadow);
     margin: 0 0 12px;
     overflow: hidden;
@@ -59,29 +59,29 @@
 .downloadcenter-catalog-head {
     align-items: center;
     display: flex;
-    gap: 10px;
+    gap: 18px;
     justify-content: space-between;
-    padding: 15px 17px 14px;
+    padding: 20px 22px 18px;
 }
 
 .downloadcenter-catalog-title h2,
 .downloadcenter-detail-title h2 {
     color: var(--dc-blue);
-    font-size: 1.28em;
-    line-height: 1.2;
+    font-size: 2em;
+    line-height: 1.1;
     margin: 0 0 6px;
 }
 
 .downloadcenter-catalog-title p,
 .downloadcenter-detail-title p {
     color: var(--dc-muted);
-    line-height: 1.42;
+    line-height: 1.5;
     margin: 4px 0 0;
     max-width: 820px;
 }
 
 .downloadcenter-help {
-    font-size: .86em;
+    font-size: .95em;
 }
 
 .downloadcenter-catalog-actions,
@@ -100,13 +100,13 @@
 .downloadcenter-submit .button1 {
     border-radius: 4px;
     font-weight: 700;
-    line-height: 1.38;
+    line-height: 1.45;
 }
 
 /* Notices */
 .downloadcenter-admin-notice,
 .downloadcenter-warning {
-    border-radius: 4px;
+    border-radius: 5px;
     border-style: solid;
     border-width: 1px 1px 1px 4px;
     margin-bottom: 12px;
@@ -125,12 +125,12 @@
     align-items: center;
     background: #ebeff3;
     border: 1px solid var(--dc-border-dark);
-    border-radius: 4px;
+    border-radius: 6px;
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
+    gap: 6px;
     margin: 0 0 12px;
-    padding: 7px;
+    padding: 8px;
 }
 
 .downloadcenter-category-pill {
@@ -139,9 +139,9 @@
     border-radius: 4px;
     color: var(--dc-blue);
     display: inline-flex;
-    gap: 4px;
+    gap: 7px;
     line-height: 1.2;
-    padding: 6px 9px;
+    padding: 7px 10px;
     text-decoration: none;
 }
 
@@ -162,10 +162,10 @@
     background: rgba(16, 82, 137, .10);
     border-radius: 20px;
     color: inherit;
-    font-size: .8em;
+    font-size: .85em;
     font-weight: 700;
     min-width: 20px;
-    padding: 1px 6px;
+    padding: 1px 7px;
     text-align: center;
 }
 
@@ -181,10 +181,10 @@
 .downloadcenter-toolbar {
     background: var(--dc-panel);
     border: 1px solid var(--dc-border);
-    border-radius: 4px;
+    border-radius: 6px;
     box-shadow: 0 1px 0 rgba(255,255,255,.9) inset;
     margin-bottom: 12px;
-    padding: 10px;
+    padding: 12px;
 }
 
 .downloadcenter-toolbar-title {
@@ -197,18 +197,18 @@
 
 .downloadcenter-toolbar-title strong {
     color: var(--dc-blue);
-    font-size: 1em;
+    font-size: 1.05em;
 }
 
 .downloadcenter-toolbar-title span {
     color: var(--dc-muted);
-    font-size: .88em;
+    font-size: .92em;
 }
 
 .downloadcenter-filters {
     display: grid;
     gap: 8px;
-    grid-template-columns: minmax(220px, 1.2fr) minmax(150px, .65fr) minmax(140px, .55fr) minmax(130px, .5fr) minmax(145px, .55fr) auto auto;
+    grid-template-columns: minmax(220px, 1fr) minmax(160px, .45fr) minmax(145px, .38fr) auto auto;
 }
 
 .downloadcenter-filters input[type="search"],
@@ -222,8 +222,8 @@
     background: #fff;
     border: 1px solid var(--dc-border-dark);
     border-radius: 4px;
-    min-height: 31px;
-    padding: 5px 7px;
+    min-height: 34px;
+    padding: 6px 8px;
     width: 100%;
 }
 
@@ -231,39 +231,27 @@
     align-items: center;
     display: inline-flex;
     justify-content: center;
-    min-height: 31px;
+    min-height: 34px;
     white-space: nowrap;
 }
 
-
-.downloadcenter-result-summary {
-    color: var(--dc-muted);
-    font-size: .89em;
-    margin: 0 0 10px;
-}
-
-.downloadcenter-result-summary strong {
-    color: var(--dc-blue);
-}
-
 /* Results, inspired by phpBB Customise database rows */
-.downloadcenter-list,
-.downloadcenter-card-grid {
-    display: grid;
+.downloadcenter-list {
+    display: flex;
+    flex-direction: column;
     gap: 10px;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }
 
 .downloadcenter-result-card {
     align-items: stretch;
     background: var(--dc-panel);
     border: 1px solid var(--dc-border);
-    border-radius: 4px;
-    box-shadow: 0 1px 0 rgba(255,255,255,.9) inset, 0 1px 5px rgba(24,42,62,.035);
+    border-radius: 7px;
+    box-shadow: 0 1px 0 rgba(255,255,255,.9) inset, 0 2px 8px rgba(24,42,62,.04);
     display: grid;
-    gap: 10px;
-    grid-template-columns: 60px minmax(0, 1fr) 135px;
-    padding: 10px;
+    gap: 14px;
+    grid-template-columns: 74px minmax(0, 1fr) 160px;
+    padding: 12px;
     position: relative;
     transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
 }
@@ -274,206 +262,21 @@
     transform: translateY(-1px);
 }
 
-.downloadcenter-public-card {
-    background: var(--dc-panel);
-    border: 1px solid var(--dc-border);
-    border-radius: 4px;
-    box-shadow: 0 1px 0 rgba(255,255,255,.9) inset, 0 1px 5px rgba(24,42,62,.04);
-    display: flex;
-    flex-direction: column;
-    gap: 9px;
-    min-width: 0;
-    padding: 10px;
-    position: relative;
-    transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
-}
-
-.downloadcenter-public-card::before {
-    background: var(--dc-blue);
-    border-radius: 4px 4px 0 0;
-    content: "";
-    display: block;
-    height: 3px;
-    left: -1px;
-    position: absolute;
-    right: -1px;
-    top: -1px;
-}
-
-.downloadcenter-public-card.is-ready::before {
-    background: var(--dc-green);
-}
-
-.downloadcenter-public-card.is-unpublished::before,
-.downloadcenter-public-card.is-locked::before {
-    background: var(--dc-orange);
-}
-
-.downloadcenter-public-card.is-unavailable::before {
-    background: var(--dc-red);
-}
-
-.downloadcenter-public-card:hover {
-    border-color: #abc6dc;
-    box-shadow: var(--dc-shadow);
-    transform: translateY(-1px);
-}
-
-.downloadcenter-public-card-top {
-    align-items: flex-start;
-    display: flex;
-    gap: 9px;
-    min-width: 0;
-}
-
-.downloadcenter-public-card-title {
-    min-width: 0;
-}
-
-.downloadcenter-public-card-title h3 {
-    font-size: 1.08em;
-    line-height: 1.2;
-    margin: 3px 0 1px;
-}
-
-.downloadcenter-public-card-title h3 a {
-    color: var(--dc-blue);
-    font-weight: 700;
-    text-decoration: none;
-}
-
-.downloadcenter-public-card-title h3 a:hover {
-    color: var(--dc-blue-light);
-    text-decoration: underline;
-}
-
-.downloadcenter-public-card-category {
-    color: var(--dc-muted);
-    font-size: .88em;
-    margin: 0;
-}
-
-.downloadcenter-public-card-badges {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-}
-
-.downloadcenter-state-badge {
-    border: 1px solid transparent;
-    border-radius: 3px;
-    display: inline-flex;
-    font-size: .74em;
-    font-weight: 700;
-    letter-spacing: .01em;
-    line-height: 1.15;
-    padding: 3px 7px;
-    text-transform: uppercase;
-}
-
-.downloadcenter-state-badge.state-ready {
-    background: #edf8ed;
-    border-color: #bddfbd;
-    color: var(--dc-green);
-}
-
-.downloadcenter-state-badge.state-new {
-    background: var(--dc-blue-soft);
-    border-color: #bcd7eb;
-    color: var(--dc-blue);
-}
-
-.downloadcenter-state-badge.state-warning,
-.downloadcenter-state-badge.state-locked {
-    background: #fff5e6;
-    border-color: #f0cf9d;
-    color: #9a5700;
-}
-
-.downloadcenter-state-badge.state-muted {
-    background: #f1f4f7;
-    border-color: #d9e0e7;
-    color: #536271;
-}
-
-.downloadcenter-public-card-meta {
-    display: grid;
-    gap: 4px;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    margin: 0;
-}
-
-.downloadcenter-public-card-meta div {
-    background: var(--dc-panel-alt);
-    border: 1px solid #edf0f3;
-    border-radius: 4px;
-    min-width: 0;
-    padding: 5px 7px;
-}
-
-.downloadcenter-public-card-meta dt {
-    color: var(--dc-muted);
-    font-size: .74em;
-    font-weight: 700;
-    margin: 0 0 2px;
-    text-transform: uppercase;
-}
-
-.downloadcenter-public-card-meta dd {
-    color: var(--dc-text);
-    font-weight: 700;
-    margin: 0;
-    overflow-wrap: anywhere;
-}
-
-.downloadcenter-public-card-footer {
-    border-top: 1px solid #edf0f3;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    justify-content: space-between;
-    margin-top: auto;
-    padding-top: 9px;
-}
-
-.downloadcenter-public-card-author {
-    color: var(--dc-muted);
-    font-size: .86em;
-    line-height: 1.4;
-    min-width: 0;
-}
-
-.downloadcenter-public-card-actions {
-    align-items: center;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    justify-content: flex-end;
-}
-
-.downloadcenter-public-card-actions .button {
-    white-space: nowrap;
-}
-
-.downloadcenter-card-download {
-    font-weight: 700;
-}
-
 .downloadcenter-result-icon,
 .downloadcenter-detail-icon {
     align-items: center;
     background: linear-gradient(#fafdff, #eaf4fb);
     border: 1px solid #bfd6e8;
-    border-radius: 4px;
+    border-radius: 7px;
     color: var(--dc-blue);
     display: flex;
-    font-size: 1.28em;
-    font-weight: 700;
-    height: 54px;
+    font-size: 1.85em;
+    font-weight: 800;
+    height: 64px;
     justify-content: center;
     overflow: hidden;
     text-decoration: none;
-    width: 54px;
+    width: 64px;
 }
 
 .downloadcenter-result-icon img,
@@ -492,7 +295,7 @@
 }
 
 .downloadcenter-result-heading h3 {
-    font-size: 1.08em;
+    font-size: 1.22em;
     line-height: 1.2;
     margin: 0;
 }
@@ -513,14 +316,14 @@
     border: 1px solid #bcd7eb;
     border-radius: 4px;
     color: var(--dc-blue);
-    font-size: .78em;
-    font-weight: 700;
-    padding: 2px 6px;
+    font-size: .84em;
+    font-weight: 800;
+    padding: 2px 7px;
 }
 
 .downloadcenter-result-desc {
     color: var(--dc-text);
-    line-height: 1.38;
+    line-height: 1.45;
     margin: 0 0 9px;
 }
 
@@ -528,7 +331,7 @@
 .downloadcenter-meta {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
+    gap: 5px;
     margin: 0;
 }
 
@@ -552,21 +355,21 @@
     flex-direction: column;
     gap: 10px;
     justify-content: space-between;
-    padding-left: 10px;
+    padding-left: 14px;
     text-align: right;
 }
 
 .downloadcenter-download-count strong {
     color: var(--dc-blue);
     display: block;
-    font-size: 1.28em;
+    font-size: 1.55em;
     line-height: 1;
 }
 
 .downloadcenter-download-count span {
     color: var(--dc-muted);
     display: block;
-    font-size: .8em;
+    font-size: .85em;
     margin-top: 3px;
 }
 
@@ -582,9 +385,9 @@
 .downloadcenter-detail-head {
     align-items: flex-start;
     display: flex;
-    gap: 10px;
+    gap: 18px;
     justify-content: space-between;
-    padding: 15px 17px 14px;
+    padding: 20px 22px 18px;
 }
 
 .downloadcenter-detail-main {
@@ -596,8 +399,8 @@
 
 .downloadcenter-detail-icon {
     flex: 0 0 auto;
-    height: 72px;
-    width: 72px;
+    height: 86px;
+    width: 86px;
 }
 
 .downloadcenter-detail-tags {
@@ -612,8 +415,8 @@
 }
 
 .downloadcenter-primary-button {
-    font-size: .95em;
-    padding-left: 10px;
+    font-size: 1.02em;
+    padding-left: 14px;
     padding-right: 14px;
 }
 
@@ -644,7 +447,7 @@
     cursor: pointer;
     font-weight: 700;
     margin: 0 4px 0 0;
-    padding: 6px 10px;
+    padding: 8px 12px;
 }
 
 .downloadcenter-tab.is-active {
@@ -669,7 +472,7 @@
 }
 
 .downloadcenter-section > .inner {
-    padding: 12px;
+    padding: 16px;
 }
 
 .downloadcenter-section h3,
@@ -680,14 +483,14 @@
 
 .downloadcenter-description,
 .downloadcenter-changelog {
-    line-height: 1.5;
+    line-height: 1.62;
 }
 
 .downloadcenter-release-box {
     background: var(--dc-panel-alt);
     border: 1px solid var(--dc-border);
-    border-radius: 4px;
-    padding: 10px;
+    border-radius: 6px;
+    padding: 12px;
 }
 
 .downloadcenter-release-head {
@@ -705,7 +508,7 @@
     border-left: 4px solid #b5cfe3;
     border-radius: 0 5px 5px 0;
     margin: 10px 0 0;
-    padding: 8px 10px;
+    padding: 10px 12px;
 }
 
 .downloadcenter-version-list {
@@ -717,9 +520,9 @@
 .downloadcenter-version-list li {
     background: var(--dc-panel-alt);
     border: 1px solid var(--dc-border);
-    border-radius: 4px;
+    border-radius: 6px;
     margin-bottom: 9px;
-    padding: 10px;
+    padding: 12px;
 }
 
 .downloadcenter-version-main {
@@ -732,13 +535,13 @@
 
 .downloadcenter-version-main strong {
     color: var(--dc-blue);
-    font-size: 1em;
+    font-size: 1.05em;
 }
 
 /* Forms, mine and generic tables */
 .downloadcenter-submit.panel,
 .downloadcenter-mine-view .panel {
-    border-radius: 4px;
+    border-radius: 6px;
     box-shadow: var(--dc-shadow);
     overflow: hidden;
 }
@@ -746,15 +549,15 @@
 .downloadcenter-submit fieldset {
     background: var(--dc-panel-alt);
     border: 1px solid var(--dc-border);
-    border-radius: 4px;
+    border-radius: 6px;
     margin-bottom: 12px;
-    padding: 10px;
+    padding: 12px;
 }
 
 .downloadcenter-submit legend {
     color: var(--dc-blue);
-    font-size: 1em;
-    font-weight: 700;
+    font-size: 1.05em;
+    font-weight: 800;
     padding: 0 5px;
 }
 
@@ -799,7 +602,7 @@
     align-items: center;
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
+    gap: 6px;
     justify-content: flex-end;
     margin: 12px 0 0;
 }
@@ -807,18 +610,18 @@
 .downloadcenter-empty-state {
     background: #f6f8fa;
     border: 1px dashed #b8c7d5;
-    border-radius: 4px;
+    border-radius: 6px;
     color: var(--dc-muted);
-    padding: 14px;
+    padding: 18px;
     text-align: center;
 }
 
 .downloadcenter-acp-pending-alert {
     background: rgba(214, 123, 0, .12);
     border: 1px solid rgba(214, 123, 0, .35);
-    border-radius: 4px;
+    border-radius: 6px;
     margin: 12px 0;
-    padding: 8px 10px;
+    padding: 10px 12px;
 }
 
 .downloadcenter-acp-pending-alert p {
@@ -830,7 +633,7 @@
     border-radius: 20px;
     color: #fff;
     display: inline-block;
-    font-size: 11px;
+    font-size: 12px;
     line-height: 1;
     margin-left: 6px;
     padding: 4px 7px;
@@ -844,7 +647,7 @@
 
 .downloadcenter-file-missing {
     color: var(--dc-red);
-    font-weight: 700;
+    font-weight: 800;
 }
 
 @media (max-width: 900px) {
@@ -884,28 +687,19 @@
 @media (max-width: 620px) {
     .downloadcenter-catalog-head,
     .downloadcenter-detail-head {
-        padding: 12px;
+        padding: 16px;
     }
 
     .downloadcenter-catalog-title h2,
     .downloadcenter-detail-title h2 {
-        font-size: 1.28em;
+        font-size: 1.55em;
     }
 
     .downloadcenter-filters {
         grid-template-columns: 1fr;
     }
 
-    .downloadcenter-card-grid,
-    .downloadcenter-list {
-        grid-template-columns: 1fr;
-    }
-
     .downloadcenter-result-card {
-        grid-template-columns: 1fr;
-    }
-
-    .downloadcenter-public-card-meta {
         grid-template-columns: 1fr;
     }
 
@@ -924,19 +718,8 @@
         width: 76px;
     }
 
-    .downloadcenter-result-side,
-    .downloadcenter-public-card-actions {
-        align-items: stretch;
+    .downloadcenter-result-side {
         flex-direction: column;
-        width: 100%;
-    }
-
-    .downloadcenter-public-card-footer {
-        display: block;
-    }
-
-    .downloadcenter-public-card-author {
-        margin-bottom: 8px;
     }
 
     .downloadcenter-tabs {
@@ -946,7 +729,7 @@
 
     .downloadcenter-tab {
         border: 1px solid #b5cfe3;
-        border-radius: 4px;
+        border-radius: 5px;
         display: block;
         margin: 0 0 5px;
         text-align: left;
@@ -959,7 +742,7 @@
 
     .downloadcenter-section {
         border-top: 1px solid var(--dc-border);
-        border-radius: 4px;
+        border-radius: 6px;
     }
 }
 
@@ -982,7 +765,7 @@
 .downloadcenter-changelog .downloadcenter-bbcode-list {
     background: #f8fafc;
     border: 1px solid #dbe4ee;
-    border-radius: 4px;
+    border-radius: 5px;
     list-style: disc outside;
     margin: .8em 0 1em 0;
     padding: 10px 14px 10px 34px;
@@ -1004,7 +787,7 @@
     background: #f6f8fa;
     border-left: 4px solid #b8c7d5;
     margin: .8em 0;
-    padding: 6px 10px;
+    padding: 8px 12px;
 }
 
 .downloadcenter-description pre,
@@ -1035,9 +818,9 @@
     box-sizing: border-box;
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
+    gap: 6px;
     margin: 0;
-    padding: 5px 7px;
+    padding: 7px 8px;
 }
 
 .downloadcenter-bbcode-group {
@@ -1059,12 +842,12 @@
     box-shadow: inset 0 1px 0 rgba(255,255,255,.85);
     color: #23435f;
     cursor: pointer;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
     height: 26px;
     line-height: 22px;
     min-width: 28px;
-    padding: 1px 6px;
+    padding: 1px 7px;
     text-align: center;
 }
 
@@ -1091,8 +874,8 @@
     align-items: center;
     color: #42566a;
     display: inline-flex;
-    font-size: 11px;
-    gap: 4px;
+    font-size: 12px;
+    gap: 5px;
     margin-left: auto;
     white-space: nowrap;
 }
@@ -1102,7 +885,7 @@
     border: 1px solid #aebdca;
     border-radius: 3px;
     color: #23435f;
-    font-size: 11px;
+    font-size: 12px;
     height: 26px;
     padding: 2px 4px;
 }
@@ -1116,7 +899,7 @@
 .downloadcenter-bbcode-help,
 .downloadcenter-file-size-preview {
     color: var(--dc-muted);
-    font-size: .86em;
+    font-size: .9em;
     margin: 5px 0 0;
 }
 
@@ -1134,7 +917,7 @@
 .downloadcenter-mine-hero {
     align-items: center;
     display: flex;
-    gap: 10px;
+    gap: 14px;
     justify-content: space-between;
 }
 
@@ -1160,10 +943,10 @@
     background: linear-gradient(#ffffff, #f8fafc);
     border: 1px solid var(--dc-border);
     border-left: 4px solid var(--dc-blue);
-    border-radius: 4px;
+    border-radius: 7px;
     box-shadow: 0 1px 0 rgba(255,255,255,.9) inset, 0 3px 12px rgba(24,42,62,.055);
     display: grid;
-    gap: 10px;
+    gap: 14px;
     grid-template-columns: minmax(0, 1fr) auto;
     padding: 13px 14px;
 }
@@ -1179,7 +962,7 @@
 .downloadcenter-mine-title {
     color: var(--dc-blue);
     font-size: 1.08em;
-    font-weight: 700;
+    font-weight: 800;
     text-decoration: none;
 }
 
@@ -1189,14 +972,14 @@
 
 .downloadcenter-mine-desc {
     color: var(--dc-text);
-    line-height: 1.38;
+    line-height: 1.45;
     margin: 3px 0 8px;
 }
 
 .downloadcenter-mine-meta {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
+    gap: 7px;
 }
 
 .downloadcenter-mine-meta span {
@@ -1230,14 +1013,14 @@
     background: #fff8e8;
     border: 1px solid #e4b45d;
     border-left: 4px solid var(--dc-orange);
-    border-radius: 4px;
+    border-radius: 6px;
     box-shadow: 0 1px 0 rgba(255,255,255,.9) inset;
     color: #5f3c00;
     display: flex;
     gap: 8px;
-    line-height: 1.38;
+    line-height: 1.45;
     margin: 10px 0 0;
-    padding: 8px 10px;
+    padding: 10px 12px;
 }
 
 .downloadcenter-review-notice strong {
@@ -1282,7 +1065,7 @@
     background: #f5f8fb;
     border: 1px solid #d8e3ec;
     border-left: 4px solid var(--dc-blue);
-    border-radius: 4px;
+    border-radius: 6px;
     display: flex;
     flex-wrap: wrap;
     gap: 8px 12px;
@@ -1301,7 +1084,7 @@
 
 .downloadcenter-rules-grid {
     display: grid;
-    gap: 10px;
+    gap: 14px;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     margin-top: 14px;
 }
@@ -1309,7 +1092,7 @@
 .downloadcenter-rule-card {
     background: #fff;
     border: 1px solid #d7e0e7;
-    border-radius: 4px;
+    border-radius: 7px;
     box-shadow: 0 1px 2px rgba(0,0,0,.04);
     padding: 15px 16px;
 }
@@ -1336,7 +1119,7 @@
 .downloadcenter-rule-note {
     background: #f7fafc;
     border: 1px solid #e2e9ef;
-    border-radius: 4px;
+    border-radius: 5px;
     margin-top: 10px;
     padding: 9px 10px;
 }
@@ -1366,7 +1149,7 @@
 .downloadcenter-screenshot {
     background: #fff;
     border: 1px solid #d7e0e7;
-    border-radius: 4px;
+    border-radius: 7px;
     box-shadow: 0 1px 2px rgba(0,0,0,.04);
     margin: 0;
     overflow: hidden;
@@ -1386,7 +1169,7 @@
 
 .downloadcenter-screenshot figcaption {
     color: var(--dc-text);
-    font-size: .86em;
+    font-size: .95em;
     line-height: 1.35;
     padding: 9px 11px;
 }
@@ -1416,10 +1199,10 @@
 }
 .downloadcenter-screenshot-zoom {
     background: rgba(0, 0, 0, .72);
-    border-radius: 3px;
+    border-radius: 999px;
     bottom: 10px;
     color: #fff;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
     left: 50%;
     opacity: 0;
@@ -1457,7 +1240,7 @@
 }
 .downloadcenter-lightbox img {
     background: #fff;
-    border-radius: 4px;
+    border-radius: 6px;
     box-shadow: 0 8px 30px rgba(0,0,0,.45);
     max-height: 82vh;
     max-width: 96vw;
@@ -1470,7 +1253,7 @@
 .downloadcenter-lightbox-close {
     background: #fff;
     border: 0;
-    border-radius: 3px;
+    border-radius: 999px;
     color: #222;
     cursor: pointer;
     font-size: 22px;
@@ -1522,14 +1305,14 @@ ol.downloadcenter-bbcode-list li {
 
 .downloadcenter-item-view .downloadcenter-breadcrumb {
     color: var(--dc-muted);
-    font-size: .86em;
+    font-size: .95em;
     margin: 0 0 10px;
 }
 
 .downloadcenter-item-view .downloadcenter-detail-head {
     background: linear-gradient(180deg, #ffffff 0%, #f8fbfd 100%);
     border-color: #cfdbe6;
-    border-radius: 4px;
+    border-radius: 9px;
     box-shadow: 0 1px 0 rgba(255,255,255,.9) inset, 0 8px 22px rgba(24,42,62,.08);
     gap: 22px;
     padding: 24px 24px 22px;
@@ -1537,7 +1320,7 @@ ol.downloadcenter-bbcode-list li {
 
 .downloadcenter-item-view .downloadcenter-detail-main {
     align-items: stretch;
-    gap: 10px;
+    gap: 18px;
 }
 
 .downloadcenter-item-view .downloadcenter-detail-icon {
@@ -1558,7 +1341,7 @@ ol.downloadcenter-bbcode-list li {
 .downloadcenter-item-view .downloadcenter-detail-title h2 {
     color: #0d4b7d;
     font-size: 2.05em;
-    font-weight: 700;
+    font-weight: 800;
     letter-spacing: -.01em;
     line-height: 1.08;
     margin-bottom: 8px;
@@ -1572,14 +1355,14 @@ ol.downloadcenter-bbcode-list li {
 }
 
 .downloadcenter-item-view .downloadcenter-detail-tags {
-    gap: 4px;
+    gap: 6px;
     margin-top: 13px;
 }
 
 .downloadcenter-item-view .downloadcenter-detail-tags span {
     background: #f4f7fa;
     border-color: #d4dde6;
-    border-radius: 3px;
+    border-radius: 999px;
     color: #4c5f70;
     font-size: .88em;
     padding: 5px 9px;
@@ -1600,7 +1383,7 @@ ol.downloadcenter-bbcode-list li {
     color: var(--dc-muted);
     display: flex;
     justify-content: space-between;
-    gap: 9px;
+    gap: 12px;
     margin-bottom: 12px;
     padding-bottom: 10px;
     width: 100%;
@@ -1613,7 +1396,7 @@ ol.downloadcenter-bbcode-list li {
 }
 
 .downloadcenter-action-meta span {
-    font-size: .88em;
+    font-size: .92em;
     line-height: 1.15;
     text-align: right;
 }
@@ -1622,11 +1405,11 @@ ol.downloadcenter-bbcode-list li {
 .downloadcenter-item-view .downloadcenter-secondary-button,
 .downloadcenter-version-main .button,
 .downloadcenter-version-main .button1 {
-    border-radius: 4px;
+    border-radius: 5px;
     box-shadow: 0 1px 0 rgba(255,255,255,.45) inset;
     display: inline-flex;
     justify-content: center;
-    min-height: 31px;
+    min-height: 34px;
     padding: 8px 13px;
     text-align: center;
     text-decoration: none;
@@ -1634,7 +1417,7 @@ ol.downloadcenter-bbcode-list li {
 
 .downloadcenter-item-view .downloadcenter-primary-button {
     font-size: 1.04em;
-    font-weight: 700;
+    font-weight: 800;
     width: 100%;
 }
 
@@ -1661,7 +1444,7 @@ ol.downloadcenter-bbcode-list li {
 .downloadcenter-item-view .downloadcenter-tabs {
     background: transparent;
     border: 0;
-    gap: 4px;
+    gap: 7px;
     margin-top: 16px;
     padding: 0;
 }
@@ -1669,7 +1452,7 @@ ol.downloadcenter-bbcode-list li {
 .downloadcenter-item-view .downloadcenter-tab {
     background: #eef4f9;
     border: 1px solid #c6d8e6;
-    border-radius: 4px;
+    border-radius: 6px;
     color: var(--dc-blue);
     font-size: .96em;
     margin: 0;
@@ -1704,7 +1487,7 @@ ol.downloadcenter-bbcode-list li {
 .downloadcenter-item-view .downloadcenter-section h3 {
     border-bottom: 1px solid #e5ebf0;
     color: #0d4b7d;
-    font-size: 1.08em;
+    font-size: 1.22em;
     margin: 0 0 14px;
     padding-bottom: 10px;
 }
@@ -1712,7 +1495,7 @@ ol.downloadcenter-bbcode-list li {
 .downloadcenter-item-view .downloadcenter-description,
 .downloadcenter-item-view .downloadcenter-changelog {
     color: #2f3b48;
-    font-size: .95em;
+    font-size: 1.02em;
     line-height: 1.72;
 }
 
@@ -1755,7 +1538,7 @@ ol.downloadcenter-bbcode-list li {
 
 .downloadcenter-item-view .downloadcenter-screenshot {
     border-color: #d2dee8;
-    border-radius: 4px;
+    border-radius: 9px;
     box-shadow: 0 2px 9px rgba(24,42,62,.06);
 }
 
@@ -1765,8 +1548,8 @@ ol.downloadcenter-bbcode-list li {
 
 .downloadcenter-item-view .downloadcenter-screenshot figcaption {
     color: #4e6070;
-    font-size: .89em;
-    padding: 8px 10px;
+    font-size: .94em;
+    padding: 10px 12px;
 }
 
 .downloadcenter-item-view .downloadcenter-version-list li {
@@ -1775,7 +1558,7 @@ ol.downloadcenter-bbcode-list li {
     border-radius: 8px;
     box-shadow: 0 1px 0 rgba(255,255,255,.9) inset;
     margin-bottom: 11px;
-    padding: 10px;
+    padding: 14px;
 }
 
 .downloadcenter-item-view .downloadcenter-version-main strong {
@@ -1791,7 +1574,7 @@ ol.downloadcenter-bbcode-list li {
 .downloadcenter-item-view .downloadcenter-version-changelog-details {
     background: #f7fafc;
     border: 1px solid #dbe5ed;
-    border-radius: 4px;
+    border-radius: 6px;
     margin-top: 12px;
     padding: 9px 11px;
 }
@@ -1809,7 +1592,7 @@ ol.downloadcenter-bbcode-list li {
 .downloadcenter-item-view .downloadcenter-empty-state {
     background: #f8fafc;
     border: 1px dashed #cdd9e4;
-    border-radius: 4px;
+    border-radius: 7px;
     color: var(--dc-muted);
     padding: 15px;
     text-align: center;
@@ -1824,7 +1607,7 @@ ol.downloadcenter-bbcode-list li {
 
 @media (max-width: 620px) {
     .downloadcenter-item-view .downloadcenter-detail-head {
-        padding: 14px;
+        padding: 18px;
     }
 
     .downloadcenter-item-view .downloadcenter-detail-main {
@@ -1847,7 +1630,7 @@ ol.downloadcenter-bbcode-list li {
     }
 
     .downloadcenter-item-view .downloadcenter-section > .inner {
-        padding: 12px;
+        padding: 16px;
     }
 
     .downloadcenter-item-view .downloadcenter-screenshot-gallery {
@@ -1872,7 +1655,7 @@ ol.downloadcenter-bbcode-list li {
 
 .downloadcenter-inline-success {
     margin: 10px 0 14px;
-    padding: 8px 10px;
+    padding: 10px 12px;
     border-left: 4px solid #2f8f46;
     background: #eef8f0;
     color: #1f5d2e;
@@ -1881,7 +1664,7 @@ ol.downloadcenter-bbcode-list li {
 }
 
 .downloadcenter-screenshot-manage-grid {
-    gap: 10px;
+    gap: 14px;
     margin: 12px 0 10px;
 }
 
@@ -1910,10 +1693,10 @@ ol.downloadcenter-bbcode-list li {
 
 .downloadcenter-screenshot-upload-box {
     margin-top: 16px;
-    padding: 10px;
+    padding: 14px;
     border: 1px solid #d8dfe8;
     background: #f8fafc;
-    border-radius: 4px;
+    border-radius: 6px;
 }
 
 .downloadcenter-screenshot-upload-box h3 {
@@ -1930,7 +1713,7 @@ ol.downloadcenter-bbcode-list li {
 /* 1.0.68 author screenshot manager size fix */
 .downloadcenter-author-screenshot-grid.downloadcenter-screenshot-manage-grid {
     grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
-    gap: 9px;
+    gap: 12px;
 }
 
 .downloadcenter-author-screenshot-grid .downloadcenter-screenshot-manage-card {
@@ -1945,7 +1728,7 @@ ol.downloadcenter-bbcode-list li {
 }
 
 .downloadcenter-author-screenshot-grid .downloadcenter-screenshot-manage-card figcaption {
-    font-size: .86em;
+    font-size: .9em;
     line-height: 1.3;
     padding: 7px 9px;
 }
@@ -1956,1542 +1739,4 @@ ol.downloadcenter-bbcode-list li {
 
 .downloadcenter-author-screenshot-grid .downloadcenter-danger-button {
     margin: 8px 9px 0;
-}
-
-/* 1.0.83 public detail page: stronger product-style layout */
-.downloadcenter-detail-head-v2 {
-    position: relative;
-    overflow: hidden;
-}
-
-.downloadcenter-detail-head-v2::after {
-    background: radial-gradient(circle at center, rgba(39, 121, 184, .12), rgba(39, 121, 184, 0) 62%);
-    content: "";
-    height: 220px;
-    pointer-events: none;
-    position: absolute;
-    right: -72px;
-    top: -86px;
-    width: 220px;
-}
-
-.downloadcenter-detail-head-v2 > * {
-    position: relative;
-    z-index: 1;
-}
-
-.downloadcenter-detail-status-row {
-    align-items: center;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    margin-bottom: 8px;
-}
-
-.downloadcenter-status-pill,
-.downloadcenter-category-chip {
-    border: 1px solid transparent;
-    border-radius: 3px;
-    display: inline-flex;
-    font-size: .82em;
-    font-weight: 700;
-    line-height: 1;
-    padding: 6px 9px;
-    text-transform: uppercase;
-}
-
-.downloadcenter-status-available {
-    background: #e8f7ed;
-    border-color: #afd8ba;
-    color: #236a36;
-}
-
-.downloadcenter-status-restricted {
-    background: #fff5df;
-    border-color: #e6c775;
-    color: #7b5812;
-}
-
-.downloadcenter-status-unavailable,
-.downloadcenter-status-no-version {
-    background: #f2f4f6;
-    border-color: #d4dce4;
-    color: #607080;
-}
-
-.downloadcenter-category-chip {
-    background: #e9f3fb;
-    border-color: #bfd6e8;
-    color: #0d4b7d;
-}
-
-.downloadcenter-detail-tags-v2 span {
-    align-items: center;
-    display: inline-flex;
-}
-
-.downloadcenter-action-card-v2 {
-    background: linear-gradient(180deg, #ffffff 0%, #f2f7fb 100%);
-}
-
-.downloadcenter-action-card-v2 .downloadcenter-primary-button {
-    font-size: 1.08em;
-    letter-spacing: .01em;
-}
-
-.downloadcenter-detail-overview {
-    display: grid;
-    gap: 10px;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    margin: 14px 0 16px;
-}
-
-.downloadcenter-overview-card {
-    background: #ffffff;
-    border: 1px solid #d6e0e8;
-    border-radius: 8px;
-    box-shadow: 0 1px 0 rgba(255,255,255,.9) inset, 0 4px 12px rgba(24,42,62,.04);
-    min-width: 0;
-    padding: 12px 14px;
-}
-
-.downloadcenter-overview-card span {
-    color: var(--dc-muted);
-    display: block;
-    font-size: .88em;
-    font-weight: 700;
-    margin-bottom: 5px;
-}
-
-.downloadcenter-overview-card strong {
-    color: #0d4b7d;
-    display: block;
-    font-size: 1.28em;
-    line-height: 1.15;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.downloadcenter-section-heading {
-    align-items: center;
-    border-bottom: 1px solid #e5ebf0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px 12px;
-    justify-content: space-between;
-    margin: 0 0 14px;
-    padding-bottom: 10px;
-}
-
-.downloadcenter-item-view .downloadcenter-section-heading h3 {
-    border: 0;
-    margin: 0;
-    padding: 0;
-}
-
-.downloadcenter-section-heading > span {
-    background: #f4f7fa;
-    border: 1px solid #d4dde6;
-    border-radius: 3px;
-    color: #4c5f70;
-    font-size: .88em;
-    font-weight: 700;
-    padding: 5px 9px;
-}
-
-.downloadcenter-release-box-v2 {
-    border-left: 4px solid var(--dc-blue-light);
-}
-
-.downloadcenter-version-list-v2 {
-    display: grid;
-    gap: 10px;
-}
-
-.downloadcenter-item-view .downloadcenter-version-list-v2 li {
-    margin-bottom: 0;
-}
-
-.downloadcenter-version-list-v2 .downloadcenter-version-main {
-    align-items: flex-start;
-    gap: 10px;
-}
-
-.downloadcenter-version-list-v2 .downloadcenter-result-tags {
-    margin-top: 7px;
-}
-
-@media (max-width: 900px) {
-    .downloadcenter-detail-overview {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-
-@media (max-width: 620px) {
-    .downloadcenter-detail-overview {
-        grid-template-columns: 1fr;
-    }
-
-    .downloadcenter-detail-status-row {
-        margin-top: 2px;
-    }
-
-    .downloadcenter-status-pill,
-    .downloadcenter-category-chip {
-        font-size: .74em;
-    }
-}
-
-/* Public category overview */
-.downloadcenter-category-overview {
-    display: grid;
-    gap: 10px;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    margin: 0 0 12px;
-}
-
-.downloadcenter-category-card {
-    background: linear-gradient(180deg, #ffffff 0%, #f7fafc 100%);
-    border: 1px solid var(--dc-border);
-    border-radius: 4px;
-    box-shadow: 0 1px 0 rgba(255,255,255,.9) inset;
-    color: var(--dc-text);
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    min-height: 104px;
-    padding: 13px 14px;
-    text-decoration: none;
-}
-
-.downloadcenter-category-card:hover {
-    border-color: #a9c9df;
-    box-shadow: var(--dc-shadow);
-    color: var(--dc-text);
-    text-decoration: none;
-}
-
-.downloadcenter-category-card strong {
-    color: var(--dc-blue);
-    font-size: 1.08em;
-}
-
-.downloadcenter-category-card-desc {
-    color: var(--dc-muted);
-    line-height: 1.4;
-}
-
-.downloadcenter-category-card-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    margin-top: auto;
-}
-
-.downloadcenter-category-card-meta em {
-    background: var(--dc-blue-soft);
-    border: 1px solid #bfd6e8;
-    border-radius: 3px;
-    color: var(--dc-blue);
-    font-style: normal;
-    font-weight: 700;
-    padding: 3px 8px;
-}
-
-.downloadcenter-category-card.is-empty {
-    opacity: .72;
-}
-
-.downloadcenter-selected-category {
-    align-items: center;
-    background: linear-gradient(180deg, #ffffff 0%, #f2f7fb 100%);
-    border: 1px solid var(--dc-border);
-    border-left: 4px solid var(--dc-blue);
-    border-radius: 4px;
-    display: flex;
-    gap: 10px;
-    justify-content: space-between;
-    margin: 0 0 12px;
-    padding: 14px 16px;
-}
-
-.downloadcenter-selected-category span {
-    color: var(--dc-muted);
-    display: block;
-    font-size: .88em;
-    font-weight: 700;
-    letter-spacing: .02em;
-    margin-bottom: 3px;
-    text-transform: uppercase;
-}
-
-.downloadcenter-selected-category h3 {
-    color: var(--dc-blue);
-    font-size: 1.35em;
-    margin: 0;
-}
-
-.downloadcenter-selected-category p {
-    color: var(--dc-muted);
-    line-height: 1.38;
-    margin: 5px 0 0;
-}
-
-.downloadcenter-selected-category dl {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    justify-content: flex-end;
-    margin: 0;
-}
-
-.downloadcenter-selected-category dl div {
-    background: #fff;
-    border: 1px solid var(--dc-border);
-    border-radius: 4px;
-    min-width: 92px;
-    padding: 8px 10px;
-    text-align: center;
-}
-
-.downloadcenter-selected-category dt {
-    color: var(--dc-muted);
-    font-size: .82em;
-    margin: 0 0 3px;
-}
-
-.downloadcenter-selected-category dd {
-    color: var(--dc-blue);
-    font-size: 1.08em;
-    font-weight: 700;
-    margin: 0;
-}
-
-@media (max-width: 700px) {
-    .downloadcenter-selected-category {
-        align-items: stretch;
-        flex-direction: column;
-    }
-
-    .downloadcenter-selected-category dl {
-        justify-content: flex-start;
-    }
-}
-
-/* Public submission form refinements */
-.downloadcenter-submit-wrap .downloadcenter-submit-hero {
-    align-items: center;
-    display: flex;
-    gap: 10px;
-    justify-content: space-between;
-}
-
-.downloadcenter-submit-hero-status {
-    background: rgba(255, 255, 255, .86);
-    border: 1px solid rgba(16, 82, 137, .18);
-    border-radius: 8px;
-    min-width: 220px;
-    padding: 12px 14px;
-}
-
-.downloadcenter-submit-hero-status strong {
-    color: var(--dc-blue);
-    display: block;
-    font-size: 1em;
-    margin-bottom: 4px;
-}
-
-.downloadcenter-submit-hero-status span {
-    color: var(--dc-muted);
-    display: block;
-    line-height: 1.35;
-}
-
-.downloadcenter-submit-steps {
-    display: grid;
-    gap: 10px;
-    grid-template-columns: repeat(3, 1fr);
-    margin: 0 0 12px;
-}
-
-.downloadcenter-submit-step {
-    background: var(--dc-panel);
-    border: 1px solid var(--dc-border);
-    border-radius: 8px;
-    box-shadow: 0 1px 0 rgba(255,255,255,.9) inset;
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 2px 10px;
-    min-height: 82px;
-    padding: 10px;
-}
-
-.downloadcenter-submit-step span {
-    align-items: center;
-    background: var(--dc-blue-soft);
-    border-radius: 3px;
-    color: var(--dc-blue);
-    display: inline-flex;
-    font-weight: 700;
-    height: 28px;
-    justify-content: center;
-    width: 28px;
-}
-
-.downloadcenter-submit-step strong {
-    align-self: center;
-    color: var(--dc-blue);
-}
-
-.downloadcenter-submit-step em {
-    color: var(--dc-muted);
-    font-style: normal;
-    grid-column: 2;
-    line-height: 1.35;
-}
-
-.downloadcenter-submit-step.is-active {
-    border-color: #a9c9df;
-}
-
-.downloadcenter-submit-callout {
-    align-items: center;
-    display: flex;
-    gap: 8px 12px;
-    justify-content: space-between;
-}
-
-.downloadcenter-submit-section {
-    background: var(--dc-panel-alt);
-    border: 1px solid var(--dc-border);
-    border-radius: 8px;
-    margin: 0 0 14px;
-    padding: 10px;
-}
-
-.downloadcenter-submit-section legend,
-.downloadcenter-submit-review legend {
-    align-items: center;
-    color: var(--dc-blue);
-    display: inline-flex;
-    font-size: 1.08em;
-    font-weight: 700;
-    gap: 8px;
-    padding: 0 6px;
-}
-
-.downloadcenter-submit-section legend span {
-    align-items: center;
-    background: var(--dc-blue);
-    border-radius: 3px;
-    color: #fff;
-    display: inline-flex;
-    font-size: .88em;
-    height: 24px;
-    justify-content: center;
-    width: 24px;
-}
-
-.downloadcenter-section-help {
-    color: var(--dc-muted);
-    line-height: 1.38;
-    margin: 0 0 12px;
-}
-
-.downloadcenter-field-grid {
-    display: grid;
-    gap: 10px 14px;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.downloadcenter-field-wide {
-    grid-column: 1 / -1;
-}
-
-.downloadcenter-submit dl {
-    margin-bottom: 12px;
-}
-
-.downloadcenter-submit dt span,
-.downloadcenter-submit .downloadcenter-file-picker-help,
-.downloadcenter-submit .downloadcenter-file-size-preview {
-    color: var(--dc-muted);
-    font-size: .88em;
-}
-
-.downloadcenter-submit textarea {
-    line-height: 1.38;
-}
-
-.downloadcenter-source-panel {
-    background: #fff;
-    border: 1px solid var(--dc-border);
-    border-radius: 8px;
-    margin: 0 0 14px;
-    padding: 10px;
-}
-
-.downloadcenter-source-header {
-    align-items: center;
-    display: flex;
-    gap: 10px;
-    justify-content: space-between;
-    margin-bottom: 10px;
-}
-
-.downloadcenter-source-header strong {
-    color: var(--dc-blue);
-    display: block;
-    margin-bottom: 3px;
-}
-
-.downloadcenter-source-header p {
-    color: var(--dc-muted);
-    margin: 0;
-}
-
-.downloadcenter-source-header select {
-    max-width: 220px;
-}
-
-.downloadcenter-source-grid {
-    display: grid;
-    gap: 10px;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.downloadcenter-source-card {
-    background: var(--dc-panel-alt);
-    border: 1px solid var(--dc-border);
-    border-radius: 4px;
-    margin: 0;
-    padding: 10px;
-}
-
-.downloadcenter-source-card.is-active {
-    border-color: #8db6d0;
-    box-shadow: 0 0 0 2px rgba(18, 163, 235, .12);
-}
-
-.downloadcenter-js .downloadcenter-source-card:not(.is-active) {
-    opacity: .62;
-}
-
-.downloadcenter-submit-section-muted {
-    background: #fbfcfe;
-}
-
-.downloadcenter-submit-review {
-    background: #fff8e8;
-    border: 1px solid #ecd6aa;
-    border-radius: 8px;
-    margin: 0 0 14px;
-    padding: 10px;
-}
-
-.downloadcenter-submit-review ul {
-    margin: 0 0 12px 20px;
-}
-
-.downloadcenter-submit-review li {
-    margin-bottom: 4px;
-}
-
-.downloadcenter-submit-actions {
-    align-items: center;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    justify-content: flex-end;
-}
-
-@media (max-width: 850px) {
-    .downloadcenter-submit-wrap .downloadcenter-submit-hero,
-    .downloadcenter-source-header,
-    .downloadcenter-submit-callout {
-        align-items: stretch;
-        flex-direction: column;
-    }
-
-    .downloadcenter-submit-steps,
-    .downloadcenter-field-grid,
-    .downloadcenter-source-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .downloadcenter-source-header select {
-        max-width: none;
-    }
-}
-
-/* 1.0.87 - My submissions dashboard and filters */
-.downloadcenter-mine-dashboard {
-    display: grid;
-    gap: 10px;
-    grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
-    margin: 12px 0;
-}
-
-.downloadcenter-mine-stat {
-    background: linear-gradient(#ffffff, #f7fafc);
-    border: 1px solid var(--dc-border);
-    border-left: 4px solid var(--dc-blue);
-    border-radius: 8px;
-    box-shadow: 0 2px 9px rgba(24,42,62,.055);
-    color: var(--dc-text) !important;
-    display: block;
-    padding: 11px 12px;
-    text-decoration: none !important;
-}
-
-.downloadcenter-mine-stat span {
-    color: var(--dc-muted);
-    display: block;
-    font-size: .86em;
-    font-weight: 700;
-    margin-bottom: 4px;
-}
-
-.downloadcenter-mine-stat strong {
-    color: var(--dc-text);
-    display: block;
-    font-size: 1.28em;
-    line-height: 1;
-}
-
-.downloadcenter-mine-stat.active {
-    background: #eef6ff;
-    border-color: #9cc6ef;
-}
-
-.downloadcenter-mine-stat.published {
-    border-left-color: #39924b;
-}
-
-.downloadcenter-mine-stat.pending,
-.downloadcenter-mine-stat.no-version {
-    border-left-color: var(--dc-orange);
-}
-
-.downloadcenter-mine-stat.disabled {
-    border-left-color: #7d8790;
-}
-
-.downloadcenter-mine-filters {
-    margin: 12px 0;
-}
-
-.downloadcenter-mine-results-head {
-    color: var(--dc-muted);
-    margin: 12px 0 6px;
-}
-
-.downloadcenter-mine-card.status-published {
-    border-left-color: #39924b;
-}
-
-.downloadcenter-mine-card.status-pending,
-.downloadcenter-mine-card.status-pending.no-version {
-    border-left-color: var(--dc-orange);
-}
-
-.downloadcenter-mine-card.status-disabled {
-    border-left-color: #7d8790;
-}
-
-.downloadcenter-status-badge.status-published {
-    background: #e8f6ec;
-    border-color: #b8dfc0;
-    color: #236531;
-}
-
-.downloadcenter-status-badge.status-pending,
-.downloadcenter-status-badge.status-no-version {
-    background: #fff4df;
-    border-color: #e7c37a;
-    color: #805000;
-}
-
-.downloadcenter-status-badge.status-disabled {
-    background: #eef1f4;
-    border-color: #cfd6dd;
-    color: #48515a;
-}
-
-.downloadcenter-mine-status-note {
-    background: #f7fafc;
-    border: 1px solid #dfe7ee;
-    border-radius: 4px;
-    color: var(--dc-muted);
-    line-height: 1.4;
-    margin: 6px 0 9px;
-    padding: 7px 9px;
-}
-
-.downloadcenter-mine-actions {
-    gap: 8px;
-}
-
-@media (max-width: 700px) {
-    .downloadcenter-mine-dashboard {
-        grid-template-columns: 1fr 1fr;
-    }
-}
-
-@media (max-width: 460px) {
-    .downloadcenter-mine-dashboard {
-        grid-template-columns: 1fr;
-    }
-}
-
-.downloadcenter-admin-notice-head {
-    align-items: center;
-    display: flex;
-    gap: 10px;
-    margin-bottom: 6px;
-}
-
-.downloadcenter-admin-notice-head strong {
-    align-items: center;
-    background: var(--dc-orange);
-    border-radius: 3px;
-    color: #fff;
-    display: inline-flex;
-    font-size: 1em;
-    justify-content: center;
-    min-width: 2.2em;
-    padding: 4px 10px;
-}
-
-.downloadcenter-admin-notice-head span {
-    font-weight: 700;
-}
-
-.downloadcenter-admin-pending-list {
-    display: grid;
-    gap: 4px;
-    list-style: none;
-    margin: 10px 0;
-    padding: 0;
-}
-
-.downloadcenter-admin-pending-list li {
-    background: rgba(255, 255, 255, 0.55);
-    border: 1px solid rgba(180, 120, 0, 0.25);
-    border-radius: 4px;
-    padding: 7px 9px;
-}
-
-.downloadcenter-admin-pending-list span {
-    color: var(--dc-muted);
-    display: block;
-    font-size: 0.92em;
-    margin-top: 2px;
-}
-
-
-/* 1.0.94 accessibility and theme resilience pass */
-.downloadcenter-sr-only {
-    border: 0 !important;
-    clip: rect(1px, 1px, 1px, 1px) !important;
-    -webkit-clip-path: inset(50%) !important;
-    clip-path: inset(50%) !important;
-    height: 1px !important;
-    margin: -1px !important;
-    overflow: hidden !important;
-    padding: 0 !important;
-    position: absolute !important;
-    white-space: nowrap !important;
-    width: 1px !important;
-}
-
-.downloadcenter-wrap a:focus-visible,
-.downloadcenter-wrap button:focus-visible,
-.downloadcenter-wrap input:focus-visible,
-.downloadcenter-wrap select:focus-visible,
-.downloadcenter-wrap textarea:focus-visible,
-.downloadcenter-wrap summary:focus-visible {
-    outline: 3px solid rgba(18, 163, 235, .45);
-    outline-offset: 2px;
-}
-
-.downloadcenter-card-grid {
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 330px), 1fr));
-}
-
-.downloadcenter-public-card {
-    overflow-wrap: anywhere;
-}
-
-.downloadcenter-public-card .button,
-.downloadcenter-detail-actions .button,
-.downloadcenter-version-list-v2 .button {
-    min-height: 31px;
-}
-
-.downloadcenter-disabled-button,
-.downloadcenter-disabled-button:hover,
-.downloadcenter-disabled-button:focus {
-    cursor: not-allowed;
-    opacity: .72;
-    text-decoration: none;
-}
-
-.downloadcenter-tab[aria-selected="true"] {
-    cursor: default;
-}
-
-.downloadcenter-tab-panel[hidden] {
-    display: none !important;
-}
-
-.downloadcenter-result-icon img,
-.downloadcenter-detail-icon img,
-.downloadcenter-screenshot img {
-    height: auto;
-    max-width: 100%;
-}
-
-.downloadcenter-filters label.downloadcenter-sr-only + input,
-.downloadcenter-filters label.downloadcenter-sr-only + select {
-    min-width: 0;
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .downloadcenter-wrap *,
-    .downloadcenter-wrap *::before,
-    .downloadcenter-wrap *::after {
-        animation-duration: .01ms !important;
-        animation-iteration-count: 1 !important;
-        scroll-behavior: auto !important;
-        transition-duration: .01ms !important;
-    }
-
-    .downloadcenter-public-card:hover,
-    .downloadcenter-result-card:hover {
-        transform: none;
-    }
-}
-
-@media (max-width: 520px) {
-    .downloadcenter-public-card-top {
-        align-items: center;
-    }
-
-    .downloadcenter-public-card-badges {
-        gap: 4px;
-    }
-
-    .downloadcenter-state-badge,
-    .downloadcenter-status-pill,
-    .downloadcenter-category-chip {
-        letter-spacing: 0;
-        text-transform: none;
-    }
-}
-
-.downloadcenter-result-summary {
-    align-items: center;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px 14px;
-    justify-content: space-between;
-}
-
-.downloadcenter-result-range {
-    color: var(--dc-muted);
-    font-size: .88em;
-}
-
-
-/* v1.0.99 - Public statistics and release polish */
-.downloadcenter-public-stats {
-    display: grid;
-    gap: 10px;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    margin: 12px 0 18px;
-}
-.downloadcenter-public-stats div {
-    background: var(--dc-panel, #f7f9fb);
-    border: 1px solid var(--dc-border, #d8e2eb);
-    border-left: 4px solid var(--dc-accent, #105289);
-    border-radius: 8px;
-    padding: 8px 10px;
-}
-.downloadcenter-public-stats strong {
-    display: block;
-    font-size: 1.25rem;
-    line-height: 1.2;
-}
-.downloadcenter-public-stats span {
-    color: var(--dc-muted, #667);
-    display: block;
-    margin-top: 2px;
-}
-
-/* v1.1.0 - Public page "UAU" visual layer
-   Scope: public catalogue only. No phpBB core changes. */
-.downloadcenter-catalog {
-    --dc-hero-1: #071d33;
-    --dc-hero-2: #105289;
-    --dc-hero-3: #12a3eb;
-    --dc-glow-blue: rgba(18, 163, 235, .28);
-    --dc-glow-green: rgba(66, 136, 66, .20);
-    --dc-card-shadow-wow: 0 18px 44px rgba(9, 30, 54, .13), 0 2px 0 rgba(255, 255, 255, .82) inset;
-    --dc-card-shadow-hover: 0 26px 68px rgba(9, 30, 54, .20), 0 0 0 1px rgba(18, 163, 235, .10);
-}
-
-.downloadcenter-catalog .downloadcenter-catalog-head {
-    background:
-        radial-gradient(circle at 12% 20%, rgba(18, 163, 235, .42) 0, rgba(18, 163, 235, 0) 34%),
-        radial-gradient(circle at 84% 18%, rgba(255, 255, 255, .18) 0, rgba(255, 255, 255, 0) 28%),
-        linear-gradient(135deg, var(--dc-hero-1) 0%, var(--dc-hero-2) 54%, #0b78b6 100%);
-    border: 0;
-    border-radius: 18px;
-    box-shadow: 0 24px 70px rgba(7, 29, 51, .26), 0 1px 0 rgba(255, 255, 255, .18) inset;
-    color: #fff;
-    margin-bottom: 16px;
-    min-height: 178px;
-    overflow: hidden;
-    padding: 30px 32px;
-}
-
-.downloadcenter-catalog .downloadcenter-catalog-head::before {
-    background: linear-gradient(90deg, rgba(255, 255, 255, .88), rgba(18, 163, 235, .78), rgba(66, 136, 66, .72));
-    height: 5px;
-    opacity: .95;
-}
-
-.downloadcenter-catalog .downloadcenter-catalog-head::after {
-    background:
-        linear-gradient(135deg, rgba(255, 255, 255, .16), rgba(255, 255, 255, 0) 55%),
-        repeating-linear-gradient(135deg, rgba(255, 255, 255, .08) 0 1px, transparent 1px 13px);
-    border: 1px solid rgba(255, 255, 255, .18);
-    border-radius: 3px;
-    bottom: -72px;
-    content: "";
-    height: 210px;
-    pointer-events: none;
-    position: absolute;
-    right: -46px;
-    transform: rotate(-8deg);
-    width: 360px;
-}
-
-.downloadcenter-catalog .downloadcenter-catalog-title {
-    max-width: 760px;
-    position: relative;
-    z-index: 1;
-}
-
-.downloadcenter-catalog .downloadcenter-catalog-title h2 {
-    color: #fff;
-    font-size: clamp(2.15em, 4.5vw, 3.65em);
-    letter-spacing: -.045em;
-    line-height: .95;
-    margin-bottom: 12px;
-    text-shadow: 0 3px 18px rgba(0, 0, 0, .22);
-}
-
-.downloadcenter-catalog .downloadcenter-catalog-title p {
-    color: rgba(255, 255, 255, .86);
-    font-size: 1.06em;
-    line-height: 1.58;
-}
-
-.downloadcenter-catalog .downloadcenter-catalog-title .downloadcenter-help {
-    background: rgba(255, 255, 255, .12);
-    border: 1px solid rgba(255, 255, 255, .20);
-    border-radius: 3px;
-    box-shadow: 0 1px 0 rgba(255, 255, 255, .14) inset;
-    color: rgba(255, 255, 255, .90);
-    display: inline-flex;
-    margin-top: 14px;
-    max-width: 100%;
-    padding: 7px 13px;
-}
-
-.downloadcenter-catalog .downloadcenter-catalog-actions {
-    align-self: stretch;
-    align-content: center;
-    max-width: 260px;
-    min-width: 220px;
-    position: relative;
-    z-index: 1;
-}
-
-.downloadcenter-catalog .downloadcenter-catalog-actions .button {
-    background: rgba(255, 255, 255, .12);
-    border: 1px solid rgba(255, 255, 255, .26);
-    border-radius: 3px;
-    box-shadow: 0 8px 22px rgba(0, 0, 0, .12), 0 1px 0 rgba(255, 255, 255, .18) inset;
-    color: #fff;
-    text-shadow: none;
-    transition: background .18s ease, border-color .18s ease, transform .18s ease, box-shadow .18s ease;
-}
-
-.downloadcenter-catalog .downloadcenter-catalog-actions .button:hover {
-    background: rgba(255, 255, 255, .20);
-    border-color: rgba(255, 255, 255, .42);
-    color: #fff;
-    transform: translateY(-1px);
-    text-decoration: none;
-}
-
-.downloadcenter-catalog .downloadcenter-catalog-actions .button1 {
-    background: linear-gradient(135deg, #ffffff 0%, #dff5ff 100%);
-    border-color: rgba(255, 255, 255, .72);
-    color: var(--dc-blue);
-    font-weight: 900;
-}
-
-.downloadcenter-catalog .downloadcenter-public-stats {
-    gap: 10px;
-    grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
-    margin: -38px 18px 18px;
-    position: relative;
-    z-index: 2;
-}
-
-/* Quando houver aviso antes dos cards, remove a sobreposição */
-.downloadcenter-catalog .downloadcenter-public-stats.has-preceding-notice {
-    margin: 12px 18px 18px;
-}
-
-.downloadcenter-catalog .downloadcenter-public-stats div {
-    background: rgba(255, 255, 255, .92);
-    border: 1px solid rgba(188, 215, 235, .92);
-    border-left: 0;
-    border-radius: 16px;
-    box-shadow: 0 14px 36px rgba(16, 82, 137, .12), 0 1px 0 #fff inset;
-    overflow: hidden;
-    padding: 16px 18px;
-    position: relative;
-}
-
-.downloadcenter-catalog .downloadcenter-public-stats div::before {
-    background: linear-gradient(180deg, var(--dc-blue-light), var(--dc-blue));
-    border-radius: 3px;
-    bottom: 14px;
-    content: "";
-    position: absolute;
-    right: 14px;
-    top: 14px;
-    width: 5px;
-}
-
-.downloadcenter-catalog .downloadcenter-public-stats strong {
-    color: var(--dc-blue);
-    font-size: 1.85rem;
-    font-weight: 900;
-    letter-spacing: -.035em;
-}
-
-.downloadcenter-catalog .downloadcenter-public-stats span {
-    color: var(--dc-muted);
-    font-weight: 700;
-    letter-spacing: .02em;
-    text-transform: uppercase;
-}
-
-.downloadcenter-catalog .downloadcenter-category-bar {
-    background: linear-gradient(180deg, rgba(255, 255, 255, .92), rgba(239, 247, 252, .94));
-    border: 1px solid rgba(188, 215, 235, .95);
-    border-radius: 16px;
-    box-shadow: 0 10px 30px rgba(16, 82, 137, .08), 0 1px 0 #fff inset;
-    gap: 8px;
-    padding: 10px;
-}
-
-.downloadcenter-catalog .downloadcenter-category-pill {
-    border-color: rgba(188, 215, 235, .95);
-    border-radius: 3px;
-    font-weight: 700;
-    padding: 9px 13px;
-    transition: background .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
-}
-
-.downloadcenter-catalog .downloadcenter-category-pill:hover {
-    box-shadow: 0 10px 24px rgba(16, 82, 137, .11);
-    transform: translateY(-1px);
-}
-
-.downloadcenter-catalog .downloadcenter-category-pill.active {
-    background: linear-gradient(135deg, var(--dc-blue), var(--dc-blue-light));
-    border-color: transparent;
-    box-shadow: 0 12px 26px var(--dc-glow-blue);
-}
-
-.downloadcenter-catalog .downloadcenter-category-overview {
-    gap: 10px;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    margin-bottom: 16px;
-}
-
-.downloadcenter-catalog .downloadcenter-category-card {
-    background:
-        radial-gradient(circle at right top, rgba(18, 163, 235, .16), transparent 34%),
-        linear-gradient(180deg, #ffffff 0%, #f5fbff 100%);
-    border-color: rgba(188, 215, 235, .95);
-    border-radius: 16px;
-    box-shadow: 0 12px 34px rgba(16, 82, 137, .08), 0 1px 0 #fff inset;
-    min-height: 130px;
-    padding: 17px 18px;
-    transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
-}
-
-.downloadcenter-catalog .downloadcenter-category-card:hover {
-    border-color: rgba(18, 163, 235, .55);
-    box-shadow: 0 20px 52px rgba(16, 82, 137, .15);
-    transform: translateY(-3px);
-}
-
-.downloadcenter-catalog .downloadcenter-category-card strong {
-    font-size: 1.08em;
-    letter-spacing: -.015em;
-}
-
-.downloadcenter-catalog .downloadcenter-toolbar {
-    background:
-        linear-gradient(180deg, rgba(255, 255, 255, .96), rgba(247, 251, 254, .96));
-    border: 1px solid rgba(188, 215, 235, .95);
-    border-radius: 18px;
-    box-shadow: 0 16px 44px rgba(16, 82, 137, .10), 0 1px 0 #fff inset;
-    padding: 12px;
-}
-
-.downloadcenter-catalog .downloadcenter-toolbar-title strong {
-    font-size: 1.18em;
-    font-weight: 900;
-    letter-spacing: -.02em;
-}
-
-.downloadcenter-catalog .downloadcenter-filters input[type="search"],
-.downloadcenter-catalog .downloadcenter-filters select {
-    background: #fff;
-    border-color: rgba(188, 215, 235, .98);
-    border-radius: 12px;
-    box-shadow: 0 1px 0 rgba(255, 255, 255, .9) inset;
-    min-height: 42px;
-    padding: 9px 12px;
-}
-
-.downloadcenter-catalog .downloadcenter-filters .button,
-.downloadcenter-catalog .downloadcenter-public-card-actions .button {
-    border-radius: 3px;
-    min-height: 40px;
-    padding-left: 15px;
-    padding-right: 15px;
-}
-
-.downloadcenter-catalog .button1,
-.downloadcenter-catalog .downloadcenter-card-download {
-    background: linear-gradient(135deg, var(--dc-blue) 0%, var(--dc-blue-light) 100%);
-    border-color: rgba(18, 163, 235, .85);
-    box-shadow: 0 10px 24px var(--dc-glow-blue);
-    color: #fff;
-    text-shadow: none;
-}
-
-.downloadcenter-catalog .button1:hover,
-.downloadcenter-catalog .downloadcenter-card-download:hover {
-    filter: brightness(1.04);
-    text-decoration: none;
-}
-
-.downloadcenter-catalog .downloadcenter-result-summary {
-    background: rgba(255, 255, 255, .72);
-    border: 1px solid rgba(216, 226, 235, .9);
-    border-radius: 3px;
-    margin: 0 0 14px;
-    padding: 8px 13px;
-}
-
-.downloadcenter-catalog .downloadcenter-card-grid {
-    gap: 10px;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 350px), 1fr));
-}
-
-.downloadcenter-catalog .downloadcenter-public-card {
-    background:
-        radial-gradient(circle at 96% 0%, rgba(18, 163, 235, .12), transparent 28%),
-        linear-gradient(180deg, #ffffff 0%, #f8fbfe 100%);
-    border-color: rgba(196, 216, 231, .98);
-    border-radius: 18px;
-    box-shadow: var(--dc-card-shadow-wow);
-    gap: 10px;
-    overflow: hidden;
-    padding: 14px;
-    transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
-}
-
-.downloadcenter-catalog .downloadcenter-public-card::before {
-    border-radius: 18px 18px 0 0;
-    height: 5px;
-}
-
-.downloadcenter-catalog .downloadcenter-public-card::after {
-    background: radial-gradient(circle, rgba(18, 163, 235, .16), transparent 64%);
-    content: "";
-    height: 150px;
-    pointer-events: none;
-    position: absolute;
-    right: -74px;
-    top: -74px;
-    width: 150px;
-}
-
-.downloadcenter-catalog .downloadcenter-public-card.is-ready {
-    border-color: rgba(66, 136, 66, .28);
-}
-
-.downloadcenter-catalog .downloadcenter-public-card.is-ready::before {
-    background: linear-gradient(90deg, var(--dc-green), #8ccf72, var(--dc-blue-light));
-}
-
-.downloadcenter-catalog .downloadcenter-public-card:hover {
-    border-color: rgba(18, 163, 235, .48);
-    box-shadow: var(--dc-card-shadow-hover);
-    transform: translateY(-5px);
-}
-
-.downloadcenter-catalog .downloadcenter-result-icon {
-    background:
-        radial-gradient(circle at 32% 24%, rgba(255, 255, 255, .9), rgba(255, 255, 255, 0) 34%),
-        linear-gradient(135deg, #e8f7ff, #cbeeff 52%, #ffffff);
-    border-color: rgba(18, 163, 235, .34);
-    border-radius: 18px;
-    box-shadow: 0 14px 30px rgba(16, 82, 137, .13), 0 1px 0 #fff inset;
-    font-size: 2.25em;
-    height: 70px;
-    min-width: 70px;
-    width: 70px;
-}
-
-.downloadcenter-catalog .downloadcenter-public-card-title h3 {
-    font-size: 1.38em;
-    letter-spacing: -.025em;
-    line-height: 1.14;
-    margin-top: 8px;
-}
-
-.downloadcenter-catalog .downloadcenter-public-card-title h3 a {
-    color: #0b426f;
-}
-
-.downloadcenter-catalog .downloadcenter-public-card-category {
-    color: var(--dc-blue);
-    font-weight: 700;
-}
-
-.downloadcenter-catalog .downloadcenter-state-badge {
-    border-radius: 3px;
-    box-shadow: 0 1px 0 rgba(255, 255, 255, .75) inset;
-    font-size: .74em;
-    letter-spacing: .035em;
-    padding: 5px 9px;
-}
-
-.downloadcenter-catalog .downloadcenter-state-badge.state-ready {
-    background: linear-gradient(135deg, #edfbea, #ffffff);
-    box-shadow: 0 8px 18px var(--dc-glow-green), 0 1px 0 #fff inset;
-}
-
-.downloadcenter-catalog .downloadcenter-state-badge.state-new {
-    background: linear-gradient(135deg, #e8f7ff, #ffffff);
-    box-shadow: 0 8px 18px var(--dc-glow-blue), 0 1px 0 #fff inset;
-}
-
-.downloadcenter-catalog .downloadcenter-result-desc {
-    color: #4d5f70;
-    font-size: .95em;
-    line-height: 1.58;
-}
-
-.downloadcenter-catalog .downloadcenter-public-card-meta {
-    gap: 9px;
-}
-
-.downloadcenter-catalog .downloadcenter-public-card-meta div {
-    background: rgba(255, 255, 255, .76);
-    border-color: rgba(216, 226, 235, .92);
-    border-radius: 12px;
-    box-shadow: 0 1px 0 #fff inset;
-    padding: 9px 10px;
-}
-
-.downloadcenter-catalog .downloadcenter-public-card-meta dt {
-    letter-spacing: .04em;
-}
-
-.downloadcenter-catalog .downloadcenter-public-card-meta dd {
-    color: #123d63;
-    font-size: .95em;
-    font-weight: 900;
-}
-
-.downloadcenter-catalog .downloadcenter-public-card-footer {
-    background: rgba(255, 255, 255, .56);
-    border-color: rgba(216, 226, 235, .88);
-    margin: auto -18px -18px;
-    padding: 14px 18px 16px;
-}
-
-.downloadcenter-catalog .downloadcenter-empty-state {
-    background:
-        radial-gradient(circle at 50% 0%, rgba(18, 163, 235, .16), transparent 38%),
-        linear-gradient(180deg, #fff, #f6fbff);
-    border: 1px solid rgba(188, 215, 235, .95);
-    border-radius: 20px;
-    box-shadow: var(--dc-card-shadow-wow);
-    padding: 34px 24px;
-}
-
-.downloadcenter-catalog .downloadcenter-empty-state strong {
-    color: var(--dc-blue);
-    display: block;
-    font-size: 1.45em;
-    letter-spacing: -.02em;
-}
-
-@media (max-width: 900px) {
-    .downloadcenter-catalog .downloadcenter-catalog-head {
-        align-items: flex-start;
-        flex-direction: column;
-        padding: 26px 22px;
-    }
-
-    .downloadcenter-catalog .downloadcenter-catalog-actions {
-        align-self: stretch;
-        justify-content: flex-start;
-        max-width: none;
-        min-width: 0;
-    }
-
-    .downloadcenter-catalog .downloadcenter-public-stats {
-        margin: 12px 0 16px;
-    }
-}
-
-@media (max-width: 620px) {
-    .downloadcenter-catalog .downloadcenter-catalog-head {
-        border-radius: 14px;
-        min-height: 0;
-        padding: 24px 18px;
-    }
-
-    .downloadcenter-catalog .downloadcenter-catalog-title h2 {
-        font-size: 2.1em;
-    }
-
-    .downloadcenter-catalog .downloadcenter-result-summary {
-        border-radius: 14px;
-    }
-
-    .downloadcenter-catalog .downloadcenter-public-card {
-        border-radius: 15px;
-        padding: 15px;
-    }
-
-    .downloadcenter-catalog .downloadcenter-public-card-footer {
-        margin: auto -15px -15px;
-        padding: 13px 15px 15px;
-    }
-
-    .downloadcenter-catalog .downloadcenter-result-icon {
-        height: 58px;
-        min-width: 58px;
-        width: 58px;
-    }
-}
-
-
-/* Refino visual: escala mais contida, cards mais baixos e cantos menos arredondados */
-.downloadcenter-wrap {
-    font-size: 0.97em;
-}
-
-.downloadcenter-catalog-title h2,
-.downloadcenter-detail-title h2 {
-    letter-spacing: -0.01em;
-}
-
-.downloadcenter-public-card-title h3,
-.downloadcenter-result-heading h3 {
-    font-weight: 700;
-}
-
-.downloadcenter-public-card-meta dd,
-.downloadcenter-download-count strong {
-    font-weight: 700;
-}
-
-.downloadcenter-public-card-meta {
-    gap: 5px;
-}
-
-.downloadcenter-result-desc,
-.downloadcenter-public-card-author,
-.downloadcenter-catalog-title p,
-.downloadcenter-detail-title p {
-    font-size: .92em;
-}
-
-.downloadcenter-public-card-actions .button,
-.downloadcenter-result-side .button,
-.downloadcenter-catalog-actions .button,
-.downloadcenter-detail-actions .button {
-    padding-top: 4px;
-    padding-bottom: 4px;
-}
-
-.downloadcenter-public-card:hover,
-.downloadcenter-result-card:hover {
-    transform: none;
-}
-
-@media (max-width: 620px) {
-    .downloadcenter-catalog-title h2,
-    .downloadcenter-detail-title h2 {
-        font-size: 1.28em;
-    }
-}
-
-/* v1.1.1 - Compact and aligned public filter buttons */
-.downloadcenter-catalog .downloadcenter-filters {
-    align-items: center;
-}
-
-.downloadcenter-catalog .downloadcenter-filters input[type="search"],
-.downloadcenter-catalog .downloadcenter-filters select,
-.downloadcenter-catalog .downloadcenter-filters .button {
-    box-sizing: border-box;
-    height: 38px;
-    min-height: 38px;
-}
-
-.downloadcenter-catalog .downloadcenter-filters input[type="search"],
-.downloadcenter-catalog .downloadcenter-filters select {
-    padding-bottom: 0;
-    padding-top: 0;
-}
-
-.downloadcenter-catalog .downloadcenter-filters .button {
-    align-items: center;
-    display: inline-flex;
-    justify-content: center;
-    line-height: 1;
-    padding: 0 16px;
-    vertical-align: middle;
-}
-
-.downloadcenter-catalog .downloadcenter-catalog-actions .button {
-    align-items: center;
-    display: inline-flex;
-    justify-content: center;
-    line-height: 1;
-    min-height: 30px;
-    padding-bottom: 0;
-    padding-top: 0;
-}
-
-
-/* v1.1.2 - Normalizacao global dos botoes da Download Center
-   Mantem todos os botoes de acao com altura consistente e texto centralizado. */
-.downloadcenter-wrap .button,
-.downloadcenter-wrap .button1,
-.downloadcenter-wrap .button2,
-.downloadcenter-wrap input[type="submit"],
-.downloadcenter-wrap input[type="button"],
-.downloadcenter-wrap input[type="reset"],
-.downloadcenter-catalog .button,
-.downloadcenter-catalog .button1,
-.downloadcenter-catalog .button2,
-.downloadcenter-detail-actions .button,
-.downloadcenter-detail-actions .button1,
-.downloadcenter-detail-actions .button2,
-.downloadcenter-public-card-actions .button,
-.downloadcenter-result-side .button,
-.downloadcenter-mine-actions .button1,
-.downloadcenter-mine-actions .button2,
-.downloadcenter-rules-actions .button,
-.downloadcenter-submit-actions .button1,
-.downloadcenter-submit-actions .button2,
-.downloadcenter-screenshot-actions .button1,
-.downloadcenter-screenshot-actions .button2,
-.downloadcenter-danger-button {
-    align-items: center !important;
-    box-sizing: border-box !important;
-    display: inline-flex !important;
-    justify-content: center !important;
-    min-height: 38px !important;
-    height: 38px !important;
-    line-height: 1 !important;
-    padding: 0 16px !important;
-    text-align: center !important;
-    vertical-align: middle !important;
-    white-space: nowrap;
-}
-
-/* Botoes maiores da pagina de detalhes continuam proporcionais, mas sem altura exagerada. */
-.downloadcenter-item-view .downloadcenter-primary-button,
-.downloadcenter-item-view .downloadcenter-secondary-button {
-    min-height: 42px !important;
-    height: 42px !important;
-    padding: 0 18px !important;
-}
-
-/* Inputs submit/reset precisam herdar a fonte corretamente dentro do phpBB. */
-.downloadcenter-wrap input[type="submit"],
-.downloadcenter-wrap input[type="button"],
-.downloadcenter-wrap input[type="reset"] {
-    cursor: pointer;
-    font: inherit;
-}
-
-/* Agrupamentos de botoes alinhados no centro vertical. */
-.downloadcenter-catalog-actions,
-.downloadcenter-detail-actions,
-.downloadcenter-public-card-actions,
-.downloadcenter-mine-actions,
-.downloadcenter-rules-actions,
-.downloadcenter-submit-actions,
-.downloadcenter-screenshot-actions,
-.downloadcenter-filters {
-    align-items: center !important;
-}
-
-/* Mantem botoes tecnicos pequenos, como BBCode e abas, sem serem afetados pela regra global. */
-.downloadcenter-bbcode-btn,
-.downloadcenter-bbcode-toolbar button.downloadcenter-bbcode-btn {
-    height: 26px !important;
-    min-height: 26px !important;
-    padding: 1px 6px !important;
-    line-height: 22px !important;
-}
-
-.downloadcenter-tab {
-    align-items: center;
-    display: inline-flex;
-    justify-content: center;
-    text-align: center;
-}
-
-.downloadcenter-bbcode-color-label {
-    align-items: center;
-    color: #42566a;
-    display: inline-flex;
-    font-size: 12px;
-    gap: 5px;
-    white-space: nowrap;
-}
-
-.downloadcenter-bbcode-color-label input[type="color"] {
-    background: #ffffff;
-    border: 1px solid #aebdca;
-    border-radius: 3px;
-    height: 26px;
-    padding: 1px;
-    width: 34px;
 }
