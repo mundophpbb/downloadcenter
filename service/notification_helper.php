@@ -99,12 +99,7 @@ class notification_helper
     protected function ensure_type($type_name)
     {
         $table = $this->table_prefix . 'notification_types';
-        $sql = 'SELECT notification_type_id
-            FROM ' . $table . "
-            WHERE notification_type_name = '" . $this->db->sql_escape($type_name) . "'";
-        $result = $this->db->sql_query($sql);
-        $type_id = (int) $this->db->sql_fetchfield('notification_type_id');
-        $this->db->sql_freeresult($result);
+        $type_id = $this->get_type_id($table, $type_name);
 
         if ($type_id > 0)
         {
@@ -115,9 +110,42 @@ class notification_helper
             'notification_type_name' => (string) $type_name,
             'notification_type_enabled' => 1,
         ];
-        $this->db->sql_query('INSERT INTO ' . $table . ' ' . $this->db->sql_build_array('INSERT', $sql_ary));
+        $sql = 'INSERT INTO ' . $table . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);
+
+        // Be defensive: this helper can be called while another request, a
+        // previous failed install, or phpBB itself has already registered the
+        // same notification type. The column is unique, so retry by selecting
+        // the existing row instead of letting a duplicate-key SQL error abort
+        // the request.
+        if (method_exists($this->db, 'sql_return_on_error'))
+        {
+            $this->db->sql_return_on_error(true);
+            $result = $this->db->sql_query($sql);
+            $this->db->sql_return_on_error(false);
+
+            if ($result !== false)
+            {
+                return (int) $this->db->sql_nextid();
+            }
+
+            return $this->get_type_id($table, $type_name);
+        }
+
+        $this->db->sql_query($sql);
 
         return (int) $this->db->sql_nextid();
+    }
+
+    protected function get_type_id($table, $type_name)
+    {
+        $sql = 'SELECT notification_type_id
+            FROM ' . $table . "
+            WHERE notification_type_name = '" . $this->db->sql_escape($type_name) . "'";
+        $result = $this->db->sql_query($sql);
+        $type_id = (int) $this->db->sql_fetchfield('notification_type_id');
+        $this->db->sql_freeresult($result);
+
+        return $type_id;
     }
 
     protected function get_type_ids(array $type_names)
