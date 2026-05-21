@@ -1796,6 +1796,12 @@ class main_controller
         }
 
         $file_name = trim((string) $version['download_file']);
+        if ($this->is_phpbb_attachment_reference($file_name))
+        {
+            $attachment = $this->get_phpbb_attachment_file($file_name);
+            return !empty($attachment['path']) && is_file($attachment['path']);
+        }
+
         return $file_name !== '' && is_file($this->local_file_path($file_name));
     }
 
@@ -1811,6 +1817,11 @@ class main_controller
         if (empty($file) || !isset($file['error']) || (int) $file['error'] === UPLOAD_ERR_NO_FILE)
         {
             return false;
+        }
+
+        if ($this->use_phpbb_attachment_uploads())
+        {
+            return $this->handle_phpbb_attachment_upload($field);
         }
 
         if ((int) $file['error'] !== UPLOAD_ERR_OK)
@@ -1871,6 +1882,85 @@ class main_controller
             'file_name' => $file_name,
             'file_size' => $this->format_file_size($size),
         ];
+    }
+
+    protected function use_phpbb_attachment_uploads()
+    {
+        return !empty($this->config['mundophpbb_downloadcenter_use_phpbb_attachments']);
+    }
+
+    protected function handle_phpbb_attachment_upload($field)
+    {
+        global $phpbb_container;
+
+        if (!defined('ATTACHMENTS_TABLE') || !$phpbb_container || !$phpbb_container->has('attachment.manager'))
+        {
+            trigger_error($this->user->lang('DOWNLOADCENTER_UPLOAD_FAILED'));
+        }
+
+        $forum_id = isset($this->config['mundophpbb_downloadcenter_support_forum_id']) ? (int) $this->config['mundophpbb_downloadcenter_support_forum_id'] : 0;
+        $filedata = $phpbb_container->get('attachment.manager')->upload($field, $forum_id, false, '', false);
+        $errors = isset($filedata['error']) ? array_filter((array) $filedata['error']) : [];
+
+        if (empty($filedata['post_attach']) || !empty($errors))
+        {
+            trigger_error($this->user->lang('DOWNLOADCENTER_UPLOAD_FAILED') . (!empty($errors) ? '<br>' . implode('<br>', $errors) : ''));
+        }
+
+        $sql_ary = [
+            'physical_filename' => (string) $filedata['physical_filename'],
+            'attach_comment' => '',
+            'real_filename' => (string) $filedata['real_filename'],
+            'extension' => (string) $filedata['extension'],
+            'mimetype' => (string) $filedata['mimetype'],
+            'filesize' => (int) $filedata['filesize'],
+            'filetime' => (int) $filedata['filetime'],
+            'thumbnail' => (int) $filedata['thumbnail'],
+            'is_orphan' => 0,
+            'in_message' => 0,
+            'poster_id' => (int) $this->user->data['user_id'],
+            'post_msg_id' => 0,
+            'topic_id' => 0,
+            'download_count' => 0,
+        ];
+
+        $this->db->sql_query('INSERT INTO ' . ATTACHMENTS_TABLE . ' ' . $this->db->sql_build_array('INSERT', $sql_ary));
+        $attach_id = (int) $this->db->sql_nextid();
+
+        return [
+            'file_name' => 'attach:' . $attach_id,
+            'file_size' => $this->format_file_size((int) $filedata['filesize']),
+        ];
+    }
+
+    protected function is_phpbb_attachment_reference($file_name)
+    {
+        return preg_match('/^attach:(\d+)$/', (string) $file_name) === 1;
+    }
+
+    protected function get_phpbb_attachment_file($file_name)
+    {
+        if (!defined('ATTACHMENTS_TABLE') || !preg_match('/^attach:(\d+)$/', (string) $file_name, $matches))
+        {
+            return false;
+        }
+
+        $sql = 'SELECT attach_id, physical_filename, real_filename, filesize, mimetype
+            FROM ' . ATTACHMENTS_TABLE . '
+            WHERE attach_id = ' . (int) $matches[1];
+        $result = $this->db->sql_query_limit($sql, 1);
+        $row = $this->db->sql_fetchrow($result);
+        $this->db->sql_freeresult($result);
+
+        if (!$row)
+        {
+            return false;
+        }
+
+        $upload_path = isset($this->config['upload_path']) ? (string) $this->config['upload_path'] : 'files';
+        $row['path'] = $this->root_path . trim($upload_path, '/\\') . '/' . basename((string) $row['physical_filename']);
+
+        return $row;
     }
 
 
@@ -2079,6 +2169,11 @@ class main_controller
 
     protected function upload_rules_text()
     {
+        if ($this->use_phpbb_attachment_uploads())
+        {
+            return $this->user->lang('DOWNLOADCENTER_UPLOAD_RULES_PHPBB_ATTACHMENTS');
+        }
+
         return $this->user->lang('DOWNLOADCENTER_UPLOAD_RULES', $this->get_allowed_extensions_string(), $this->format_file_size($this->get_max_upload_bytes()));
     }
 

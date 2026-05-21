@@ -85,21 +85,27 @@ class download_controller
             return $response;
         }
 
-        $file = $this->local_file_path($row['download_file']);
+        $attachment = $this->get_phpbb_attachment_file($row['download_file']);
+        $file = $attachment ? $attachment['path'] : $this->local_file_path($row['download_file']);
         if (!$row['download_file'] || !is_file($file))
         {
             trigger_error($this->user->lang('DOWNLOADCENTER_FILE_NOT_AVAILABLE'));
         }
 
         $this->register_download((int) $row['item_id'], (int) $row['version_id']);
+        if ($attachment)
+        {
+            $this->increment_phpbb_attachment_downloads((int) $attachment['attach_id']);
+        }
 
         $response = new BinaryFileResponse($file);
         $this->prepare_binary_response($response, $file);
         $response->headers->set('Content-Type', 'application/octet-stream');
+        $download_filename = $attachment ? (string) $attachment['real_filename'] : $this->download_filename($row, $file);
         $response->setContentDisposition(
             ResponseHeaderBag::DISPOSITION_ATTACHMENT,
-            $this->download_filename($row, $file),
-            $this->ascii_filename_fallback($this->download_filename($row, $file))
+            $download_filename,
+            $this->ascii_filename_fallback($download_filename)
         );
         $this->apply_private_download_headers($response);
 
@@ -328,6 +334,43 @@ class download_controller
     protected function local_file_path($file_name)
     {
         return $this->root_path . 'files/mundophpbb/downloadcenter/' . basename((string) $file_name);
+    }
+
+    protected function get_phpbb_attachment_file($file_name)
+    {
+        if (!defined('ATTACHMENTS_TABLE') || !preg_match('/^attach:(\d+)$/', (string) $file_name, $matches))
+        {
+            return false;
+        }
+
+        $sql = 'SELECT attach_id, physical_filename, real_filename, filesize, mimetype
+            FROM ' . ATTACHMENTS_TABLE . '
+            WHERE attach_id = ' . (int) $matches[1];
+        $result = $this->db->sql_query_limit($sql, 1);
+        $row = $this->db->sql_fetchrow($result);
+        $this->db->sql_freeresult($result);
+
+        if (!$row)
+        {
+            return false;
+        }
+
+        $upload_path = isset($this->config['upload_path']) ? (string) $this->config['upload_path'] : 'files';
+        $row['path'] = $this->root_path . trim($upload_path, '/\\') . '/' . basename((string) $row['physical_filename']);
+
+        return $row;
+    }
+
+    protected function increment_phpbb_attachment_downloads($attach_id)
+    {
+        if (!defined('ATTACHMENTS_TABLE') || $attach_id <= 0)
+        {
+            return;
+        }
+
+        $this->db->sql_query('UPDATE ' . ATTACHMENTS_TABLE . '
+            SET download_count = download_count + 1
+            WHERE attach_id = ' . (int) $attach_id);
     }
 
 

@@ -67,6 +67,7 @@ $lang = array_merge($lang, [
     'DOWNLOADCENTER_UPLOAD_EXTENSION_NOT_ALLOWED' => 'Extensão de arquivo não permitida. Extensões permitidas: %s.',
     'DOWNLOADCENTER_UPLOAD_DIRECTORY_FAILED' => 'Não foi possível criar o diretório de upload.',
     'DOWNLOADCENTER_UPLOAD_MOVE_FAILED' => 'Não foi possível mover o arquivo enviado.',
+    'DOWNLOADCENTER_UPLOAD_RULES_PHPBB_ATTACHMENTS' => 'Uploads sao validados e armazenados pelos anexos do phpBB. Extensoes permitidas e limites seguem as configuracoes de anexos do phpBB.',
 
     'DOWNLOADCENTER_NOT_AUTHORISED_VIEW' => 'Você não tem permissão para visualizar o Banco de Downloads.',
     'DOWNLOADCENTER_NOT_AUTHORISED_DOWNLOAD' => 'Você não tem permissão para baixar arquivos do Banco de Downloads.',

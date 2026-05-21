@@ -67,6 +67,7 @@ $lang = array_merge($lang, [
     'DOWNLOADCENTER_UPLOAD_EXTENSION_NOT_ALLOWED' => 'File extension is not allowed. Allowed extensions: %s.',
     'DOWNLOADCENTER_UPLOAD_DIRECTORY_FAILED' => 'Could not create the upload directory.',
     'DOWNLOADCENTER_UPLOAD_MOVE_FAILED' => 'Could not move the uploaded file.',
+    'DOWNLOADCENTER_UPLOAD_RULES_PHPBB_ATTACHMENTS' => 'Uploads are validated and stored by phpBB attachments. Allowed extensions and size limits follow the phpBB attachment settings.',
 
     'DOWNLOADCENTER_NOT_AUTHORISED_VIEW' => 'You are not authorised to view the Download Center.',
     'DOWNLOADCENTER_NOT_AUTHORISED_DOWNLOAD' => 'You are not authorised to download files from the Download Center.',

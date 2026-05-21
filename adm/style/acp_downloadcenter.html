@@ -849,6 +849,14 @@
         </dl>
 
         <dl>
+            <dt><label>{L_ACP_DOWNLOADCENTER_USE_PHPBB_ATTACHMENTS}{L_COLON}</label><br><span>{L_ACP_DOWNLOADCENTER_USE_PHPBB_ATTACHMENTS_EXPLAIN}</span></dt>
+            <dd>
+                <label><input type="radio" class="radio" name="downloadcenter_use_phpbb_attachments" value="1"<!-- IF DOWNLOADCENTER_USE_PHPBB_ATTACHMENTS --> checked="checked"<!-- ENDIF -->> {L_YES}</label>
+                <label><input type="radio" class="radio" name="downloadcenter_use_phpbb_attachments" value="0"<!-- IF not DOWNLOADCENTER_USE_PHPBB_ATTACHMENTS --> checked="checked"<!-- ENDIF -->> {L_NO}</label>
+            </dd>
+        </dl>
+
+        <dl>
             <dt><label>{L_ACP_DOWNLOADCENTER_PUBLIC_STATS}{L_COLON}</label><br><span>{L_ACP_DOWNLOADCENTER_PUBLIC_STATS_EXPLAIN}</span></dt>
             <dd>
                 <label><input type="radio" class="radio" name="downloadcenter_show_public_stats" value="1"<!-- IF DOWNLOADCENTER_SHOW_PUBLIC_STATS --> checked="checked"<!-- ENDIF -->> {L_YES}</label>
