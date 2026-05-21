@@ -3,25 +3,56 @@
 
     document.documentElement.classList.add('downloadcenter-js');
 
-    function activateTab(tabName) {
+    function activateTab(tabName, focusTab) {
         var tabs = document.querySelectorAll('[data-downloadcenter-tab]');
         var panels = document.querySelectorAll('[data-downloadcenter-panel]');
 
         tabs.forEach(function (tab) {
-            tab.classList.toggle('is-active', tab.getAttribute('data-downloadcenter-tab') === tabName);
+            var isActive = tab.getAttribute('data-downloadcenter-tab') === tabName;
+            tab.classList.toggle('is-active', isActive);
+            tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            tab.setAttribute('tabindex', isActive ? '0' : '-1');
+            if (isActive && focusTab) {
+                tab.focus();
+            }
         });
 
         panels.forEach(function (panel) {
-            panel.classList.toggle('is-active', panel.getAttribute('data-downloadcenter-panel') === tabName);
+            var isActive = panel.getAttribute('data-downloadcenter-panel') === tabName;
+            panel.classList.toggle('is-active', isActive);
+            panel.hidden = !isActive;
         });
     }
 
     document.addEventListener('DOMContentLoaded', function () {
         var tabs = document.querySelectorAll('[data-downloadcenter-tab]');
 
-        tabs.forEach(function (tab) {
+        if (tabs.length) {
+            var activeTab = document.querySelector('[data-downloadcenter-tab].is-active') || tabs[0];
+            activateTab(activeTab.getAttribute('data-downloadcenter-tab'), false);
+        }
+
+        tabs.forEach(function (tab, index) {
             tab.addEventListener('click', function () {
-                activateTab(tab.getAttribute('data-downloadcenter-tab'));
+                activateTab(tab.getAttribute('data-downloadcenter-tab'), false);
+            });
+
+            tab.addEventListener('keydown', function (event) {
+                var targetIndex;
+                if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+                    targetIndex = (index + 1) % tabs.length;
+                } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+                    targetIndex = (index - 1 + tabs.length) % tabs.length;
+                } else if (event.key === 'Home') {
+                    targetIndex = 0;
+                } else if (event.key === 'End') {
+                    targetIndex = tabs.length - 1;
+                }
+
+                if (typeof targetIndex !== 'undefined') {
+                    event.preventDefault();
+                    activateTab(tabs[targetIndex].getAttribute('data-downloadcenter-tab'), true);
+                }
             });
         });
     });
@@ -78,6 +109,16 @@
         select.value = '';
     });
 
+    document.addEventListener('change', function (event) {
+        var input = event.target && event.target.matches('[data-bbcode-color]') ? event.target : null;
+        if (!input || !input.value) {
+            return;
+        }
+        var toolbar = input.closest('[data-downloadcenter-bbcode-toolbar]');
+        var textarea = toolbar ? toolbar.parentNode.querySelector('textarea') : null;
+        insertAtCursor(textarea, '[color=' + input.value + ']', '[/color]');
+    });
+
     function formatSize(bytes) {
         bytes = Number(bytes) || 0;
         if (bytes >= 1073741824) return (bytes / 1073741824).toFixed(2) + ' GB';
@@ -111,7 +152,7 @@
         }
         box = document.createElement('div');
         box.className = 'downloadcenter-lightbox';
-        box.innerHTML = '<button type="button" class="downloadcenter-lightbox-close" aria-label="Fechar">×</button><div class="downloadcenter-lightbox-inner"><img src="" alt=""><div class="downloadcenter-lightbox-caption"></div></div>';
+        box.innerHTML = '<button type="button" class="downloadcenter-lightbox-close" aria-label="Fechar">×</button><div class="downloadcenter-lightbox-inner" role="dialog" aria-modal="true"><img src="" alt=""><div class="downloadcenter-lightbox-caption"></div></div>';
         document.body.appendChild(box);
         return box;
     }
@@ -146,6 +187,31 @@
     document.addEventListener('keydown', function (event) {
         if (event.key === 'Escape') {
             closeLightbox();
+        }
+    });
+}());
+
+(function () {
+    'use strict';
+
+    function updateSourcePanel(select) {
+        var panel = select ? select.closest('[data-downloadcenter-source-panel]') : null;
+        if (!panel) {
+            return;
+        }
+        var value = select.value || 'external';
+        panel.querySelectorAll('[data-downloadcenter-source-card]').forEach(function (card) {
+            card.classList.toggle('is-active', card.getAttribute('data-downloadcenter-source-card') === value);
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('[data-downloadcenter-source-select]').forEach(updateSourcePanel);
+    });
+
+    document.addEventListener('change', function (event) {
+        if (event.target && event.target.matches('[data-downloadcenter-source-select]')) {
+            updateSourcePanel(event.target);
         }
     });
 }());

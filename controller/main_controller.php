@@ -35,7 +35,8 @@ class main_controller
 
         $can_download = $this->can_download();
         $download_block_reason = $this->download_block_reason();
-        $pending_total = $this->is_admin() ? $this->count_pending_items() : 0;
+        $pending_total = $this->can_approve() ? $this->count_pending_items() : 0;
+        $pending_preview = $pending_total > 0 ? $this->get_pending_preview_items(3) : [];
 
         if (empty($this->config['mundophpbb_downloadcenter_enabled']))
         {
@@ -49,17 +50,29 @@ class main_controller
 
         $search = trim($request->variable('q', '', true));
         $category_id = max(0, $request->variable('c', 0));
+        $phpbb_filter = trim($request->variable('phpbb', '', true));
+        $php_filter = trim($request->variable('php', '', true));
         $sort = $request->variable('sort', 'newest');
-        $allowed_sorts = ['newest', 'name', 'downloads'];
+        $allowed_sorts = ['newest', 'updated', 'name', 'downloads'];
         if (!in_array($sort, $allowed_sorts, true))
         {
             $sort = 'newest';
         }
 
         $start = max(0, $request->variable('start', 0));
-        $per_page = isset($this->config['mundophpbb_downloadcenter_public_per_page']) ? max(1, (int) $this->config['mundophpbb_downloadcenter_public_per_page']) : 12;
+        $per_page = isset($this->config['mundophpbb_downloadcenter_public_per_page']) ? (int) $this->config['mundophpbb_downloadcenter_public_per_page'] : 12;
+        $per_page = min(50, max(1, $per_page));
 
-        $public_category_counts = $this->get_public_category_counts();
+        $public_category_stats = $this->get_public_category_stats();
+        $public_category_counts = [];
+        foreach ($public_category_stats as $stats_category_id => $stats)
+        {
+            $public_category_counts[(int) $stats_category_id] = (int) $stats['item_count'];
+        }
+        $public_stats = $this->get_public_overall_stats();
+        $phpbb_filter_options = $this->get_public_version_filter_options('phpbb_version', $phpbb_filter);
+        $php_filter_options = $this->get_public_version_filter_options('php_version', $php_filter);
+        $selected_category = null;
 
         $sql = 'SELECT *
             FROM ' . $this->table('downloadcenter_categories') . '
@@ -69,15 +82,32 @@ class main_controller
         while ($category = $this->db->sql_fetchrow($result))
         {
             $cat_id = (int) $category['category_id'];
-            $category_count = isset($public_category_counts[$cat_id]) ? (int) $public_category_counts[$cat_id] : 0;
-            $this->template->assign_block_vars('categories', [
+            $category_stats = isset($public_category_stats[$cat_id]) ? $public_category_stats[$cat_id] : ['item_count' => 0, 'download_count' => 0, 'latest_update' => 0];
+            $category_count = (int) $category_stats['item_count'];
+            $category_downloads = (int) $category_stats['download_count'];
+            $category_latest_update = (int) $category_stats['latest_update'];
+            $category_url = $this->pagination_url($this->helper->route('mundophpbb_downloadcenter_index'), ['q' => $search, 'c' => $cat_id, 'phpbb' => $phpbb_filter, 'php' => $php_filter, 'sort' => $sort]);
+
+            $category_vars = [
                 'CATEGORY_ID' => $cat_id,
                 'CATEGORY_NAME' => $category['category_name'],
+                'CATEGORY_DESC' => $category['category_desc'],
                 'CATEGORY_COUNT' => $category_count,
+                'CATEGORY_DOWNLOADS' => $category_downloads,
+                'CATEGORY_UPDATED' => $category_latest_update > 0 ? $this->user->format_date($category_latest_update) : '',
                 'S_SELECTED' => $cat_id === $category_id,
                 'S_HAS_ITEMS' => $category_count > 0,
-                'U_CATEGORY' => $this->helper->route('mundophpbb_downloadcenter_index') . '?c=' . $cat_id,
-            ]);
+                'S_HAS_DESC' => trim((string) $category['category_desc']) !== '',
+                'S_HAS_UPDATE' => $category_latest_update > 0,
+                'U_CATEGORY' => $category_url,
+            ];
+
+            if ($cat_id === $category_id)
+            {
+                $selected_category = $category_vars;
+            }
+
+            $this->template->assign_block_vars('categories', $category_vars);
         }
         $this->db->sql_freeresult($result);
 
@@ -97,8 +127,24 @@ class main_controller
             $where[] = '(i.item_name ' . $search_like . ' OR i.item_short_desc ' . $search_like . ' OR i.item_desc ' . $search_like . ')';
         }
 
+        if ($phpbb_filter !== '')
+        {
+            $phpbb_like = $this->db->sql_like_expression($this->db->get_any_char() . $this->db->sql_escape($phpbb_filter) . $this->db->get_any_char());
+            $where[] = 'EXISTS (SELECT 1 FROM ' . $this->table('downloadcenter_versions') . ' vf WHERE vf.item_id = i.item_id AND vf.version_enabled = 1 AND vf.phpbb_version ' . $phpbb_like . ')';
+        }
+
+        if ($php_filter !== '')
+        {
+            $php_like = $this->db->sql_like_expression($this->db->get_any_char() . $this->db->sql_escape($php_filter) . $this->db->get_any_char());
+            $where[] = 'EXISTS (SELECT 1 FROM ' . $this->table('downloadcenter_versions') . ' vf WHERE vf.item_id = i.item_id AND vf.version_enabled = 1 AND vf.php_version ' . $php_like . ')';
+        }
+
         $order_by = 'i.item_updated DESC, i.item_created DESC';
-        if ($sort === 'name')
+        if ($sort === 'updated')
+        {
+            $order_by = 'i.item_updated DESC, i.item_name ASC';
+        }
+        else if ($sort === 'name')
         {
             $order_by = 'i.item_name ASC';
         }
@@ -124,14 +170,30 @@ class main_controller
             ORDER BY ' . $order_by;
 
         $result = $this->db->sql_query_limit($sql, $per_page, $start);
+        $rows = [];
+        $page_item_ids = [];
         while ($row = $this->db->sql_fetchrow($result))
         {
-            $version = $this->get_latest_version((int) $row['item_id']);
+            $rows[] = $row;
+            $page_item_ids[] = (int) $row['item_id'];
+        }
+        $this->db->sql_freeresult($result);
+
+        $page_versions = $this->get_current_versions_for_items($page_item_ids);
+        $items_first = $total_items > 0 ? $start + 1 : 0;
+        $items_last = $total_items > 0 ? min($start + $per_page, $total_items) : 0;
+
+        foreach ($rows as $row)
+        {
+            $item_id = (int) $row['item_id'];
+            $version = isset($page_versions[$item_id]) ? $page_versions[$item_id] : false;
+
+            $file_available = $version ? $this->version_file_available($version) : false;
 
             $this->template->assign_block_vars('items', [
-                'ITEM_ID'          => (int) $row['item_id'],
+                'ITEM_ID'          => $item_id,
                 'ITEM_NAME'        => $row['item_name'],
-                'ITEM_SHORT_DESC'  => $this->render_short_text($row['item_short_desc']),
+                'ITEM_SHORT_DESC'  => $this->render_rich_text($row['item_short_desc']),
                 'ITEM_ICON'        => $this->resolve_item_icon_url($row['item_icon']),
                 'CATEGORY_NAME'    => $row['category_name'],
                 'AUTHOR_NAME'      => !empty($row['username']) ? $row['username'] : $this->user->lang('DOWNLOADCENTER_UNKNOWN_AUTHOR'),
@@ -139,36 +201,90 @@ class main_controller
                 'PHPBB_VERSION'    => $version ? $version['phpbb_version'] : '',
                 'PHP_VERSION'      => $version ? $version['php_version'] : '',
                 'FILE_SIZE'        => $version ? $version['file_size'] : '',
+                'ITEM_UPDATED'     => !empty($row['item_updated']) ? $this->user->format_date((int) $row['item_updated']) : '',
                 'DOWNLOADS'        => (int) $row['item_downloads'],
-                'U_ITEM'           => $this->helper->route('mundophpbb_downloadcenter_item', ['item_id' => (int) $row['item_id']]),
+                'U_ITEM'           => $this->helper->route('mundophpbb_downloadcenter_item', ['item_id' => $item_id]),
+                'U_DOWNLOAD'       => ($version && $file_available) ? $this->helper->route('mundophpbb_downloadcenter_download', ['version_id' => (int) $version['version_id']]) : '',
+                'S_HAS_VERSION'    => (bool) $version,
                 'S_CAN_DOWNLOAD'   => $can_download,
+                'S_FILE_AVAILABLE' => $file_available,
+                'S_FILE_MISSING'   => ($version && !$file_available),
+                'S_RECENTLY_UPDATED' => !empty($row['item_updated']) && ((time() - (int) $row['item_updated']) <= 30 * 86400),
             ]);
         }
-        $this->db->sql_freeresult($result);
+
+        foreach ($phpbb_filter_options as $option)
+        {
+            $this->template->assign_block_vars('phpbb_filters', $option);
+        }
+
+        foreach ($php_filter_options as $option)
+        {
+            $this->template->assign_block_vars('php_filters', $option);
+        }
 
         $this->template->assign_vars([
             'SEARCH_QUERY' => $search,
             'SELECTED_CATEGORY_ID' => $category_id,
+            'SELECTED_CATEGORY_NAME' => $selected_category ? $selected_category['CATEGORY_NAME'] : '',
+            'SELECTED_CATEGORY_DESC' => $selected_category ? $selected_category['CATEGORY_DESC'] : '',
+            'SELECTED_CATEGORY_COUNT' => $selected_category ? $selected_category['CATEGORY_COUNT'] : 0,
+            'SELECTED_CATEGORY_DOWNLOADS' => $selected_category ? $selected_category['CATEGORY_DOWNLOADS'] : 0,
+            'SELECTED_CATEGORY_UPDATED' => $selected_category ? $selected_category['CATEGORY_UPDATED'] : '',
+            'S_SELECTED_CATEGORY_HAS_DESC' => $selected_category ? $selected_category['S_HAS_DESC'] : false,
+            'S_SELECTED_CATEGORY_HAS_UPDATE' => $selected_category ? $selected_category['S_HAS_UPDATE'] : false,
+            'PHPBB_FILTER' => $phpbb_filter,
+            'PHP_FILTER' => $php_filter,
             'SORT' => $sort,
-            'PAGINATION' => $this->make_pagination($this->pagination_url($this->helper->route('mundophpbb_downloadcenter_index'), ['q' => $search, 'c' => $category_id, 'sort' => $sort]), $total_items, $per_page, $start),
+            'PAGINATION' => $this->make_pagination($this->pagination_url($this->helper->route('mundophpbb_downloadcenter_index'), ['q' => $search, 'c' => $category_id, 'phpbb' => $phpbb_filter, 'php' => $php_filter, 'sort' => $sort]), $total_items, $per_page, $start),
             'PAGE_NUMBER' => $this->make_page_number($total_items, $per_page, $start),
             'TOTAL_ITEMS' => $total_items,
+            'ITEMS_FIRST' => $items_first,
+            'ITEMS_LAST' => $items_last,
+            'S_HAS_RESULT_RANGE' => $total_items > 0,
             'S_HAS_PAGINATION' => $total_items > $per_page,
             'S_SORT_NEWEST' => $sort === 'newest',
+            'S_SORT_UPDATED' => $sort === 'updated',
             'S_SORT_NAME' => $sort === 'name',
             'S_SORT_DOWNLOADS' => $sort === 'downloads',
+            'S_HAS_ACTIVE_FILTERS' => ($search !== '' || $category_id > 0 || $phpbb_filter !== '' || $php_filter !== '' || $sort !== 'newest'),
+            'S_HAS_SELECTED_CATEGORY' => $selected_category !== null,
+            'S_HAS_PHPBB_FILTER_OPTIONS' => !empty($phpbb_filter_options),
+            'S_HAS_PHP_FILTER_OPTIONS' => !empty($php_filter_options),
             'U_DOWNLOADCENTER_INDEX' => $this->helper->route('mundophpbb_downloadcenter_index'),
             'TOTAL_PUBLIC_ITEMS' => array_sum($public_category_counts),
             'U_DOWNLOADCENTER_SUBMIT' => $this->helper->route('mundophpbb_downloadcenter_submit'),
             'U_DOWNLOADCENTER_MINE' => $this->helper->route('mundophpbb_downloadcenter_mine'),
             'U_DOWNLOADCENTER_RULES' => $this->rules_url(),
-            'S_DOWNLOADCENTER_REQUIRE_RULES_ACCEPT' => $this->requires_rules_acceptance(),
             'S_SHOW_MY_SUBMISSIONS' => !$this->is_anonymous(),
             'S_CAN_SUBMIT' => $this->can_submit(),
             'S_CAN_DOWNLOAD' => $can_download,
             'DOWNLOAD_BLOCK_REASON' => $download_block_reason,
             'PENDING_TOTAL' => $pending_total,
             'S_SHOW_ADMIN_PENDING_NOTICE' => $pending_total > 0,
+            'S_HAS_ADMIN_PENDING_PREVIEW' => !empty($pending_preview),
+            'S_SHOW_PUBLIC_STATS' => !isset($this->config['mundophpbb_downloadcenter_show_public_stats']) || (bool) $this->config['mundophpbb_downloadcenter_show_public_stats'],
+            'PUBLIC_STATS_ITEMS' => (int) $public_stats['items'],
+            'PUBLIC_STATS_CATEGORIES' => (int) $public_stats['categories'],
+            'PUBLIC_STATS_DOWNLOADS' => (int) $public_stats['downloads'],
+            'PUBLIC_STATS_UPDATED' => $public_stats['updated'] > 0 ? $this->user->format_date((int) $public_stats['updated']) : '',
+            'S_HAS_PUBLIC_STATS_UPDATED' => $public_stats['updated'] > 0,
+            'U_DOWNLOADCENTER_FEED' => (!empty($this->config['mundophpbb_downloadcenter_feed_enabled']) ? $this->helper->route('mundophpbb_downloadcenter_feed') : ''),
+        ]);
+
+        foreach ($pending_preview as $pending_item)
+        {
+            $this->template->assign_block_vars('admin_pending_items', [
+                'ITEM_ID' => (int) $pending_item['item_id'],
+                'ITEM_NAME' => (string) $pending_item['item_name'],
+                'AUTHOR' => (string) $pending_item['username'],
+                'DATE' => $this->user->format_date((int) $pending_item['item_updated']),
+            ]);
+        }
+
+        $this->template->assign_block_vars('navlinks', [
+            'FORUM_NAME' => $this->user->lang('DOWNLOADCENTER_TITLE'),
+            'U_VIEW_FORUM' => $this->helper->route('mundophpbb_downloadcenter_index'),
         ]);
 
         return $this->helper->render('downloadcenter_index.html', $this->user->lang('DOWNLOADCENTER_TITLE'));
@@ -208,11 +324,12 @@ class main_controller
             trigger_error($this->user->lang('DOWNLOADCENTER_ITEM_NOT_FOUND'));
         }
 
+        $current_version_id = isset($item['item_current_version_id']) ? (int) $item['item_current_version_id'] : 0;
         $sql = 'SELECT *
             FROM ' . $this->table('downloadcenter_versions') . '
             WHERE item_id = ' . (int) $item_id . '
                 AND version_enabled = 1
-            ORDER BY version_created DESC, version_id DESC';
+            ORDER BY CASE WHEN version_id = ' . (int) $current_version_id . ' THEN 0 ELSE 1 END, version_created DESC, version_id DESC';
         $result = $this->db->sql_query($sql);
 
         $first = true;
@@ -284,7 +401,7 @@ class main_controller
 
         $this->template->assign_vars([
             'ITEM_NAME'       => $item['item_name'],
-            'ITEM_SHORT_DESC' => $this->render_short_text($item['item_short_desc']),
+            'ITEM_SHORT_DESC' => $this->render_rich_text($item['item_short_desc']),
             'ITEM_DESC'       => $this->render_rich_text($item['item_desc']),
             'ITEM_ICON'       => $this->resolve_item_icon_url($item['item_icon']),
             'CATEGORY_NAME'   => $item['category_name'],
@@ -300,18 +417,88 @@ class main_controller
             'U_DOWNLOADCENTER_SUBMIT' => $this->helper->route('mundophpbb_downloadcenter_submit'),
             'U_DOWNLOADCENTER_MINE' => $this->helper->route('mundophpbb_downloadcenter_mine'),
             'U_DOWNLOADCENTER_RULES' => $this->rules_url(),
-            'S_DOWNLOADCENTER_REQUIRE_RULES_ACCEPT' => $this->requires_rules_acceptance(),
             'S_SHOW_MY_SUBMISSIONS' => !$this->is_anonymous(),
             'S_CAN_SUBMIT' => $this->can_submit(),
             'S_CAN_DOWNLOAD' => $can_download,
             'DOWNLOAD_BLOCK_REASON' => $download_block_reason,
+            'DOWNLOADCENTER_META_DESCRIPTION' => trim((string) $item['item_short_desc']) !== '' ? $item['item_short_desc'] : utf8_clean_string($item['item_name']),
+        ]);
+
+        $this->template->assign_block_vars('navlinks', [
+            'FORUM_NAME' => $this->user->lang('DOWNLOADCENTER_TITLE'),
+            'U_VIEW_FORUM' => $this->helper->route('mundophpbb_downloadcenter_index'),
+        ]);
+        $this->template->assign_block_vars('navlinks', [
+            'FORUM_NAME' => $item['item_name'],
+            'U_VIEW_FORUM' => $this->helper->route('mundophpbb_downloadcenter_item', ['item_id' => (int) $item_id]),
         ]);
 
         return $this->helper->render('downloadcenter_item.html', $item['item_name']);
     }
 
+    public function feed()
+    {
+        $this->user->add_lang_ext('mundophpbb/downloadcenter', 'common');
+
+        if (empty($this->config['mundophpbb_downloadcenter_enabled']) || empty($this->config['mundophpbb_downloadcenter_feed_enabled']))
+        {
+            trigger_error($this->user->lang('DOWNLOADCENTER_FEED_DISABLED'));
+        }
+
+        if (!$this->can_view())
+        {
+            trigger_error($this->user->lang('DOWNLOADCENTER_NOT_AUTHORISED_VIEW'));
+        }
+
+        $base_url = generate_board_url();
+        $items = [];
+        $sql = 'SELECT i.item_id, i.item_name, i.item_short_desc, i.item_updated, c.category_name
+            FROM ' . $this->table('downloadcenter_items') . ' i
+            LEFT JOIN ' . $this->table('downloadcenter_categories') . ' c ON c.category_id = i.category_id
+            WHERE i.item_enabled = 1 AND i.item_approved = 1
+            ORDER BY i.item_updated DESC, i.item_created DESC';
+        $result = $this->db->sql_query_limit($sql, 20);
+        while ($row = $this->db->sql_fetchrow($result))
+        {
+            $items[] = $row;
+        }
+        $this->db->sql_freeresult($result);
+
+        $xml = [];
+        $xml[] = '<?xml version="1.0" encoding="UTF-8"?>';
+        $xml[] = '<rss version="2.0">';
+        $xml[] = '<channel>';
+        $xml[] = '<title>' . htmlspecialchars($this->user->lang('DOWNLOADCENTER_TITLE'), ENT_XML1, 'UTF-8') . '</title>';
+        $xml[] = '<link>' . htmlspecialchars($base_url . $this->helper->route('mundophpbb_downloadcenter_index'), ENT_XML1, 'UTF-8') . '</link>';
+        $xml[] = '<description>' . htmlspecialchars($this->user->lang('DOWNLOADCENTER_EXPLAIN'), ENT_XML1, 'UTF-8') . '</description>';
+        foreach ($items as $row)
+        {
+            $link = $base_url . $this->helper->route('mundophpbb_downloadcenter_item', ['item_id' => (int) $row['item_id']]);
+            $xml[] = '<item>';
+            $xml[] = '<title>' . htmlspecialchars($row['item_name'], ENT_XML1, 'UTF-8') . '</title>';
+            $xml[] = '<link>' . htmlspecialchars($link, ENT_XML1, 'UTF-8') . '</link>';
+            $xml[] = '<guid>' . htmlspecialchars($link, ENT_XML1, 'UTF-8') . '</guid>';
+            if (!empty($row['item_updated']))
+            {
+                $xml[] = '<pubDate>' . date(DATE_RSS, (int) $row['item_updated']) . '</pubDate>';
+            }
+            $xml[] = '<description>' . htmlspecialchars($row['item_short_desc'], ENT_XML1, 'UTF-8') . '</description>';
+            if (!empty($row['category_name']))
+            {
+                $xml[] = '<category>' . htmlspecialchars($row['category_name'], ENT_XML1, 'UTF-8') . '</category>';
+            }
+            $xml[] = '</item>';
+        }
+        $xml[] = '</channel>';
+        $xml[] = '</rss>';
+
+        return new \Symfony\Component\HttpFoundation\Response(implode("\n", $xml), 200, ['Content-Type' => 'application/rss+xml; charset=UTF-8']);
+    }
+
     public function rules()
     {
+        global $request;
+
         $this->user->add_lang_ext('mundophpbb/downloadcenter', 'common');
 
         if (empty($this->config['mundophpbb_downloadcenter_enabled']))
@@ -329,7 +516,6 @@ class main_controller
             'U_DOWNLOADCENTER_SUBMIT' => $this->helper->route('mundophpbb_downloadcenter_submit'),
             'U_DOWNLOADCENTER_MINE' => $this->helper->route('mundophpbb_downloadcenter_mine'),
             'U_DOWNLOADCENTER_RULES' => $this->rules_url(),
-            'S_DOWNLOADCENTER_REQUIRE_RULES_ACCEPT' => $this->requires_rules_acceptance(),
             'S_CAN_SUBMIT' => $this->can_submit(),
             'S_SHOW_MY_SUBMISSIONS' => !$this->is_anonymous(),
             'DOWNLOADCENTER_UPLOAD_RULES' => $this->upload_rules_text(),
@@ -362,61 +548,175 @@ class main_controller
             trigger_error($this->user->lang('DOWNLOADCENTER_NOT_AUTHORISED_VIEW'));
         }
 
+        $status_filter = $request->variable('status', 'all');
+        $allowed_status_filters = ['all', 'published', 'pending', 'disabled', 'no_version'];
+        if (!in_array($status_filter, $allowed_status_filters, true))
+        {
+            $status_filter = 'all';
+        }
+
+        $search = trim($request->variable('q', '', true));
         $start = max(0, $request->variable('start', 0));
-        $per_page = isset($this->config['mundophpbb_downloadcenter_public_per_page']) ? max(1, (int) $this->config['mundophpbb_downloadcenter_public_per_page']) : 12;
+        $per_page = isset($this->config['mundophpbb_downloadcenter_public_per_page']) ? (int) $this->config['mundophpbb_downloadcenter_public_per_page'] : 12;
+        $per_page = min(50, max(1, $per_page));
+        $items_table = $this->table('downloadcenter_items');
+        $versions_table = $this->table('downloadcenter_versions');
+        $user_id = (int) $this->user->data['user_id'];
+
+        $base_where = ['i.user_id = ' . $user_id];
+        $where = $base_where;
+
+        if ($search !== '')
+        {
+            $search_like = $this->db->sql_like_expression($this->db->get_any_char() . $this->db->sql_escape($search) . $this->db->get_any_char());
+            $where[] = '(i.item_name ' . $search_like . ' OR i.item_short_desc ' . $search_like . ' OR i.item_desc ' . $search_like . ')';
+        }
+
+        if ($status_filter === 'published')
+        {
+            $where[] = 'i.item_enabled = 1 AND i.item_approved = 1';
+        }
+        else if ($status_filter === 'pending')
+        {
+            $where[] = 'i.item_enabled = 1 AND i.item_approved = 0';
+        }
+        else if ($status_filter === 'disabled')
+        {
+            $where[] = 'i.item_enabled = 0';
+        }
+        else if ($status_filter === 'no_version')
+        {
+            $where[] = 'NOT EXISTS (SELECT 1 FROM ' . $versions_table . ' vf WHERE vf.item_id = i.item_id AND vf.version_enabled = 1)';
+        }
+
+        $summary = [
+            'total' => 0,
+            'published' => 0,
+            'pending' => 0,
+            'disabled' => 0,
+            'no_version' => 0,
+        ];
+
+        $sql = 'SELECT COUNT(*) AS total,
+                SUM(CASE WHEN i.item_enabled = 1 AND i.item_approved = 1 THEN 1 ELSE 0 END) AS published_total,
+                SUM(CASE WHEN i.item_enabled = 1 AND i.item_approved = 0 THEN 1 ELSE 0 END) AS pending_total,
+                SUM(CASE WHEN i.item_enabled = 0 THEN 1 ELSE 0 END) AS disabled_total
+            FROM ' . $items_table . ' i
+            WHERE ' . implode(' AND ', $base_where);
+        $result = $this->db->sql_query($sql);
+        $summary_row = $this->db->sql_fetchrow($result);
+        $this->db->sql_freeresult($result);
+        if ($summary_row)
+        {
+            $summary['total'] = (int) $summary_row['total'];
+            $summary['published'] = (int) $summary_row['published_total'];
+            $summary['pending'] = (int) $summary_row['pending_total'];
+            $summary['disabled'] = (int) $summary_row['disabled_total'];
+        }
 
         $sql = 'SELECT COUNT(*) AS total
-            FROM ' . $this->table('downloadcenter_items') . ' i
-            WHERE i.user_id = ' . (int) $this->user->data['user_id'];
+            FROM ' . $items_table . ' i
+            WHERE i.user_id = ' . $user_id . '
+                AND NOT EXISTS (SELECT 1 FROM ' . $versions_table . ' vf WHERE vf.item_id = i.item_id AND vf.version_enabled = 1)';
+        $result = $this->db->sql_query($sql);
+        $summary['no_version'] = (int) $this->db->sql_fetchfield('total');
+        $this->db->sql_freeresult($result);
+
+        $sql = 'SELECT COUNT(*) AS total
+            FROM ' . $items_table . ' i
+            WHERE ' . implode(' AND ', $where);
         $result = $this->db->sql_query($sql);
         $total_my_items = (int) $this->db->sql_fetchfield('total');
         $this->db->sql_freeresult($result);
 
         $start = $this->normalize_start($start, $per_page, $total_my_items);
 
-        $sql = 'SELECT i.*, c.category_name,
-                    (SELECT v.version_number FROM ' . $this->table('downloadcenter_versions') . ' v WHERE v.item_id = i.item_id ORDER BY v.version_created DESC, v.version_id DESC LIMIT 1) AS latest_version
-            FROM ' . $this->table('downloadcenter_items') . ' i
+        $sql = 'SELECT i.*, c.category_name
+            FROM ' . $items_table . ' i
             LEFT JOIN ' . $this->table('downloadcenter_categories') . ' c ON c.category_id = i.category_id
-            WHERE i.user_id = ' . (int) $this->user->data['user_id'] . '
+            WHERE ' . implode(' AND ', $where) . '
             ORDER BY i.item_updated DESC, i.item_created DESC, i.item_name ASC';
         $result = $this->db->sql_query_limit($sql, $per_page, $start);
         while ($row = $this->db->sql_fetchrow($result))
         {
+            $current_version = $this->get_latest_version((int) $row['item_id']);
+            $has_version = (bool) $current_version;
             $status_key = 'DOWNLOADCENTER_STATUS_PENDING';
-            if ((int) $row['item_approved'] === 1 && (int) $row['item_enabled'] === 1)
-            {
-                $status_key = 'DOWNLOADCENTER_STATUS_PUBLISHED';
-            }
-            else if ((int) $row['item_enabled'] === 0)
+            $status_class = 'pending';
+            $status_explain_key = 'DOWNLOADCENTER_MY_STATUS_PENDING_EXPLAIN';
+
+            if ((int) $row['item_enabled'] === 0)
             {
                 $status_key = 'DOWNLOADCENTER_STATUS_DISABLED';
+                $status_class = 'disabled';
+                $status_explain_key = 'DOWNLOADCENTER_MY_STATUS_DISABLED_EXPLAIN';
+            }
+            else if ((int) $row['item_approved'] === 1)
+            {
+                $status_key = 'DOWNLOADCENTER_STATUS_PUBLISHED';
+                $status_class = 'published';
+                $status_explain_key = 'DOWNLOADCENTER_MY_STATUS_PUBLISHED_EXPLAIN';
+            }
+
+            if (!$has_version)
+            {
+                $status_class .= ' no-version';
+                $status_explain_key = 'DOWNLOADCENTER_MY_STATUS_NO_VERSION_EXPLAIN';
             }
 
             $this->template->assign_block_vars('my_items', [
                 'ITEM_ID' => (int) $row['item_id'],
                 'ITEM_NAME' => $row['item_name'],
                 'CATEGORY_NAME' => $row['category_name'] ?: '-',
-                'LATEST_VERSION' => $row['latest_version'] ?: '-',
-                'ITEM_SHORT_DESC' => $this->render_short_text($row['item_short_desc']),
+                'LATEST_VERSION' => $current_version ? $current_version['version_number'] : '-',
+                'PHPBB_VERSION' => $current_version ? $current_version['phpbb_version'] : '',
+                'PHP_VERSION' => $current_version ? $current_version['php_version'] : '',
+                'ITEM_SHORT_DESC' => $this->render_rich_text($row['item_short_desc']),
                 'STATUS' => $this->user->lang($status_key),
+                'STATUS_CLASS' => $status_class,
+                'STATUS_EXPLAIN' => $this->user->lang($status_explain_key),
                 'ITEM_DOWNLOADS' => (int) $row['item_downloads'],
+                'ITEM_CREATED' => !empty($row['item_created']) ? $this->user->format_date((int) $row['item_created']) : '',
                 'ITEM_UPDATED' => !empty($row['item_updated']) ? $this->user->format_date((int) $row['item_updated']) : '',
                 'U_ITEM' => ((int) $row['item_approved'] === 1 && (int) $row['item_enabled'] === 1) ? $this->helper->route('mundophpbb_downloadcenter_item', ['item_id' => (int) $row['item_id']]) : '',
                 'U_EDIT' => $this->helper->route('mundophpbb_downloadcenter_edit', ['item_id' => (int) $row['item_id']]),
+                'S_HAS_VERSION' => $has_version,
+                'S_PUBLISHED' => ((int) $row['item_approved'] === 1 && (int) $row['item_enabled'] === 1),
+                'S_PENDING' => ((int) $row['item_approved'] === 0 && (int) $row['item_enabled'] === 1),
+                'S_DISABLED' => ((int) $row['item_enabled'] === 0),
             ]);
         }
         $this->db->sql_freeresult($result);
+
+        $base_url = $this->pagination_url($this->helper->route('mundophpbb_downloadcenter_mine'), ['q' => $search, 'status' => $status_filter]);
 
         $this->template->assign_vars([
             'U_DOWNLOADCENTER_INDEX' => $this->helper->route('mundophpbb_downloadcenter_index'),
             'U_DOWNLOADCENTER_SUBMIT' => $this->helper->route('mundophpbb_downloadcenter_submit'),
             'U_DOWNLOADCENTER_RULES' => $this->rules_url(),
-            'S_DOWNLOADCENTER_REQUIRE_RULES_ACCEPT' => $this->requires_rules_acceptance(),
+            'U_DOWNLOADCENTER_MINE' => $this->helper->route('mundophpbb_downloadcenter_mine'),
+            'U_MINE_ALL' => $this->pagination_url($this->helper->route('mundophpbb_downloadcenter_mine'), ['q' => $search, 'status' => 'all']),
+            'U_MINE_PUBLISHED' => $this->pagination_url($this->helper->route('mundophpbb_downloadcenter_mine'), ['q' => $search, 'status' => 'published']),
+            'U_MINE_PENDING' => $this->pagination_url($this->helper->route('mundophpbb_downloadcenter_mine'), ['q' => $search, 'status' => 'pending']),
+            'U_MINE_DISABLED' => $this->pagination_url($this->helper->route('mundophpbb_downloadcenter_mine'), ['q' => $search, 'status' => 'disabled']),
+            'U_MINE_NO_VERSION' => $this->pagination_url($this->helper->route('mundophpbb_downloadcenter_mine'), ['q' => $search, 'status' => 'no_version']),
+            'SEARCH_QUERY' => $search,
+            'STATUS_FILTER' => $status_filter,
+            'S_FILTER_ALL' => $status_filter === 'all',
+            'S_FILTER_PUBLISHED' => $status_filter === 'published',
+            'S_FILTER_PENDING' => $status_filter === 'pending',
+            'S_FILTER_DISABLED' => $status_filter === 'disabled',
+            'S_FILTER_NO_VERSION' => $status_filter === 'no_version',
+            'S_HAS_ACTIVE_MINE_FILTERS' => ($search !== '' || $status_filter !== 'all'),
             'S_CAN_SUBMIT' => $this->can_submit(),
-            'PAGINATION' => $this->make_pagination($this->helper->route('mundophpbb_downloadcenter_mine'), $total_my_items, $per_page, $start),
+            'PAGINATION' => $this->make_pagination($base_url, $total_my_items, $per_page, $start),
             'PAGE_NUMBER' => $this->make_page_number($total_my_items, $per_page, $start),
             'TOTAL_MY_ITEMS' => $total_my_items,
+            'MY_TOTAL_ALL' => $summary['total'],
+            'MY_TOTAL_PUBLISHED' => $summary['published'],
+            'MY_TOTAL_PENDING' => $summary['pending'],
+            'MY_TOTAL_DISABLED' => $summary['disabled'],
+            'MY_TOTAL_NO_VERSION' => $summary['no_version'],
             'S_HAS_PAGINATION' => $total_my_items > $per_page,
         ]);
 
@@ -481,7 +781,7 @@ class main_controller
                 trigger_error($this->user->lang('DOWNLOADCENTER_SCREENSHOT_UPLOAD_REQUIRED'));
             }
 
-            $this->insert_screenshot($item_id, $uploaded_screenshot['file_name'], $this->sanitize_db_text(trim($request->variable('new_screenshot_caption', '', true))), max(0, $request->variable('new_screenshot_order', 0)));
+            $this->insert_screenshot($item_id, $uploaded_screenshot['file_name'], trim($request->variable('new_screenshot_caption', '', true)), max(0, $request->variable('new_screenshot_order', 0)));
             $this->mark_author_item_pending($item_id);
             $this->add_log('screenshot_created', $this->user->lang('DOWNLOADCENTER_LOG_SCREENSHOT_CREATED', (string) $item_id), $item_id, 0);
             $this->notify_pending($item_id, $item['item_name']);
@@ -505,7 +805,7 @@ class main_controller
             {
                 $sid = (int) $screenshot['screenshot_id'];
                 $data = [
-                    'image_caption' => isset($captions[$sid]) ? $this->sanitize_db_text(trim((string) $captions[$sid])) : '',
+                    'image_caption' => isset($captions[$sid]) ? trim((string) $captions[$sid]) : '',
                     'image_order' => isset($orders[$sid]) ? max(0, (int) $orders[$sid]) : 0,
                 ];
 
@@ -560,11 +860,11 @@ class main_controller
                 trigger_error('FORM_INVALID');
             }
 
-            $item_name = $this->sanitize_db_text(trim($request->variable('item_name', '', true)));
+            $item_name = trim($request->variable('item_name', '', true));
             $category_id = max(0, $request->variable('category_id', 0));
-            $item_short_desc = $this->sanitize_db_text(trim($request->variable('item_short_desc', '', true)));
-            $item_desc = $this->sanitize_db_text(trim($request->variable('item_desc', '', true)));
-            $item_icon = $this->sanitize_db_text(trim($request->variable('item_icon', '', true)));
+            $item_short_desc = trim($request->variable('item_short_desc', '', true));
+            $item_desc = trim($request->variable('item_desc', '', true));
+            $item_icon = trim($request->variable('item_icon', '', true));
             $add_new_version = (bool) $request->variable('add_new_version', 0);
 
             if ($item_name === '')
@@ -597,7 +897,7 @@ class main_controller
             if ($request->is_set_post('latest_version_changelog'))
             {
                 $latest_version_id = $request->variable('latest_version_id', 0);
-                $latest_changelog = $this->sanitize_db_text(trim($request->variable('latest_version_changelog', '', true)));
+                $latest_changelog = trim($request->variable('latest_version_changelog', '', true));
 
                 if ($latest_version_id > 0)
                 {
@@ -618,14 +918,112 @@ class main_controller
                 }
             }
 
+            if (!$add_new_version && $request->variable('update_latest_version', 0))
+            {
+                $latest_version_id = $request->variable('latest_version_id', 0);
+
+                if ($latest_version_id <= 0)
+                {
+                    trigger_error($this->user->lang('DOWNLOADCENTER_VERSION_REQUIRED_FOR_NEW_VERSION'));
+                }
+
+                $sql = 'SELECT * FROM ' . $versions_table . '
+                    WHERE version_id = ' . (int) $latest_version_id . '
+                        AND item_id = ' . $item_id;
+                $result = $this->db->sql_query_limit($sql, 1);
+                $latest_version = $this->db->sql_fetchrow($result);
+                $this->db->sql_freeresult($result);
+
+                if (!$latest_version)
+                {
+                    trigger_error($this->user->lang('DOWNLOADCENTER_VERSION_REQUIRED_FOR_NEW_VERSION'));
+                }
+
+                $version_number = trim($request->variable('latest_version_number', '', true));
+                $phpbb_version = trim($request->variable('latest_phpbb_version', '', true));
+                $php_version = trim($request->variable('latest_php_version', '', true));
+                $version_changelog = trim($request->variable('latest_version_changelog', '', true));
+                $download_type = $request->variable('latest_download_type', (string) $latest_version['download_type']);
+                $download_url = trim($request->variable('latest_download_url', '', true));
+                $download_file = (string) $latest_version['download_file'];
+                $file_size = (string) $latest_version['file_size'];
+
+                if ($version_number === '')
+                {
+                    trigger_error($this->user->lang('DOWNLOADCENTER_VERSION_REQUIRED_FOR_NEW_VERSION'));
+                }
+
+                if ($download_type !== 'local')
+                {
+                    $download_type = 'external';
+                }
+
+                if ($download_type === 'local')
+                {
+                    $upload = $this->handle_local_upload($request, 'latest_download_upload');
+                    if ($upload)
+                    {
+                        $download_file = $upload['file_name'];
+                        $file_size = $upload['file_size'];
+                    }
+                    if ($download_file === '')
+                    {
+                        trigger_error($this->user->lang('DOWNLOADCENTER_DOWNLOAD_SOURCE_REQUIRED'));
+                    }
+                    $download_url = '';
+                }
+                else
+                {
+                    if ($download_url === '')
+                    {
+                        $download_url = (string) $latest_version['download_url'];
+                    }
+                    if ($download_url === '')
+                    {
+                        trigger_error($this->user->lang('DOWNLOADCENTER_DOWNLOAD_SOURCE_REQUIRED'));
+                    }
+                    if (!preg_match('#^https?://#i', $download_url) || !filter_var($download_url, FILTER_VALIDATE_URL))
+                    {
+                        trigger_error($this->user->lang('DOWNLOADCENTER_DOWNLOAD_URL_INVALID'));
+                    }
+                    $download_file = '';
+                    $file_size = '';
+                }
+
+                $version_data = [
+                    'version_number' => $version_number,
+                    'phpbb_version' => $phpbb_version,
+                    'php_version' => $php_version,
+                    'download_type' => $download_type,
+                    'download_url' => $download_url,
+                    'download_file' => $download_file,
+                    'file_size' => $file_size,
+                    'version_changelog' => $version_changelog,
+                    'version_enabled' => 1,
+                ];
+
+                $sql = 'UPDATE ' . $versions_table . '
+                    SET ' . $this->db->sql_build_array('UPDATE', $version_data) . '
+                    WHERE version_id = ' . (int) $latest_version_id . '
+                        AND item_id = ' . (int) $item_id;
+                $this->db->sql_query($sql);
+
+                $sql = 'UPDATE ' . $items_table . '
+                    SET item_current_version_id = ' . (int) $latest_version_id . '
+                    WHERE item_id = ' . (int) $item_id;
+                $this->db->sql_query($sql);
+
+                $version_id = (int) $latest_version_id;
+            }
+
             if ($add_new_version)
             {
-                $version_number = $this->sanitize_db_text(trim($request->variable('version_number', '', true)));
-                $phpbb_version = $this->sanitize_db_text(trim($request->variable('phpbb_version', '', true)));
-                $php_version = $this->sanitize_db_text(trim($request->variable('php_version', '', true)));
-                $version_changelog = $this->sanitize_db_text(trim($request->variable('version_changelog', '', true)));
+                $version_number = trim($request->variable('version_number', '', true));
+                $phpbb_version = trim($request->variable('phpbb_version', '', true));
+                $php_version = trim($request->variable('php_version', '', true));
+                $version_changelog = trim($request->variable('version_changelog', '', true));
                 $download_type = $request->variable('download_type', 'external');
-                $download_url = $this->sanitize_db_text(trim($request->variable('download_url', '', true)));
+                $download_url = trim($request->variable('download_url', '', true));
                 $download_file = '';
                 $file_size = '';
 
@@ -655,6 +1053,10 @@ class main_controller
                 {
                     trigger_error($this->user->lang('DOWNLOADCENTER_DOWNLOAD_SOURCE_REQUIRED'));
                 }
+                else if (!preg_match('#^https?://#i', $download_url) || !filter_var($download_url, FILTER_VALIDATE_URL))
+                {
+                    trigger_error($this->user->lang('DOWNLOADCENTER_EXTERNAL_URL_INVALID'));
+                }
 
                 $version_data = [
                     'item_id' => $item_id,
@@ -674,6 +1076,11 @@ class main_controller
                 $sql = 'INSERT INTO ' . $versions_table . ' ' . $this->db->sql_build_array('INSERT', $version_data);
                 $this->db->sql_query($sql);
                 $version_id = (int) $this->db->sql_nextid();
+
+                $sql = 'UPDATE ' . $items_table . '
+                    SET item_current_version_id = ' . (int) $version_id . '
+                    WHERE item_id = ' . (int) $item_id;
+                $this->db->sql_query($sql);
             }
 
             $log_message = $add_new_version
@@ -703,6 +1110,13 @@ class main_controller
 
         $latest_version_id = 0;
         $latest_version_changelog = '';
+        $latest_version_number = '';
+        $latest_phpbb_version = '';
+        $latest_php_version = '';
+        $latest_download_type = 'external';
+        $latest_download_url = '';
+        $latest_download_file = '';
+        $latest_file_size = '';
         $sql = 'SELECT *
             FROM ' . $versions_table . '
             WHERE item_id = ' . $item_id . '
@@ -734,7 +1148,6 @@ class main_controller
             'U_ACTION' => $this->helper->route('mundophpbb_downloadcenter_edit', ['item_id' => $item_id]),
             'U_DOWNLOADCENTER_MINE' => $this->helper->route('mundophpbb_downloadcenter_mine'),
             'U_DOWNLOADCENTER_RULES' => $this->rules_url(),
-            'S_DOWNLOADCENTER_REQUIRE_RULES_ACCEPT' => $this->requires_rules_acceptance(),
             'ITEM_NAME' => $item['item_name'],
             'ITEM_SHORT_DESC' => $item['item_short_desc'],
             'ITEM_DESC' => $item['item_desc'],
@@ -742,6 +1155,16 @@ class main_controller
             'S_ITEM_APPROVED' => (int) $item['item_approved'] === 1,
             'LATEST_VERSION_ID' => $latest_version_id,
             'LATEST_VERSION_CHANGELOG' => $latest_version_changelog,
+            'LATEST_VERSION_NUMBER' => $latest_version_number,
+            'LATEST_PHPBB_VERSION' => $latest_phpbb_version,
+            'LATEST_PHP_VERSION' => $latest_php_version,
+            'LATEST_DOWNLOAD_TYPE' => $latest_download_type,
+            'LATEST_DOWNLOAD_URL' => $latest_download_url,
+            'LATEST_DOWNLOAD_FILE' => $latest_download_file,
+            'LATEST_FILE_SIZE' => $latest_file_size,
+            'S_LATEST_VERSION_EXTERNAL' => $latest_download_type !== 'local',
+            'S_LATEST_VERSION_LOCAL' => $latest_download_type === 'local',
+            'S_HAS_LATEST_DOWNLOAD_FILE' => $latest_download_file !== '',
             'S_HAS_LATEST_VERSION' => $latest_version_id > 0,
             'DOWNLOADCENTER_UPLOAD_RULES' => $this->upload_rules_text(),
         ]);
@@ -784,17 +1207,17 @@ class main_controller
                 trigger_error('FORM_INVALID');
             }
 
-            $item_name = $this->sanitize_db_text(trim($request->variable('item_name', '', true)));
-            $version_number = $this->sanitize_db_text(trim($request->variable('version_number', '', true)));
+            $item_name = trim($request->variable('item_name', '', true));
+            $version_number = trim($request->variable('version_number', '', true));
             $category_id = max(0, $request->variable('category_id', 0));
-            $item_short_desc = $this->sanitize_db_text(trim($request->variable('item_short_desc', '', true)));
-            $item_desc = $this->sanitize_db_text(trim($request->variable('item_desc', '', true)));
-            $item_icon = $this->sanitize_db_text(trim($request->variable('item_icon', '', true)));
-            $phpbb_version = $this->sanitize_db_text(trim($request->variable('phpbb_version', '', true)));
-            $php_version = $this->sanitize_db_text(trim($request->variable('php_version', '', true)));
-            $version_changelog = $this->sanitize_db_text(trim($request->variable('version_changelog', '', true)));
+            $item_short_desc = trim($request->variable('item_short_desc', '', true));
+            $item_desc = trim($request->variable('item_desc', '', true));
+            $item_icon = trim($request->variable('item_icon', '', true));
+            $phpbb_version = trim($request->variable('phpbb_version', '', true));
+            $php_version = trim($request->variable('php_version', '', true));
+            $version_changelog = trim($request->variable('version_changelog', '', true));
             $download_type = $request->variable('download_type', 'external');
-            $download_url = $this->sanitize_db_text(trim($request->variable('download_url', '', true)));
+            $download_url = trim($request->variable('download_url', '', true));
             $download_file = '';
             $file_size = '';
 
@@ -808,7 +1231,7 @@ class main_controller
                 trigger_error($this->user->lang('DOWNLOADCENTER_REQUIRED_FIELDS'));
             }
 
-            if ($this->requires_rules_acceptance() && !$request->variable('accept_rules', 0))
+            if (!$request->variable('accept_rules', 0))
             {
                 trigger_error($this->user->lang('DOWNLOADCENTER_RULES_ACCEPT_REQUIRED'));
             }
@@ -828,6 +1251,10 @@ class main_controller
             else if ($download_url === '')
             {
                 trigger_error($this->user->lang('DOWNLOADCENTER_DOWNLOAD_SOURCE_REQUIRED'));
+            }
+            else if (!preg_match('#^https?://#i', $download_url) || !filter_var($download_url, FILTER_VALIDATE_URL))
+            {
+                trigger_error($this->user->lang('DOWNLOADCENTER_EXTERNAL_URL_INVALID'));
             }
 
             $time = time();
@@ -873,10 +1300,15 @@ class main_controller
             $this->db->sql_query($sql);
             $version_id = (int) $this->db->sql_nextid();
 
+            $sql = 'UPDATE ' . $items_table . '
+                SET item_current_version_id = ' . (int) $version_id . '
+                WHERE item_id = ' . (int) $item_id;
+            $this->db->sql_query($sql);
+
             $uploaded_screenshot = $this->handle_screenshot_upload($request);
             if ($uploaded_screenshot)
             {
-                $this->insert_screenshot($item_id, $uploaded_screenshot['file_name'], $this->sanitize_db_text(trim($request->variable('screenshot_caption', '', true))), max(0, $request->variable('screenshot_order', 0)));
+                $this->insert_screenshot($item_id, $uploaded_screenshot['file_name'], trim($request->variable('screenshot_caption', '', true)), max(0, $request->variable('screenshot_order', 0)));
                 $this->add_log('screenshot_created', $this->user->lang('DOWNLOADCENTER_LOG_SCREENSHOT_CREATED', (string) $item_id), $item_id, $version_id);
             }
 
@@ -904,7 +1336,6 @@ class main_controller
         $this->template->assign_vars([
             'U_ACTION' => $this->helper->route('mundophpbb_downloadcenter_submit'),
             'U_DOWNLOADCENTER_RULES' => $this->rules_url(),
-            'S_DOWNLOADCENTER_REQUIRE_RULES_ACCEPT' => $this->requires_rules_acceptance(),
             'DOWNLOADCENTER_UPLOAD_RULES' => $this->upload_rules_text(),
         ]);
 
@@ -951,11 +1382,70 @@ class main_controller
         return $total;
     }
 
+    protected function get_pending_preview_items($limit = 3)
+    {
+        $items = [];
+
+        if (!$this->can_approve())
+        {
+            return $items;
+        }
+
+        $sql = 'SELECT i.item_id, i.item_name, i.item_updated, u.username
+            FROM ' . $this->table('downloadcenter_items') . ' i
+            LEFT JOIN ' . USERS_TABLE . ' u ON u.user_id = i.user_id
+            WHERE i.item_approved = 0
+            ORDER BY i.item_updated DESC, i.item_id DESC';
+        $result = $this->db->sql_query_limit($sql, max(1, (int) $limit));
+        while ($row = $this->db->sql_fetchrow($result))
+        {
+            $items[] = $row;
+        }
+        $this->db->sql_freeresult($result);
+
+        return $items;
+    }
+
 
     protected function get_public_category_counts()
     {
         $counts = [];
-        $sql = 'SELECT category_id, COUNT(item_id) AS item_count
+        foreach ($this->get_public_category_stats() as $category_id => $stats)
+        {
+            $counts[(int) $category_id] = (int) $stats['item_count'];
+        }
+
+        return $counts;
+    }
+
+    protected function get_public_overall_stats()
+    {
+        $stats = ['items' => 0, 'categories' => 0, 'downloads' => 0, 'updated' => 0];
+        $sql = 'SELECT COUNT(*) AS items, COALESCE(SUM(item_downloads), 0) AS downloads, MAX(item_updated) AS updated
+            FROM ' . $this->table('downloadcenter_items') . '
+            WHERE item_enabled = 1 AND item_approved = 1';
+        $result = $this->db->sql_query($sql);
+        $row = $this->db->sql_fetchrow($result);
+        $this->db->sql_freeresult($result);
+        if ($row)
+        {
+            $stats['items'] = (int) $row['items'];
+            $stats['downloads'] = (int) $row['downloads'];
+            $stats['updated'] = (int) $row['updated'];
+        }
+
+        $sql = 'SELECT COUNT(*) AS categories FROM ' . $this->table('downloadcenter_categories') . ' WHERE category_enabled = 1';
+        $result = $this->db->sql_query($sql);
+        $stats['categories'] = (int) $this->db->sql_fetchfield('categories');
+        $this->db->sql_freeresult($result);
+
+        return $stats;
+    }
+
+    protected function get_public_category_stats()
+    {
+        $stats = [];
+        $sql = 'SELECT category_id, COUNT(item_id) AS item_count, SUM(item_downloads) AS download_count, MAX(item_updated) AS latest_update
             FROM ' . $this->table('downloadcenter_items') . '
             WHERE item_enabled = 1
                 AND item_approved = 1
@@ -963,15 +1453,168 @@ class main_controller
         $result = $this->db->sql_query($sql);
         while ($row = $this->db->sql_fetchrow($result))
         {
-            $counts[(int) $row['category_id']] = (int) $row['item_count'];
+            $stats[(int) $row['category_id']] = [
+                'item_count' => (int) $row['item_count'],
+                'download_count' => (int) $row['download_count'],
+                'latest_update' => (int) $row['latest_update'],
+            ];
         }
         $this->db->sql_freeresult($result);
 
-        return $counts;
+        return $stats;
+    }
+
+    protected function get_public_version_filter_options($field, $selected_value = '')
+    {
+        $allowed_fields = ['phpbb_version', 'php_version'];
+        if (!in_array($field, $allowed_fields, true))
+        {
+            return [];
+        }
+
+        $options = [];
+        $sql = 'SELECT DISTINCT v.' . $field . ' AS filter_value
+            FROM ' . $this->table('downloadcenter_versions') . ' v
+            INNER JOIN ' . $this->table('downloadcenter_items') . ' i ON i.item_id = v.item_id
+            WHERE i.item_enabled = 1
+                AND i.item_approved = 1
+                AND v.version_enabled = 1
+                AND v.' . $field . " <> ''
+            ORDER BY v." . $field . ' ASC';
+        $result = $this->db->sql_query($sql);
+        while ($row = $this->db->sql_fetchrow($result))
+        {
+            $value = trim((string) $row['filter_value']);
+            if ($value === '')
+            {
+                continue;
+            }
+
+            $options[] = [
+                'VALUE' => $value,
+                'LABEL' => $value,
+                'S_SELECTED' => ($value === $selected_value),
+            ];
+        }
+        $this->db->sql_freeresult($result);
+
+        return $options;
+    }
+
+    protected function get_current_versions_for_items(array $item_ids)
+    {
+        $item_ids = array_values(array_unique(array_map('intval', $item_ids)));
+        $item_ids = array_filter($item_ids, function ($item_id) {
+            return $item_id > 0;
+        });
+
+        if (empty($item_ids))
+        {
+            return [];
+        }
+
+        $versions = [];
+        $missing_item_ids = [];
+        $current_version_ids = [];
+        $current_version_item_map = [];
+
+        $sql = 'SELECT item_id, item_current_version_id
+            FROM ' . $this->table('downloadcenter_items') . '
+            WHERE ' . $this->db->sql_in_set('item_id', $item_ids);
+        $result = $this->db->sql_query($sql);
+        while ($row = $this->db->sql_fetchrow($result))
+        {
+            $item_id = (int) $row['item_id'];
+            $version_id = (int) $row['item_current_version_id'];
+            if ($version_id > 0)
+            {
+                $current_version_ids[] = $version_id;
+                $current_version_item_map[$version_id] = $item_id;
+            }
+            else
+            {
+                $missing_item_ids[] = $item_id;
+            }
+        }
+        $this->db->sql_freeresult($result);
+
+        if (!empty($current_version_ids))
+        {
+            $sql = 'SELECT *
+                FROM ' . $this->table('downloadcenter_versions') . '
+                WHERE ' . $this->db->sql_in_set('version_id', array_values(array_unique($current_version_ids))) . '
+                    AND version_enabled = 1';
+            $result = $this->db->sql_query($sql);
+            while ($row = $this->db->sql_fetchrow($result))
+            {
+                $version_id = (int) $row['version_id'];
+                $item_id = (int) $row['item_id'];
+                if (isset($current_version_item_map[$version_id]) && $current_version_item_map[$version_id] === $item_id)
+                {
+                    $versions[$item_id] = $row;
+                }
+            }
+            $this->db->sql_freeresult($result);
+        }
+
+        foreach ($item_ids as $item_id)
+        {
+            if (!isset($versions[$item_id]))
+            {
+                $missing_item_ids[] = $item_id;
+            }
+        }
+
+        $missing_item_ids = array_values(array_unique($missing_item_ids));
+        if (!empty($missing_item_ids))
+        {
+            $sql = 'SELECT *
+                FROM ' . $this->table('downloadcenter_versions') . '
+                WHERE ' . $this->db->sql_in_set('item_id', $missing_item_ids) . '
+                    AND version_enabled = 1
+                ORDER BY item_id ASC, version_created DESC, version_id DESC';
+            $result = $this->db->sql_query($sql);
+            while ($row = $this->db->sql_fetchrow($result))
+            {
+                $item_id = (int) $row['item_id'];
+                if (!isset($versions[$item_id]))
+                {
+                    $versions[$item_id] = $row;
+                }
+            }
+            $this->db->sql_freeresult($result);
+        }
+
+        return $versions;
     }
 
     protected function get_latest_version($item_id)
     {
+        $current_version_id = 0;
+        $sql = 'SELECT item_current_version_id
+            FROM ' . $this->table('downloadcenter_items') . '
+            WHERE item_id = ' . (int) $item_id;
+        $result = $this->db->sql_query_limit($sql, 1);
+        $current_version_id = (int) $this->db->sql_fetchfield('item_current_version_id');
+        $this->db->sql_freeresult($result);
+
+        if ($current_version_id > 0)
+        {
+            $sql = 'SELECT *
+                FROM ' . $this->table('downloadcenter_versions') . '
+                WHERE version_id = ' . (int) $current_version_id . '
+                    AND item_id = ' . (int) $item_id . '
+                    AND version_enabled = 1';
+            $result = $this->db->sql_query_limit($sql, 1);
+            $row = $this->db->sql_fetchrow($result);
+            $this->db->sql_freeresult($result);
+
+            if ($row)
+            {
+                return $row;
+            }
+        }
+
         $sql = 'SELECT *
             FROM ' . $this->table('downloadcenter_versions') . '
             WHERE item_id = ' . (int) $item_id . '
@@ -986,6 +1629,11 @@ class main_controller
 
     protected function can_view()
     {
+        if ($this->use_acl_permissions())
+        {
+            return $this->is_admin() || $this->auth->acl_get('u_downloadcenter_view');
+        }
+
         return $this->access_allowed(isset($this->config['mundophpbb_downloadcenter_view_access']) ? $this->config['mundophpbb_downloadcenter_view_access'] : 'all');
     }
 
@@ -993,21 +1641,43 @@ class main_controller
     {
         $min_posts = (int) $this->config['mundophpbb_downloadcenter_min_posts'];
 
-        return $this->access_allowed(isset($this->config['mundophpbb_downloadcenter_download_access']) ? $this->config['mundophpbb_downloadcenter_download_access'] : 'registered')
+        if ($this->use_acl_permissions())
+        {
+            return $this->can_view()
+                && ($this->is_admin() || $this->auth->acl_get('u_downloadcenter_download'))
+                && ($min_posts <= 0 || (int) $this->user->data['user_posts'] >= $min_posts);
+        }
+
+        return $this->access_allowed($this->effective_access_mode('mundophpbb_downloadcenter_download_access', 'registered', true))
             && ($min_posts <= 0 || (int) $this->user->data['user_posts'] >= $min_posts);
     }
 
     protected function can_submit()
     {
+        if ($this->use_acl_permissions())
+        {
+            return $this->submissions_enabled()
+                && $this->can_view()
+                && (int) $this->user->data['user_id'] !== ANONYMOUS
+                && ($this->is_admin() || $this->auth->acl_get('u_downloadcenter_submit'));
+        }
+
         return $this->submissions_enabled()
-            && $this->access_allowed(isset($this->config['mundophpbb_downloadcenter_submit_access']) ? $this->config['mundophpbb_downloadcenter_submit_access'] : 'registered');
+            && $this->access_allowed($this->effective_access_mode('mundophpbb_downloadcenter_submit_access', 'registered', true));
     }
 
     protected function download_block_reason()
     {
         $min_posts = (int) $this->config['mundophpbb_downloadcenter_min_posts'];
 
-        if (!$this->access_allowed(isset($this->config['mundophpbb_downloadcenter_download_access']) ? $this->config['mundophpbb_downloadcenter_download_access'] : 'registered'))
+        if ($this->use_acl_permissions())
+        {
+            if (!$this->can_download())
+            {
+                return $this->user->lang('DOWNLOADCENTER_NOT_AUTHORISED_DOWNLOAD');
+            }
+        }
+        else if (!$this->access_allowed($this->effective_access_mode('mundophpbb_downloadcenter_download_access', 'registered', true)))
         {
             return $this->user->lang('DOWNLOADCENTER_NOT_AUTHORISED_DOWNLOAD');
         }
@@ -1023,6 +1693,35 @@ class main_controller
     protected function submissions_enabled()
     {
         return (!isset($this->config['mundophpbb_downloadcenter_allow_submissions']) || (bool) $this->config['mundophpbb_downloadcenter_allow_submissions']);
+    }
+
+
+    protected function effective_access_mode($config_key, $default, $respect_view_access = true)
+    {
+        $mode = isset($this->config[$config_key]) ? (string) $this->config[$config_key] : $default;
+        $mode = $this->normalise_access_mode($mode, $default);
+
+        if ($respect_view_access)
+        {
+            $view_mode = isset($this->config['mundophpbb_downloadcenter_view_access']) ? (string) $this->config['mundophpbb_downloadcenter_view_access'] : 'all';
+            $mode = $this->most_restrictive_access_mode($view_mode, $mode);
+        }
+
+        return $mode;
+    }
+
+    protected function normalise_access_mode($mode, $default = 'registered')
+    {
+        return in_array($mode, ['all', 'registered', 'admin'], true) ? $mode : $default;
+    }
+
+    protected function most_restrictive_access_mode($first, $second)
+    {
+        $weights = ['all' => 0, 'registered' => 1, 'admin' => 2];
+        $first = $this->normalise_access_mode($first, 'all');
+        $second = $this->normalise_access_mode($second, 'registered');
+
+        return ($weights[$first] >= $weights[$second]) ? $first : $second;
     }
 
     protected function access_allowed($mode)
@@ -1041,9 +1740,19 @@ class main_controller
         }
     }
 
+    protected function use_acl_permissions()
+    {
+        return isset($this->config['mundophpbb_downloadcenter_permission_mode']) && $this->config['mundophpbb_downloadcenter_permission_mode'] === 'acl';
+    }
+
+    protected function can_approve()
+    {
+        return $this->is_admin() || $this->auth->acl_get('m_downloadcenter_approve');
+    }
+
     protected function is_admin()
     {
-        return ((int) $this->user->data['user_type'] === USER_FOUNDER) || $this->auth->acl_get('a_board');
+        return ((int) $this->user->data['user_type'] === USER_FOUNDER) || $this->auth->acl_get('a_board') || $this->auth->acl_get('a_downloadcenter_manage');
     }
 
     protected function is_anonymous()
@@ -1073,9 +1782,9 @@ class main_controller
         return $this->root_path . 'files/mundophpbb/downloadcenter/' . basename((string) $file_name);
     }
 
-    protected function handle_local_upload($request)
+    protected function handle_local_upload($request, $field = 'download_upload')
     {
-        $file = $request->file('download_upload');
+        $file = $request->file($field);
 
         if (empty($file) || !isset($file['error']) || (int) $file['error'] === UPLOAD_ERR_NO_FILE)
         {
@@ -1083,6 +1792,11 @@ class main_controller
         }
 
         if ((int) $file['error'] !== UPLOAD_ERR_OK)
+        {
+            trigger_error($this->user->lang('DOWNLOADCENTER_UPLOAD_FAILED'));
+        }
+
+        if (empty($file['size']) || (int) $file['size'] <= 0)
         {
             trigger_error($this->user->lang('DOWNLOADCENTER_UPLOAD_FAILED'));
         }
@@ -1300,7 +2014,7 @@ class main_controller
         foreach ($parts as $part)
         {
             $part = trim($part, '. ');
-            if ($part !== '' && preg_match('/^[a-z0-9]{1,10}$/', $part))
+            if ($part !== '' && preg_match('/^[a-z0-9]{1,10}$/', $part) && !$this->is_blocked_upload_extension($part))
             {
                 $allowed[$part] = $part;
             }
@@ -1329,6 +2043,18 @@ class main_controller
         return $this->get_max_upload_mb() * 1024 * 1024;
     }
 
+    protected function rules_url()
+    {
+        $rules_topic_id = isset($this->config['mundophpbb_downloadcenter_rules_topic_id']) ? (int) $this->config['mundophpbb_downloadcenter_rules_topic_id'] : 0;
+
+        if ($rules_topic_id > 0)
+        {
+            return append_sid($this->root_path . 'viewtopic.' . $this->php_ext, 't=' . $rules_topic_id);
+        }
+
+        return $this->helper->route('mundophpbb_downloadcenter_rules');
+    }
+
     protected function upload_rules_text()
     {
         return $this->user->lang('DOWNLOADCENTER_UPLOAD_RULES', $this->get_allowed_extensions_string(), $this->format_file_size($this->get_max_upload_bytes()));
@@ -1354,10 +2080,9 @@ class main_controller
             return false;
         }
 
-        $dangerous = ['php', 'php3', 'php4', 'php5', 'phtml', 'phar', 'cgi', 'pl', 'asp', 'aspx', 'jsp', 'exe', 'sh', 'bat', 'cmd', 'com', 'scr', 'js', 'html', 'htm'];
-        foreach (array_slice($parts, 0, -1) as $part)
+        foreach ($parts as $part)
         {
-            if (in_array(strtolower($part), $dangerous, true))
+            if ($this->is_blocked_upload_extension($part))
             {
                 return false;
             }
@@ -1365,6 +2090,23 @@ class main_controller
 
         return true;
     }
+
+    protected function blocked_upload_extensions()
+    {
+        return [
+            'php', 'php3', 'php4', 'php5', 'phtml', 'phar', 'cgi', 'pl',
+            'asp', 'aspx', 'jsp', 'exe', 'sh', 'bash', 'bat', 'cmd', 'com',
+            'scr', 'msi', 'dll', 'jar', 'js', 'mjs', 'html', 'htm', 'svg',
+            'xml', 'xhtml', 'shtml', 'htaccess', 'htpasswd'
+        ];
+    }
+
+    protected function is_blocked_upload_extension($extension)
+    {
+        $extension = strtolower(trim((string) $extension, '. '));
+        return $extension === '' || in_array($extension, $this->blocked_upload_extensions(), true);
+    }
+
 
     protected function format_file_size($bytes)
     {
@@ -1400,6 +2142,9 @@ class main_controller
         $text = preg_replace('#\[i\](.*?)\[/i\]#is', '<em>$1</em>', $text);
         $text = preg_replace('#\[u\](.*?)\[/u\]#is', '<span style="text-decoration: underline;">$1</span>', $text);
         $text = preg_replace('#\[s\](.*?)\[/s\]#is', '<span style="text-decoration: line-through;">$1</span>', $text);
+        $text = preg_replace_callback('~\[color=(\#[0-9a-f]{3}|\#[0-9a-f]{6}|[a-z][a-z0-9_-]{1,20})\](.*?)\[/color\]~is', function ($matches) {
+            return '<span style="color: ' . strtolower($matches[1]) . ';">' . $matches[2] . '</span>';
+        }, $text);
         $text = preg_replace('#\[quote\](.*?)\[/quote\]#is', '<blockquote>$1</blockquote>', $text);
         $text = preg_replace('#\[code\](.*?)\[/code\]#is', '<pre><code>$1</code></pre>', $text);
         $text = preg_replace('#\[url\](https?://[^\s\[]+?)\[/url\]#is', '<a href="$1" rel="nofollow noopener" target="_blank">$1</a>', $text);
@@ -1468,18 +2213,6 @@ class main_controller
         $text = preg_replace('#(</(?:ul|ol)>)\s*#', '$1', $text);
 
         return nl2br($text, false);
-    }
-
-    protected function render_short_text($text)
-    {
-        $html = $this->render_rich_text($text);
-
-        // The short description is used in compact areas such as cards and user dashboards.
-        // Keep BBCode formatting, but avoid media/heavy blocks that can break layout.
-        $html = preg_replace('#<img\s+[^>]*class="downloadcenter-bbcode-image"[^>]*>#i', '', $html);
-        $html = preg_replace('#<pre><code>(.*?)</code></pre>#is', '<code>$1</code>', $html);
-
-        return $html;
     }
 
     protected function slugify($text)
@@ -1621,43 +2354,6 @@ class main_controller
 
         return $icon;
     }
-
-
-    protected function sanitize_db_text($text)
-    {
-        $text = (string) $text;
-
-        // Many phpBB installations still use MySQL/MariaDB utf8 (3-byte) rather than utf8mb4.
-        // Remove 4-byte Unicode characters (mostly emoji) before saving extension data to avoid SQL 1366 errors.
-        if ($text !== '')
-        {
-            $clean = @preg_replace('/[\x{10000}-\x{10FFFF}\x{FE00}-\x{FE0F}\x{200D}]/u', '', $text);
-            if ($clean !== null)
-            {
-                $text = $clean;
-            }
-        }
-
-        return $text;
-    }
-
-    protected function rules_url()
-    {
-        $rules_url = isset($this->config['mundophpbb_downloadcenter_rules_url']) ? trim((string) $this->config['mundophpbb_downloadcenter_rules_url']) : '';
-
-        if ($rules_url !== '')
-        {
-            return $rules_url;
-        }
-
-        return $this->helper->route('mundophpbb_downloadcenter_rules');
-    }
-
-    protected function requires_rules_acceptance()
-    {
-        return !isset($this->config['mundophpbb_downloadcenter_require_rules_accept']) || (bool) $this->config['mundophpbb_downloadcenter_require_rules_accept'];
-    }
-
 
     protected function table($name)
     {

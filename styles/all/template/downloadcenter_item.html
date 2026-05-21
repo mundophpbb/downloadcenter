@@ -3,7 +3,7 @@
 <div class="downloadcenter-wrap downloadcenter-item-view">
     <p class="downloadcenter-breadcrumb"><a href="{U_DOWNLOADCENTER_INDEX}">&laquo; {L_DOWNLOADCENTER_BACK_TO_INDEX}</a> &bull; <a href="{U_DOWNLOADCENTER_RULES}">{L_DOWNLOADCENTER_RULES_TITLE}</a></p>
 
-    <section class="downloadcenter-detail-head">
+    <section class="downloadcenter-detail-head downloadcenter-detail-head-v2">
         <div class="downloadcenter-detail-main">
             <div class="downloadcenter-detail-icon">
                 <!-- IF ITEM_ICON -->
@@ -13,32 +13,53 @@
                 <!-- ENDIF -->
             </div>
             <div class="downloadcenter-detail-title">
+                <div class="downloadcenter-detail-status-row">
+                    <!-- IF S_HAS_CURRENT_VERSION and S_CURRENT_FILE_AVAILABLE and S_CAN_DOWNLOAD -->
+                        <span class="downloadcenter-status-pill downloadcenter-status-available">{L_DOWNLOADCENTER_STATUS_AVAILABLE}</span>
+                    <!-- ELSEIF S_HAS_CURRENT_VERSION and S_CURRENT_FILE_AVAILABLE -->
+                        <span class="downloadcenter-status-pill downloadcenter-status-restricted">{L_DOWNLOADCENTER_STATUS_RESTRICTED}</span>
+                    <!-- ELSEIF S_HAS_CURRENT_VERSION -->
+                        <span class="downloadcenter-status-pill downloadcenter-status-unavailable">{L_DOWNLOADCENTER_STATUS_UNAVAILABLE}</span>
+                    <!-- ELSE -->
+                        <span class="downloadcenter-status-pill downloadcenter-status-no-version">{L_DOWNLOADCENTER_STATUS_NO_VERSION}</span>
+                    <!-- ENDIF -->
+                    <!-- IF CATEGORY_NAME --><span class="downloadcenter-category-chip">{CATEGORY_NAME}</span><!-- ENDIF -->
+                </div>
+
                 <h2>{ITEM_NAME}</h2>
-                <!-- IF ITEM_SHORT_DESC --><p>{ITEM_SHORT_DESC}</p><!-- ENDIF -->
-                <div class="downloadcenter-result-tags downloadcenter-detail-tags">
-                    <!-- IF CATEGORY_NAME --><span>{CATEGORY_NAME}</span><!-- ENDIF -->
+                <!-- IF ITEM_SHORT_DESC --><div class="downloadcenter-short-desc">{ITEM_SHORT_DESC}</div><!-- ENDIF -->
+
+                <div class="downloadcenter-detail-tags downloadcenter-detail-tags-v2">
                     <!-- IF AUTHOR_NAME --><span>{L_DOWNLOADCENTER_BY_AUTHOR}: {AUTHOR_NAME}</span><!-- ENDIF -->
                     <!-- IF CURRENT_VERSION_NUMBER --><span>{L_DOWNLOADCENTER_CURRENT_VERSION}: v{CURRENT_VERSION_NUMBER}</span><!-- ENDIF -->
-                    <!-- IF CURRENT_PHPBB_VERSION --><span>{CURRENT_PHPBB_VERSION}</span><!-- ENDIF -->
-                    <!-- IF CURRENT_PHP_VERSION --><span>{CURRENT_PHP_VERSION}</span><!-- ENDIF -->
-                    <!-- IF CURRENT_FILE_SIZE --><span>{CURRENT_FILE_SIZE}</span><!-- ENDIF -->
+                    <!-- IF CURRENT_PHPBB_VERSION --><span>{L_DOWNLOADCENTER_PHPBB_COMPATIBILITY}: {CURRENT_PHPBB_VERSION}</span><!-- ENDIF -->
+                    <!-- IF CURRENT_PHP_VERSION --><span>{L_DOWNLOADCENTER_PHP_COMPATIBILITY}: {CURRENT_PHP_VERSION}</span><!-- ENDIF -->
+                    <!-- IF CURRENT_FILE_SIZE --><span>{L_DOWNLOADCENTER_FILE_SIZE}: {CURRENT_FILE_SIZE}</span><!-- ENDIF -->
                     <span>{DOWNLOADS} {L_DOWNLOADCENTER_DOWNLOADS}</span>
                 </div>
             </div>
         </div>
 
-        <aside class="downloadcenter-detail-actions downloadcenter-action-card">
+        <aside class="downloadcenter-detail-actions downloadcenter-action-card downloadcenter-action-card-v2">
             <div class="downloadcenter-action-meta">
-                <!-- IF CURRENT_VERSION_NUMBER --><strong>v{CURRENT_VERSION_NUMBER}</strong><!-- ENDIF -->
+                <!-- IF CURRENT_VERSION_NUMBER -->
+                    <strong>v{CURRENT_VERSION_NUMBER}</strong>
+                <!-- ELSE -->
+                    <strong>{L_DOWNLOADCENTER_STATUS_NO_VERSION}</strong>
+                <!-- ENDIF -->
                 <span>{DOWNLOADS} {L_DOWNLOADCENTER_DOWNLOADS}</span>
             </div>
+
             <!-- IF U_CURRENT_DOWNLOAD and S_CAN_DOWNLOAD and S_CURRENT_FILE_AVAILABLE -->
                 <a class="button button1 downloadcenter-primary-button" href="{U_CURRENT_DOWNLOAD}">{L_DOWNLOADCENTER_DOWNLOAD_CURRENT}</a>
             <!-- ELSEIF S_CURRENT_FILE_MISSING -->
-                <span class="button downloadcenter-disabled-button downloadcenter-primary-button" aria-disabled="true">{L_DOWNLOADCENTER_FILE_UNAVAILABLE}</span>
+                <span class="button downloadcenter-disabled-button downloadcenter-primary-button" role="button" aria-disabled="true" tabindex="-1">{L_DOWNLOADCENTER_FILE_UNAVAILABLE}</span>
             <!-- ELSEIF U_CURRENT_DOWNLOAD -->
-                <span class="button downloadcenter-disabled-button downloadcenter-primary-button" aria-disabled="true">{L_DOWNLOADCENTER_DOWNLOAD_LOCKED}</span>
+                <span class="button downloadcenter-disabled-button downloadcenter-primary-button" role="button" aria-disabled="true" tabindex="-1">{L_DOWNLOADCENTER_DOWNLOAD_LOCKED}</span>
+            <!-- ELSE -->
+                <span class="button downloadcenter-disabled-button downloadcenter-primary-button" role="button" aria-disabled="true" tabindex="-1">{L_DOWNLOADCENTER_DOWNLOAD_NOT_PUBLISHED}</span>
             <!-- ENDIF -->
+
             <!-- IF U_SUPPORT_TOPIC -->
                 <a class="button downloadcenter-secondary-button" href="{U_SUPPORT_TOPIC}">{L_DOWNLOADCENTER_SUPPORT_TOPIC}</a>
             <!-- ENDIF -->
@@ -49,16 +70,38 @@
         <div class="panel downloadcenter-warning"><div class="inner"><p>{DOWNLOAD_BLOCK_REASON}</p></div></div>
     <!-- ENDIF -->
 
-    <div class="downloadcenter-tabs" role="tablist" aria-label="{L_DOWNLOADCENTER_ITEM_TABS}">
-        <button type="button" class="downloadcenter-tab is-active" data-downloadcenter-tab="description">{L_DOWNLOADCENTER_DESCRIPTION}</button>
-        <button type="button" class="downloadcenter-tab" data-downloadcenter-tab="screenshots">{L_DOWNLOADCENTER_SCREENSHOTS}<!-- IF SCREENSHOT_COUNT --> ({SCREENSHOT_COUNT})<!-- ENDIF --></button>
-        <button type="button" class="downloadcenter-tab" data-downloadcenter-tab="changelog">{L_DOWNLOADCENTER_CHANGELOG}</button>
-        <button type="button" class="downloadcenter-tab" data-downloadcenter-tab="versions">{L_DOWNLOADCENTER_OLDER_VERSIONS}</button>
+    <div class="downloadcenter-detail-overview">
+        <div class="downloadcenter-overview-card">
+            <span>{L_DOWNLOADCENTER_CURRENT_VERSION}</span>
+            <strong><!-- IF CURRENT_VERSION_NUMBER -->v{CURRENT_VERSION_NUMBER}<!-- ELSE -->&mdash;<!-- ENDIF --></strong>
+        </div>
+        <div class="downloadcenter-overview-card">
+            <span>{L_DOWNLOADCENTER_DOWNLOADS}</span>
+            <strong>{DOWNLOADS}</strong>
+        </div>
+        <div class="downloadcenter-overview-card">
+            <span>{L_DOWNLOADCENTER_VERSIONS}</span>
+            <strong>{VERSION_COUNT}</strong>
+        </div>
+        <div class="downloadcenter-overview-card">
+            <span>{L_DOWNLOADCENTER_SCREENSHOTS}</span>
+            <strong>{SCREENSHOT_COUNT}</strong>
+        </div>
     </div>
 
-    <div class="panel downloadcenter-section downloadcenter-tab-panel downloadcenter-content-card is-active" data-downloadcenter-panel="description">
+    <div class="downloadcenter-tabs" role="tablist" aria-label="{L_DOWNLOADCENTER_ITEM_TABS}">
+        <button type="button" class="downloadcenter-tab is-active" id="downloadcenter-tab-description" data-downloadcenter-tab="description" role="tab" aria-selected="true" aria-controls="downloadcenter-panel-description">{L_DOWNLOADCENTER_DESCRIPTION}</button>
+        <button type="button" class="downloadcenter-tab" id="downloadcenter-tab-changelog" data-downloadcenter-tab="changelog" role="tab" aria-selected="false" aria-controls="downloadcenter-panel-changelog" tabindex="-1">{L_DOWNLOADCENTER_CHANGELOG}</button>
+        <button type="button" class="downloadcenter-tab" id="downloadcenter-tab-versions" data-downloadcenter-tab="versions" role="tab" aria-selected="false" aria-controls="downloadcenter-panel-versions" tabindex="-1">{L_DOWNLOADCENTER_OLDER_VERSIONS}</button>
+        <button type="button" class="downloadcenter-tab" id="downloadcenter-tab-screenshots" data-downloadcenter-tab="screenshots" role="tab" aria-selected="false" aria-controls="downloadcenter-panel-screenshots" tabindex="-1">{L_DOWNLOADCENTER_SCREENSHOTS}<!-- IF SCREENSHOT_COUNT --> ({SCREENSHOT_COUNT})<!-- ENDIF --></button>
+    </div>
+
+    <div class="panel downloadcenter-section downloadcenter-tab-panel downloadcenter-content-card is-active" id="downloadcenter-panel-description" data-downloadcenter-panel="description" role="tabpanel" aria-labelledby="downloadcenter-tab-description">
         <div class="inner">
-            <h3>{L_DOWNLOADCENTER_DESCRIPTION}</h3>
+            <div class="downloadcenter-section-heading">
+                <h3>{L_DOWNLOADCENTER_DESCRIPTION}</h3>
+                <!-- IF CATEGORY_NAME --><span>{CATEGORY_NAME}</span><!-- ENDIF -->
+            </div>
             <!-- IF ITEM_DESC -->
                 <div class="downloadcenter-description">{ITEM_DESC}</div>
             <!-- ELSE -->
@@ -67,40 +110,22 @@
         </div>
     </div>
 
-    <div class="panel downloadcenter-section downloadcenter-tab-panel downloadcenter-content-card" data-downloadcenter-panel="screenshots">
+    <div class="panel downloadcenter-section downloadcenter-tab-panel downloadcenter-content-card" id="downloadcenter-panel-changelog" data-downloadcenter-panel="changelog" role="tabpanel" aria-labelledby="downloadcenter-tab-changelog">
         <div class="inner">
-            <h3>{L_DOWNLOADCENTER_SCREENSHOTS}</h3>
-            <!-- IF .screenshots -->
-                <div class="downloadcenter-screenshot-gallery">
-                    <!-- BEGIN screenshots -->
-                        <figure class="downloadcenter-screenshot">
-                            <a href="{screenshots.U_IMAGE}" data-downloadcenter-lightbox="screenshot" data-caption="{screenshots.CAPTION}">
-                                <img src="{screenshots.U_IMAGE}" alt="{screenshots.CAPTION}" loading="lazy">
-                                <span class="downloadcenter-screenshot-zoom">{L_DOWNLOADCENTER_VIEW_SCREENSHOT}</span>
-                            </a>
-                            <!-- IF screenshots.CAPTION --><figcaption>{screenshots.CAPTION}</figcaption><!-- ENDIF -->
-                        </figure>
-                    <!-- END screenshots -->
-                </div>
-            <!-- ELSE -->
-                <div class="downloadcenter-empty-state"><strong>{L_DOWNLOADCENTER_NO_SCREENSHOTS}</strong></div>
-            <!-- ENDIF -->
-        </div>
-    </div>
-
-
-    <div class="panel downloadcenter-section downloadcenter-tab-panel downloadcenter-content-card" data-downloadcenter-panel="changelog">
-        <div class="inner">
-            <h3>{L_DOWNLOADCENTER_CHANGELOG}</h3>
+            <div class="downloadcenter-section-heading">
+                <h3>{L_DOWNLOADCENTER_CHANGELOG}</h3>
+                <!-- IF CURRENT_VERSION_NUMBER --><span>v{CURRENT_VERSION_NUMBER}</span><!-- ENDIF -->
+            </div>
             <!-- IF S_HAS_CURRENT_VERSION -->
-                <div class="downloadcenter-release-box">
+                <div class="downloadcenter-release-box downloadcenter-release-box-v2">
                     <div class="downloadcenter-release-head">
                         <strong>{L_DOWNLOADCENTER_CURRENT_VERSION}: v{CURRENT_VERSION_NUMBER}</strong>
                         <div class="downloadcenter-result-tags">
                             <!-- IF CURRENT_CREATED --><span>{L_DOWNLOADCENTER_RELEASED}: {CURRENT_CREATED}</span><!-- ENDIF -->
-                            <!-- IF CURRENT_PHPBB_VERSION --><span>{CURRENT_PHPBB_VERSION}</span><!-- ENDIF -->
-                            <!-- IF CURRENT_PHP_VERSION --><span>{CURRENT_PHP_VERSION}</span><!-- ENDIF -->
-                            <!-- IF CURRENT_DOWNLOADS --><span>{CURRENT_DOWNLOADS} {L_DOWNLOADCENTER_DOWNLOADS}</span><!-- ENDIF -->
+                            <!-- IF CURRENT_PHPBB_VERSION --><span>{L_DOWNLOADCENTER_PHPBB_COMPATIBILITY}: {CURRENT_PHPBB_VERSION}</span><!-- ENDIF -->
+                            <!-- IF CURRENT_PHP_VERSION --><span>{L_DOWNLOADCENTER_PHP_COMPATIBILITY}: {CURRENT_PHP_VERSION}</span><!-- ENDIF -->
+                            <!-- IF CURRENT_FILE_SIZE --><span>{L_DOWNLOADCENTER_FILE_SIZE}: {CURRENT_FILE_SIZE}</span><!-- ENDIF -->
+                            <span>{CURRENT_DOWNLOADS} {L_DOWNLOADCENTER_DOWNLOADS}</span>
                         </div>
                     </div>
                     <!-- IF CURRENT_CHANGELOG -->
@@ -115,30 +140,35 @@
         </div>
     </div>
 
-    <div class="panel downloadcenter-section downloadcenter-tab-panel downloadcenter-content-card" data-downloadcenter-panel="versions">
+    <div class="panel downloadcenter-section downloadcenter-tab-panel downloadcenter-content-card" id="downloadcenter-panel-versions" data-downloadcenter-panel="versions" role="tabpanel" aria-labelledby="downloadcenter-tab-versions">
         <div class="inner">
-            <h3>{L_DOWNLOADCENTER_OLDER_VERSIONS}</h3>
+            <div class="downloadcenter-section-heading">
+                <h3>{L_DOWNLOADCENTER_OLDER_VERSIONS}</h3>
+                <span>{VERSION_COUNT} {L_DOWNLOADCENTER_VERSIONS}</span>
+            </div>
 
             <!-- IF .older_versions -->
-                <ul class="downloadcenter-version-list">
+                <ul class="downloadcenter-version-list downloadcenter-version-list-v2">
                     <!-- BEGIN older_versions -->
                         <li>
                             <div class="downloadcenter-version-main">
-                                <strong>v{older_versions.VERSION_NUMBER}</strong>
+                                <div>
+                                    <strong>v{older_versions.VERSION_NUMBER}</strong>
+                                    <div class="downloadcenter-result-tags">
+                                        <!-- IF older_versions.CREATED --><span>{L_DOWNLOADCENTER_RELEASED}: {older_versions.CREATED}</span><!-- ENDIF -->
+                                        <!-- IF older_versions.PHPBB_VERSION --><span>{L_DOWNLOADCENTER_PHPBB_COMPATIBILITY}: {older_versions.PHPBB_VERSION}</span><!-- ENDIF -->
+                                        <!-- IF older_versions.PHP_VERSION --><span>{L_DOWNLOADCENTER_PHP_COMPATIBILITY}: {older_versions.PHP_VERSION}</span><!-- ENDIF -->
+                                        <!-- IF older_versions.FILE_SIZE --><span>{L_DOWNLOADCENTER_FILE_SIZE}: {older_versions.FILE_SIZE}</span><!-- ENDIF -->
+                                        <span>{older_versions.DOWNLOADS} {L_DOWNLOADCENTER_DOWNLOADS}</span>
+                                    </div>
+                                </div>
                                 <!-- IF older_versions.S_CAN_DOWNLOAD and older_versions.S_FILE_AVAILABLE -->
-                                    <a class="button button1" href="{older_versions.U_DOWNLOAD}">{L_DOWNLOADCENTER_DOWNLOAD}</a>
+                                    <a class="button button1" href="{older_versions.U_DOWNLOAD}" aria-label="{L_DOWNLOADCENTER_DOWNLOAD}: v{older_versions.VERSION_NUMBER}">{L_DOWNLOADCENTER_DOWNLOAD}</a>
                                 <!-- ELSEIF older_versions.S_FILE_MISSING -->
-                                    <span class="button downloadcenter-disabled-button" aria-disabled="true">{L_DOWNLOADCENTER_FILE_UNAVAILABLE}</span>
+                                    <span class="button downloadcenter-disabled-button" role="button" aria-disabled="true" tabindex="-1">{L_DOWNLOADCENTER_FILE_UNAVAILABLE}</span>
                                 <!-- ELSE -->
-                                    <span class="button downloadcenter-disabled-button" aria-disabled="true">{L_DOWNLOADCENTER_DOWNLOAD_LOCKED}</span>
+                                    <span class="button downloadcenter-disabled-button" role="button" aria-disabled="true" tabindex="-1">{L_DOWNLOADCENTER_DOWNLOAD_LOCKED}</span>
                                 <!-- ENDIF -->
-                            </div>
-                            <div class="downloadcenter-result-tags">
-                                <!-- IF older_versions.CREATED --><span>{L_DOWNLOADCENTER_RELEASED}: {older_versions.CREATED}</span><!-- ENDIF -->
-                                <!-- IF older_versions.PHPBB_VERSION --><span>{older_versions.PHPBB_VERSION}</span><!-- ENDIF -->
-                                <!-- IF older_versions.PHP_VERSION --><span>{older_versions.PHP_VERSION}</span><!-- ENDIF -->
-                                <!-- IF older_versions.FILE_SIZE --><span>{older_versions.FILE_SIZE}</span><!-- ENDIF -->
-                                <span>{older_versions.DOWNLOADS} {L_DOWNLOADCENTER_DOWNLOADS}</span>
                             </div>
                             <!-- IF older_versions.CHANGELOG -->
                                 <details class="downloadcenter-version-changelog-details">
@@ -155,6 +185,30 @@
                 <!-- ELSE -->
                     <div class="downloadcenter-empty-state"><strong>{L_DOWNLOADCENTER_NO_VERSIONS}</strong></div>
                 <!-- ENDIF -->
+            <!-- ENDIF -->
+        </div>
+    </div>
+
+    <div class="panel downloadcenter-section downloadcenter-tab-panel downloadcenter-content-card" id="downloadcenter-panel-screenshots" data-downloadcenter-panel="screenshots" role="tabpanel" aria-labelledby="downloadcenter-tab-screenshots">
+        <div class="inner">
+            <div class="downloadcenter-section-heading">
+                <h3>{L_DOWNLOADCENTER_SCREENSHOTS}</h3>
+                <span>{SCREENSHOT_COUNT}</span>
+            </div>
+            <!-- IF .screenshots -->
+                <div class="downloadcenter-screenshot-gallery">
+                    <!-- BEGIN screenshots -->
+                        <figure class="downloadcenter-screenshot">
+                            <a href="{screenshots.U_IMAGE}" data-downloadcenter-lightbox="screenshot" data-caption="{screenshots.CAPTION}">
+                                <img src="{screenshots.U_IMAGE}" alt="{screenshots.CAPTION}" loading="lazy">
+                                <span class="downloadcenter-screenshot-zoom">{L_DOWNLOADCENTER_VIEW_SCREENSHOT}</span>
+                            </a>
+                            <!-- IF screenshots.CAPTION --><figcaption>{screenshots.CAPTION}</figcaption><!-- ENDIF -->
+                        </figure>
+                    <!-- END screenshots -->
+                </div>
+            <!-- ELSE -->
+                <div class="downloadcenter-empty-state"><strong>{L_DOWNLOADCENTER_NO_SCREENSHOTS}</strong></div>
             <!-- ENDIF -->
         </div>
     </div>

@@ -17,7 +17,7 @@ class main_module
 
         $user->add_lang_ext('mundophpbb/downloadcenter', 'acp');
 
-        if (!$auth->acl_get('a_board'))
+        if (!$auth->acl_get('a_board') && !$auth->acl_get('a_downloadcenter_manage'))
         {
             trigger_error($user->lang('ACP_DOWNLOADCENTER_NOT_AUTHORISED'));
         }
@@ -31,15 +31,15 @@ class main_module
         switch ($mode)
         {
             case 'dashboard':
-                $this->handle_dashboard($db, $template, $user);
+                $this->handle_dashboard($db, $template, $user, $config);
             break;
 
             case 'diagnostics':
-                $this->handle_diagnostics($db, $template, $user, $config);
+                $this->handle_diagnostics($db, $request, $template, $user, $config);
             break;
 
             case 'integrity':
-                $this->handle_integrity($db, $template, $user, $config, $phpbb_root_path, $phpEx);
+                $this->handle_integrity($db, $request, $template, $user, $config, $phpbb_root_path, $phpEx);
             break;
 
             case 'categories':
@@ -97,7 +97,7 @@ class main_module
         ]);
     }
 
-    protected function handle_dashboard($db, $template, $user)
+    protected function handle_dashboard($db, $template, $user, $config)
     {
         $categories_table = $this->table_prefix . 'downloadcenter_categories';
         $items_table = $this->table_prefix . 'downloadcenter_items';
@@ -106,17 +106,83 @@ class main_module
         $downloads_table = $this->table_prefix . 'downloadcenter_downloads';
 
         $total_categories = $this->count_table_rows($db, $categories_table);
+        $total_items = $this->count_table_rows($db, $items_table);
         $total_published_items = $this->count_table_rows($db, $items_table, 'item_enabled = 1 AND item_approved = 1');
         $total_pending_items = $this->count_table_rows($db, $items_table, 'item_approved = 0');
+        $total_disabled_items = $this->count_table_rows($db, $items_table, 'item_enabled = 0');
         $total_versions = $this->count_table_rows($db, $versions_table);
         $total_downloads = $this->count_table_rows($db, $downloads_table);
 
+        $dashboard_status_counts = [
+            'ready' => 0,
+            'disabled' => 0,
+            'pending' => 0,
+            'no_version' => 0,
+            'file_missing' => 0,
+            'empty_local_file' => 0,
+            'external_invalid' => 0,
+            'admin_only' => 0,
+        ];
+        $dashboard_attention_total = 0;
+
+        $sql = 'SELECT i.*, c.category_name, u.username
+            FROM ' . $items_table . ' i
+            LEFT JOIN ' . $categories_table . ' c ON c.category_id = i.category_id
+            LEFT JOIN ' . USERS_TABLE . ' u ON u.user_id = i.user_id
+            ORDER BY i.item_updated DESC, i.item_id DESC';
+        $result = $db->sql_query($sql);
+        while ($row = $db->sql_fetchrow($result))
+        {
+            $current_version = $this->get_latest_version_for_item($db, $versions_table, (int) $row['item_id']);
+            $status = $this->get_item_operational_status($row, $current_version, $config, $user);
+            $code = isset($status['code']) ? (string) $status['code'] : 'ready';
+
+            if (!isset($dashboard_status_counts[$code]))
+            {
+                $dashboard_status_counts[$code] = 0;
+            }
+            $dashboard_status_counts[$code]++;
+
+            if ($code !== 'ready')
+            {
+                $dashboard_attention_total++;
+
+                if ($dashboard_attention_total <= 10)
+                {
+                    $template->assign_block_vars('dashboard_attention_items', [
+                        'ITEM_ID' => (int) $row['item_id'],
+                        'ITEM_NAME' => $row['item_name'],
+                        'CATEGORY_NAME' => $row['category_name'] ?: '-',
+                        'USERNAME' => $row['username'] ?: '-',
+                        'STATUS' => $status['label'],
+                        'STATUS_EXPLAIN' => $status['explain'],
+                        'STATUS_CLASS' => $status['class'],
+                        'U_EDIT' => $this->u_action_for_mode('items') . '&amp;action=edit&amp;item_id=' . (int) $row['item_id'],
+                    ]);
+                }
+            }
+        }
+        $db->sql_freeresult($result);
+
+        $dashboard_files_attention = (int) $dashboard_status_counts['file_missing'] + (int) $dashboard_status_counts['empty_local_file'] + (int) $dashboard_status_counts['external_invalid'];
+
         $template->assign_vars([
             'DASHBOARD_TOTAL_CATEGORIES' => $total_categories,
+            'DASHBOARD_TOTAL_ITEMS' => $total_items,
             'DASHBOARD_TOTAL_PUBLISHED_ITEMS' => $total_published_items,
             'DASHBOARD_TOTAL_PENDING_ITEMS' => $total_pending_items,
+            'DASHBOARD_TOTAL_DISABLED_ITEMS' => $total_disabled_items,
             'DASHBOARD_TOTAL_VERSIONS' => $total_versions,
             'DASHBOARD_TOTAL_DOWNLOADS' => $total_downloads,
+            'DASHBOARD_READY_ITEMS' => (int) $dashboard_status_counts['ready'],
+            'DASHBOARD_ITEMS_WITHOUT_VERSION' => (int) $dashboard_status_counts['no_version'],
+            'DASHBOARD_ITEMS_WITH_FILE_PROBLEMS' => $dashboard_files_attention,
+            'DASHBOARD_ITEMS_ADMIN_ONLY' => (int) $dashboard_status_counts['admin_only'],
+            'DASHBOARD_ATTENTION_TOTAL' => $dashboard_attention_total,
+            'S_DASHBOARD_HAS_ATTENTION' => $dashboard_attention_total > 0,
+            'S_DASHBOARD_HAS_FILE_PROBLEMS' => $dashboard_files_attention > 0,
+            'S_DASHBOARD_HAS_ITEMS_WITHOUT_VERSION' => (int) $dashboard_status_counts['no_version'] > 0,
+            'S_DASHBOARD_HAS_ADMIN_ONLY' => (int) $dashboard_status_counts['admin_only'] > 0,
         ]);
 
         $sql = 'SELECT i.item_id, i.item_name, i.item_downloads, i.item_updated, c.category_name, u.username
@@ -213,7 +279,7 @@ class main_module
     }
 
 
-    protected function handle_diagnostics($db, $template, $user, $config)
+    protected function handle_diagnostics($db, $request, $template, $user, $config)
     {
         $storage_dir = $this->local_storage_directory();
         $storage_exists = is_dir($storage_dir);
@@ -230,9 +296,52 @@ class main_module
         $versions_table = $this->table_prefix . 'downloadcenter_versions';
         $categories_table = $this->table_prefix . 'downloadcenter_categories';
 
+        if ($request->is_set_post('diagnostics_rebuild'))
+        {
+            if (!check_form_key('mundophpbb_downloadcenter_diagnostics'))
+            {
+                trigger_error($user->lang('FORM_INVALID') . adm_back_link($this->u_action));
+            }
+
+            $result = $this->run_maintenance_rebuild($db, $user);
+            trigger_error($user->lang('ACP_DOWNLOADCENTER_DIAG_REBUILD_DONE', $result['items'], $result['versions'], $result['counters'], $result['targets'], $result['storage']) . adm_back_link($this->u_action_for_mode('diagnostics')));
+        }
+
         $total_categories = $this->count_table_rows($db, $categories_table);
         $total_published = $this->count_table_rows($db, $items_table, 'item_enabled = 1 AND item_approved = 1');
         $total_pending = $this->count_table_rows($db, $items_table, 'item_approved = 0');
+
+        $package_version = '1.0.99';
+        $installed_version = isset($config['mundophpbb_downloadcenter_version']) ? (string) $config['mundophpbb_downloadcenter_version'] : '';
+        $permission_mode = isset($config['mundophpbb_downloadcenter_permission_mode']) && $config['mundophpbb_downloadcenter_permission_mode'] === 'acl' ? 'acl' : 'global';
+        $support_forum_id = isset($config['mundophpbb_downloadcenter_support_forum_id']) ? (int) $config['mundophpbb_downloadcenter_support_forum_id'] : 0;
+        $notifications_enabled = !isset($config['mundophpbb_downloadcenter_notifications_enabled']) || (bool) $config['mundophpbb_downloadcenter_notifications_enabled'];
+        $allow_submissions = isset($config['mundophpbb_downloadcenter_allow_submissions']) ? (bool) $config['mundophpbb_downloadcenter_allow_submissions'] : true;
+        $public_per_page = isset($config['mundophpbb_downloadcenter_public_per_page']) ? (int) $config['mundophpbb_downloadcenter_public_per_page'] : 0;
+
+        $required_config_keys = [
+            'mundophpbb_downloadcenter_enabled',
+            'mundophpbb_downloadcenter_version',
+            'mundophpbb_downloadcenter_permission_mode',
+            'mundophpbb_downloadcenter_view_access',
+            'mundophpbb_downloadcenter_download_access',
+            'mundophpbb_downloadcenter_submit_access',
+            'mundophpbb_downloadcenter_allowed_extensions',
+            'mundophpbb_downloadcenter_max_upload_mb',
+            'mundophpbb_downloadcenter_public_per_page',
+            'mundophpbb_downloadcenter_show_public_stats',
+            'mundophpbb_downloadcenter_feed_enabled',
+            'mundophpbb_downloadcenter_rate_limit_count',
+            'mundophpbb_downloadcenter_rate_limit_window',
+        ];
+        $missing_config_keys = [];
+        foreach ($required_config_keys as $config_key)
+        {
+            if (!isset($config[$config_key]))
+            {
+                $missing_config_keys[] = $config_key;
+            }
+        }
 
         $missing_files = 0;
         $sql = 'SELECT download_file FROM ' . $versions_table . " WHERE download_type = 'local' AND download_file <> ''";
@@ -256,27 +365,283 @@ class main_module
             }
         }
 
+        $external_invalid = $this->count_external_invalid_versions($db, $versions_table);
+        $prelaunch_checks = $this->build_prelaunch_checks($user, [
+            'version_ok' => $installed_version !== '' && version_compare($installed_version, $package_version, '>='),
+            'config_ok' => count($missing_config_keys) === 0,
+            'storage_ok' => $storage_exists && $storage_writable,
+            'htaccess_ok' => $htaccess_ok,
+            'categories_ok' => $total_categories > 0,
+            'published_ok' => $total_published > 0,
+            'missing_files_ok' => $missing_files === 0,
+            'external_urls_ok' => $external_invalid === 0,
+            'pagination_ok' => $public_per_page > 0,
+        ]);
+        if ($request->variable('export_report', 0))
+        {
+            $this->send_diagnostics_report($user, [
+                'package_version' => $package_version,
+                'installed_version' => $installed_version,
+                'permission_mode' => $permission_mode,
+                'storage_dir' => $storage_dir,
+                'storage_writable' => $storage_exists && $storage_writable,
+                'htaccess_ok' => $htaccess_ok,
+                'total_categories' => $total_categories,
+                'total_published' => $total_published,
+                'total_pending' => $total_pending,
+                'missing_files' => $missing_files,
+                'orphan_files' => $orphan_files,
+                'external_invalid' => $external_invalid,
+                'php_upload_max' => $this->format_file_size($php_upload_max),
+                'php_post_max' => $this->format_file_size($php_post_max),
+                'extension_limit' => $this->format_file_size($max_upload_bytes),
+                'prelaunch_checks' => $prelaunch_checks,
+            ]);
+        }
+
+        $version_ok = $installed_version !== '' && version_compare($installed_version, $package_version, '>=');
+        $config_ok = count($missing_config_keys) === 0;
+        $support_forum_ok = $support_forum_id === 0 || $this->is_valid_support_forum($support_forum_id);
+        $public_per_page_ok = $public_per_page > 0;
+
+        $this->assign_diagnostic_row($template, $version_ok, $user->lang('ACP_DOWNLOADCENTER_DIAG_VERSION'), $version_ok ? $user->lang('ACP_DOWNLOADCENTER_DIAG_VERSION_OK', $installed_version) : $user->lang('ACP_DOWNLOADCENTER_DIAG_VERSION_WARN', $installed_version !== '' ? $installed_version : $user->lang('ACP_DOWNLOADCENTER_DIAG_VERSION_UNKNOWN'), $package_version));
+        $this->assign_diagnostic_row($template, $config_ok, $user->lang('ACP_DOWNLOADCENTER_DIAG_CONFIG_KEYS'), $config_ok ? $user->lang('ACP_DOWNLOADCENTER_DIAG_CONFIG_KEYS_OK') : $user->lang('ACP_DOWNLOADCENTER_DIAG_CONFIG_KEYS_WARN', implode(', ', $missing_config_keys)));
+        $this->assign_diagnostic_row($template, true, $user->lang('ACP_DOWNLOADCENTER_DIAG_PERMISSION_MODE'), $permission_mode === 'acl' ? $user->lang('ACP_DOWNLOADCENTER_DIAG_PERMISSION_MODE_ACL') : $user->lang('ACP_DOWNLOADCENTER_DIAG_PERMISSION_MODE_GLOBAL'));
+        $this->assign_diagnostic_row($template, $support_forum_ok, $user->lang('ACP_DOWNLOADCENTER_DIAG_SUPPORT_FORUM'), $support_forum_ok ? ($support_forum_id > 0 ? $user->lang('ACP_DOWNLOADCENTER_DIAG_SUPPORT_FORUM_OK', $support_forum_id) : $user->lang('ACP_DOWNLOADCENTER_DIAG_SUPPORT_FORUM_DISABLED')) : $user->lang('ACP_DOWNLOADCENTER_DIAG_SUPPORT_FORUM_WARN', $support_forum_id));
+        $this->assign_diagnostic_row($template, true, $user->lang('ACP_DOWNLOADCENTER_DIAG_SUBMISSIONS'), $allow_submissions ? ($notifications_enabled ? $user->lang('ACP_DOWNLOADCENTER_DIAG_SUBMISSIONS_ENABLED_NOTIFY') : $user->lang('ACP_DOWNLOADCENTER_DIAG_SUBMISSIONS_ENABLED_NO_NOTIFY')) : $user->lang('ACP_DOWNLOADCENTER_DIAG_SUBMISSIONS_DISABLED'));
+        $this->assign_diagnostic_row($template, $public_per_page_ok, $user->lang('ACP_DOWNLOADCENTER_DIAG_PUBLIC_PAGINATION'), $public_per_page_ok ? $user->lang('ACP_DOWNLOADCENTER_DIAG_PUBLIC_PAGINATION_OK', $public_per_page) : $user->lang('ACP_DOWNLOADCENTER_DIAG_PUBLIC_PAGINATION_WARN'));
         $this->assign_diagnostic_row($template, $storage_exists && $storage_writable, $user->lang('ACP_DOWNLOADCENTER_DIAG_STORAGE'), $storage_exists ? ($storage_writable ? $user->lang('ACP_DOWNLOADCENTER_DIAG_STORAGE_OK', $storage_dir) : $user->lang('ACP_DOWNLOADCENTER_DIAG_STORAGE_NOT_WRITABLE', $storage_dir)) : $user->lang('ACP_DOWNLOADCENTER_DIAG_STORAGE_MISSING', $storage_dir));
         $this->assign_diagnostic_row($template, $htaccess_ok, $user->lang('ACP_DOWNLOADCENTER_DIAG_HTACCESS'), $htaccess_ok ? $user->lang('ACP_DOWNLOADCENTER_DIAG_HTACCESS_OK') : $user->lang('ACP_DOWNLOADCENTER_DIAG_HTACCESS_MISSING'));
         $this->assign_diagnostic_row($template, count($allowed_extensions) > 0, $user->lang('ACP_DOWNLOADCENTER_DIAG_EXTENSIONS'), $user->lang('ACP_DOWNLOADCENTER_DIAG_EXTENSIONS_INFO', implode(', ', $allowed_extensions)));
         $this->assign_diagnostic_row($template, $effective_php_limit >= $max_upload_bytes, $user->lang('ACP_DOWNLOADCENTER_DIAG_UPLOAD_LIMIT'), $effective_php_limit >= $max_upload_bytes ? $user->lang('ACP_DOWNLOADCENTER_DIAG_UPLOAD_LIMIT_OK', $this->format_file_size($max_upload_bytes)) : $user->lang('ACP_DOWNLOADCENTER_DIAG_UPLOAD_LIMIT_WARN', $this->format_file_size($max_upload_bytes), $this->format_file_size($effective_php_limit)));
         $this->assign_diagnostic_row($template, $missing_files === 0, $user->lang('ACP_DOWNLOADCENTER_DIAG_MISSING_FILES'), $missing_files === 0 ? $user->lang('ACP_DOWNLOADCENTER_DIAG_MISSING_FILES_OK') : $user->lang('ACP_DOWNLOADCENTER_DIAG_MISSING_FILES_WARN', $missing_files));
+        $this->assign_diagnostic_row($template, $external_invalid === 0, $user->lang('ACP_DOWNLOADCENTER_DIAG_EXTERNAL_URLS'), $external_invalid === 0 ? $user->lang('ACP_DOWNLOADCENTER_DIAG_EXTERNAL_URLS_OK') : $user->lang('ACP_DOWNLOADCENTER_DIAG_EXTERNAL_URLS_WARN', $external_invalid));
         $this->assign_diagnostic_row($template, true, $user->lang('ACP_DOWNLOADCENTER_DIAG_ORPHAN_FILES'), $user->lang('ACP_DOWNLOADCENTER_DIAG_ORPHAN_FILES_INFO', $orphan_files));
         $this->assign_diagnostic_row($template, true, $user->lang('ACP_DOWNLOADCENTER_DIAG_CONTENT'), $user->lang('ACP_DOWNLOADCENTER_DIAG_CONTENT_INFO', $total_categories, $total_published, $total_pending));
 
         $template->assign_vars([
             'DIAG_STORAGE_DIR' => $storage_dir,
+            'DIAG_EXTENSION_VERSION' => $installed_version !== '' ? $installed_version : $user->lang('ACP_DOWNLOADCENTER_DIAG_VERSION_UNKNOWN'),
+            'DIAG_PERMISSION_MODE' => $permission_mode === 'acl' ? $user->lang('ACP_DOWNLOADCENTER_PERMISSION_MODE_ACL') : $user->lang('ACP_DOWNLOADCENTER_PERMISSION_MODE_GLOBAL'),
             'DIAG_TOTAL_FILES' => count($library_files),
             'DIAG_ORPHAN_FILES' => $orphan_files,
             'DIAG_MISSING_FILES' => $missing_files,
             'DIAG_PHP_UPLOAD_MAX' => $this->format_file_size($php_upload_max),
             'DIAG_PHP_POST_MAX' => $this->format_file_size($php_post_max),
             'DIAG_EXTENSION_LIMIT' => $this->format_file_size($max_upload_bytes),
+            'DIAG_EXTERNAL_INVALID' => $external_invalid,
+            'U_DIAGNOSTICS_REPORT' => $this->u_action_for_mode('diagnostics') . '&amp;export_report=1',
         ]);
+
+        foreach ($prelaunch_checks as $check)
+        {
+            $template->assign_block_vars('prelaunch_checks', $check);
+        }
     }
 
 
-    protected function handle_integrity($db, $template, $user, $config, $phpbb_root_path, $phpEx)
+    protected function count_external_invalid_versions($db, $versions_table)
+    {
+        $invalid = 0;
+        $sql = "SELECT download_url FROM " . $versions_table . " WHERE download_type = 'external'";
+        $result = $db->sql_query($sql);
+        while ($row = $db->sql_fetchrow($result))
+        {
+            $url = trim((string) $row['download_url']);
+            if ($url === '' || !preg_match('#^https?://#i', $url) || !filter_var($url, FILTER_VALIDATE_URL))
+            {
+                $invalid++;
+            }
+        }
+        $db->sql_freeresult($result);
+
+        return $invalid;
+    }
+
+    protected function build_prelaunch_checks($user, array $state)
+    {
+        $map = [
+            'version_ok' => ['ACP_DOWNLOADCENTER_PRELAUNCH_VERSION', 'ACP_DOWNLOADCENTER_PRELAUNCH_VERSION_EXPLAIN'],
+            'config_ok' => ['ACP_DOWNLOADCENTER_PRELAUNCH_CONFIG', 'ACP_DOWNLOADCENTER_PRELAUNCH_CONFIG_EXPLAIN'],
+            'storage_ok' => ['ACP_DOWNLOADCENTER_PRELAUNCH_STORAGE', 'ACP_DOWNLOADCENTER_PRELAUNCH_STORAGE_EXPLAIN'],
+            'htaccess_ok' => ['ACP_DOWNLOADCENTER_PRELAUNCH_HTACCESS', 'ACP_DOWNLOADCENTER_PRELAUNCH_HTACCESS_EXPLAIN'],
+            'categories_ok' => ['ACP_DOWNLOADCENTER_PRELAUNCH_CATEGORIES', 'ACP_DOWNLOADCENTER_PRELAUNCH_CATEGORIES_EXPLAIN'],
+            'published_ok' => ['ACP_DOWNLOADCENTER_PRELAUNCH_PUBLISHED', 'ACP_DOWNLOADCENTER_PRELAUNCH_PUBLISHED_EXPLAIN'],
+            'missing_files_ok' => ['ACP_DOWNLOADCENTER_PRELAUNCH_FILES', 'ACP_DOWNLOADCENTER_PRELAUNCH_FILES_EXPLAIN'],
+            'external_urls_ok' => ['ACP_DOWNLOADCENTER_PRELAUNCH_URLS', 'ACP_DOWNLOADCENTER_PRELAUNCH_URLS_EXPLAIN'],
+            'pagination_ok' => ['ACP_DOWNLOADCENTER_PRELAUNCH_PAGINATION', 'ACP_DOWNLOADCENTER_PRELAUNCH_PAGINATION_EXPLAIN'],
+        ];
+        $checks = [];
+        foreach ($map as $key => $labels)
+        {
+            $ok = !empty($state[$key]);
+            $checks[] = [
+                'STATUS_CLASS' => $ok ? 'ok' : 'warn',
+                'STATUS' => $ok ? $user->lang('ACP_DOWNLOADCENTER_PRELAUNCH_OK') : $user->lang('ACP_DOWNLOADCENTER_PRELAUNCH_ATTENTION'),
+                'TITLE' => $user->lang($labels[0]),
+                'MESSAGE' => $user->lang($labels[1]),
+            ];
+        }
+
+        return $checks;
+    }
+
+    protected function send_diagnostics_report($user, array $data)
+    {
+        $lines = [];
+        $lines[] = 'MundophpBB Download Center - Diagnostic report';
+        $lines[] = 'Generated: ' . date('Y-m-d H:i:s');
+        $lines[] = '';
+        $lines[] = 'Package version: ' . $data['package_version'];
+        $lines[] = 'Installed version: ' . ($data['installed_version'] !== '' ? $data['installed_version'] : 'unknown');
+        $lines[] = 'Permission mode: ' . $data['permission_mode'];
+        $lines[] = 'Storage directory: ' . $data['storage_dir'];
+        $lines[] = 'Storage writable: ' . (!empty($data['storage_writable']) ? 'yes' : 'no');
+        $lines[] = '.htaccess present: ' . (!empty($data['htaccess_ok']) ? 'yes' : 'no');
+        $lines[] = '';
+        $lines[] = 'Content';
+        $lines[] = '- Categories: ' . (int) $data['total_categories'];
+        $lines[] = '- Published items: ' . (int) $data['total_published'];
+        $lines[] = '- Pending items: ' . (int) $data['total_pending'];
+        $lines[] = '- Missing local files: ' . (int) $data['missing_files'];
+        $lines[] = '- Orphan local files: ' . (int) $data['orphan_files'];
+        $lines[] = '- Invalid external URLs: ' . (int) $data['external_invalid'];
+        $lines[] = '';
+        $lines[] = 'Upload limits';
+        $lines[] = '- upload_max_filesize: ' . $data['php_upload_max'];
+        $lines[] = '- post_max_size: ' . $data['php_post_max'];
+        $lines[] = '- extension limit: ' . $data['extension_limit'];
+        $lines[] = '';
+        $lines[] = 'Pre-release checklist';
+        foreach ($data['prelaunch_checks'] as $check)
+        {
+            $lines[] = '- [' . ($check['STATUS_CLASS'] === 'ok' ? 'OK' : 'ATTENTION') . '] ' . $check['TITLE'] . ' - ' . $check['MESSAGE'];
+        }
+
+        $report = implode("\n", $lines) . "\n";
+        header('Content-Type: text/plain; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="downloadcenter-diagnostic-report.txt"');
+        header('Content-Length: ' . strlen($report));
+        echo $report;
+        garbage_collection();
+        exit_handler();
+    }
+
+
+
+    protected function run_maintenance_rebuild($db, $user)
+    {
+        $items_table = $this->table_prefix . 'downloadcenter_items';
+        $versions_table = $this->table_prefix . 'downloadcenter_versions';
+        $fixed_items = 0;
+        $fixed_versions = 0;
+        $rebuilt_counters = 0;
+        $cleaned_targets = 0;
+        $storage_actions = 0;
+
+        $storage_dir = $this->local_storage_directory();
+        if (!is_dir($storage_dir) && @mkdir($storage_dir, 0777, true))
+        {
+            $storage_actions++;
+        }
+
+        $htaccess_path = $storage_dir . '.htaccess';
+        if (is_dir($storage_dir) && !is_file($htaccess_path))
+        {
+            $htaccess = "Order Allow,Deny\nDeny from all\n";
+            if (@file_put_contents($htaccess_path, $htaccess) !== false)
+            {
+                $storage_actions++;
+            }
+        }
+
+        $sql = 'SELECT item_id, item_current_version_id
+            FROM ' . $items_table . '
+            ORDER BY item_id ASC';
+        $result = $db->sql_query($sql);
+        while ($row = $db->sql_fetchrow($result))
+        {
+            $item_id = (int) $row['item_id'];
+            $current_version_id = (int) $row['item_current_version_id'];
+            $needs_current_fix = $current_version_id <= 0;
+
+            if (!$needs_current_fix)
+            {
+                $sql_check = 'SELECT version_id
+                    FROM ' . $versions_table . '
+                    WHERE version_id = ' . (int) $current_version_id . '
+                        AND item_id = ' . (int) $item_id . '
+                        AND version_enabled = 1';
+                $check_result = $db->sql_query_limit($sql_check, 1);
+                $valid_current = (bool) $db->sql_fetchfield('version_id');
+                $db->sql_freeresult($check_result);
+                $needs_current_fix = !$valid_current;
+            }
+
+            if ($needs_current_fix)
+            {
+                $this->assign_fallback_current_version($db, $items_table, $versions_table, $item_id);
+                $fixed_items++;
+            }
+
+            $rebuilt_counters += $this->rebuild_download_counters_for_item($db, $item_id);
+        }
+        $db->sql_freeresult($result);
+
+        $sql = 'SELECT version_id, item_id, download_type, download_file, download_url
+            FROM ' . $versions_table . "
+            WHERE (download_type = 'external' AND download_file <> '')
+                OR (download_type = 'local' AND download_url <> '')";
+        $result = $db->sql_query($sql);
+        while ($row = $db->sql_fetchrow($result))
+        {
+            if ((string) $row['download_type'] === 'external')
+            {
+                $sql_update = 'UPDATE ' . $versions_table . "
+                    SET download_file = '', file_size = ''
+                    WHERE version_id = " . (int) $row['version_id'];
+            }
+            else
+            {
+                $sql_update = 'UPDATE ' . $versions_table . "
+                    SET download_url = ''
+                    WHERE version_id = " . (int) $row['version_id'];
+            }
+            $db->sql_query($sql_update);
+            $cleaned_targets++;
+        }
+        $db->sql_freeresult($result);
+
+        $sql = 'SELECT v.version_id, v.item_id, v.download_type, v.download_file, v.download_url
+            FROM ' . $versions_table . ' v
+            LEFT JOIN ' . $items_table . ' i ON i.item_id = v.item_id
+            WHERE i.item_id IS NULL';
+        $result = $db->sql_query($sql);
+        while ($row = $db->sql_fetchrow($result))
+        {
+            $this->delete_local_file_for_version($row, $db, $versions_table);
+            $sql_delete_downloads = 'DELETE FROM ' . $this->table_prefix . 'downloadcenter_downloads
+                WHERE version_id = ' . (int) $row['version_id'];
+            $db->sql_query($sql_delete_downloads);
+            $sql_delete_version = 'DELETE FROM ' . $versions_table . '
+                WHERE version_id = ' . (int) $row['version_id'];
+            $db->sql_query($sql_delete_version);
+            $fixed_versions++;
+        }
+        $db->sql_freeresult($result);
+
+        $this->add_log($db, $user, 'diagnostics_rebuild', $user->lang('ACP_DOWNLOADCENTER_LOG_DIAGNOSTICS_REBUILD', (string) $fixed_items, (string) $fixed_versions, (string) $rebuilt_counters, (string) $cleaned_targets, (string) $storage_actions));
+
+        return [
+            'items' => $fixed_items,
+            'versions' => $fixed_versions,
+            'counters' => $rebuilt_counters,
+            'targets' => $cleaned_targets,
+            'storage' => $storage_actions,
+        ];
+    }
+
+    protected function handle_integrity($db, $request, $template, $user, $config, $phpbb_root_path, $phpEx)
     {
         $items_table = $this->table_prefix . 'downloadcenter_items';
         $categories_table = $this->table_prefix . 'downloadcenter_categories';
@@ -284,12 +649,26 @@ class main_module
         $downloads_table = $this->table_prefix . 'downloadcenter_downloads';
         $screenshots_table = $this->table_prefix . 'downloadcenter_screenshots';
 
+        if ($request->is_set_post('integrity_fix'))
+        {
+            if (!check_form_key('mundophpbb_downloadcenter_integrity'))
+            {
+                trigger_error($user->lang('FORM_INVALID') . adm_back_link($this->u_action));
+            }
+
+            $fix_action = $request->variable('fix_action', '');
+            $fix_id = $request->variable('fix_id', 0);
+            $fixed_total = $this->run_integrity_fix($db, $user, $fix_action, $fix_id);
+
+            trigger_error($user->lang('ACP_DOWNLOADCENTER_INTEGRITY_FIX_DONE', $fixed_total) . adm_back_link($this->u_action_for_mode('integrity')));
+        }
+
         $issues_total = 0;
         $critical_total = 0;
         $warning_total = 0;
         $info_total = 0;
 
-        $add_issue = function ($severity, $title, $details, $suggestion = '', $url = '') use ($template, &$issues_total, &$critical_total, &$warning_total, &$info_total) {
+        $add_issue = function ($severity, $title, $details, $suggestion = '', $url = '', $fix_action = '', $fix_id = 0) use ($template, &$issues_total, &$critical_total, &$warning_total, &$info_total) {
             $severity = in_array($severity, ['critical', 'warning', 'info'], true) ? $severity : 'info';
             $issues_total++;
             if ($severity === 'critical')
@@ -313,6 +692,9 @@ class main_module
                 'SUGGESTION' => $suggestion,
                 'U_ACTION' => $url,
                 'S_HAS_ACTION' => $url !== '',
+                'FIX_ACTION' => $fix_action,
+                'FIX_ID' => (int) $fix_id,
+                'S_HAS_FIX' => $fix_action !== '',
             ]);
         };
 
@@ -412,7 +794,7 @@ class main_module
         $result = $db->sql_query_limit($sql, 100);
         while ($row = $db->sql_fetchrow($result))
         {
-            $add_issue('warning', $user->lang('ACP_DOWNLOADCENTER_INTEGRITY_ORPHAN_SCREENSHOT'), $user->lang('ACP_DOWNLOADCENTER_INTEGRITY_ORPHAN_SCREENSHOT_DETAILS', (int) $row['screenshot_id'], (int) $row['item_id'], (string) $row['image_file']), $user->lang('ACP_DOWNLOADCENTER_INTEGRITY_FIX_ORPHAN_SCREENSHOT'));
+            $add_issue('warning', $user->lang('ACP_DOWNLOADCENTER_INTEGRITY_ORPHAN_SCREENSHOT'), $user->lang('ACP_DOWNLOADCENTER_INTEGRITY_ORPHAN_SCREENSHOT_DETAILS', (int) $row['screenshot_id'], (int) $row['item_id'], (string) $row['image_file']), $user->lang('ACP_DOWNLOADCENTER_INTEGRITY_FIX_ORPHAN_SCREENSHOT'), '', 'delete_orphan_screenshot', (int) $row['screenshot_id']);
         }
         $db->sql_freeresult($result);
 
@@ -442,11 +824,88 @@ class main_module
         $result = $db->sql_query_limit($sql, 100);
         while ($row = $db->sql_fetchrow($result))
         {
-            $add_issue('info', $user->lang('ACP_DOWNLOADCENTER_INTEGRITY_ORPHAN_DOWNLOAD'), $user->lang('ACP_DOWNLOADCENTER_INTEGRITY_ORPHAN_DOWNLOAD_DETAILS', (int) $row['download_id'], (int) $row['item_id'], (int) $row['version_id']), $user->lang('ACP_DOWNLOADCENTER_INTEGRITY_FIX_ORPHAN_DOWNLOAD'));
+            $add_issue('info', $user->lang('ACP_DOWNLOADCENTER_INTEGRITY_ORPHAN_DOWNLOAD'), $user->lang('ACP_DOWNLOADCENTER_INTEGRITY_ORPHAN_DOWNLOAD_DETAILS', (int) $row['download_id'], (int) $row['item_id'], (int) $row['version_id']), $user->lang('ACP_DOWNLOADCENTER_INTEGRITY_FIX_ORPHAN_DOWNLOAD'), '', 'delete_orphan_download', (int) $row['download_id']);
         }
         $db->sql_freeresult($result);
 
-        // 10. Physical files not linked to any version.
+        // 10. Items whose explicit current version is invalid, disabled or belongs to another item.
+        $sql = 'SELECT i.item_id, i.item_name, i.item_current_version_id, v.version_id, v.item_id AS version_item_id, v.version_enabled
+            FROM ' . $items_table . ' i
+            LEFT JOIN ' . $versions_table . ' v ON v.version_id = i.item_current_version_id
+            WHERE i.item_current_version_id > 0
+                AND (v.version_id IS NULL OR v.item_id <> i.item_id OR v.version_enabled = 0)
+            ORDER BY i.item_id ASC';
+        $result = $db->sql_query_limit($sql, 100);
+        while ($row = $db->sql_fetchrow($result))
+        {
+            $add_issue('warning', $user->lang('ACP_DOWNLOADCENTER_INTEGRITY_INVALID_CURRENT_VERSION'), $user->lang('ACP_DOWNLOADCENTER_INTEGRITY_INVALID_CURRENT_VERSION_DETAILS', (int) $row['item_id'], (string) $row['item_name'], (int) $row['item_current_version_id']), $user->lang('ACP_DOWNLOADCENTER_INTEGRITY_FIX_CURRENT_VERSION'), $this->u_action_for_mode('items') . '&amp;action=edit&amp;item_id=' . (int) $row['item_id'], 'fix_current_version', (int) $row['item_id']);
+        }
+        $db->sql_freeresult($result);
+
+        // 11. Enabled versions whose parent item no longer exists.
+        $sql = 'SELECT v.version_id, v.item_id, v.version_number
+            FROM ' . $versions_table . ' v
+            LEFT JOIN ' . $items_table . ' i ON i.item_id = v.item_id
+            WHERE i.item_id IS NULL
+            ORDER BY v.version_id ASC';
+        $result = $db->sql_query_limit($sql, 100);
+        while ($row = $db->sql_fetchrow($result))
+        {
+            $add_issue('warning', $user->lang('ACP_DOWNLOADCENTER_INTEGRITY_ORPHAN_VERSION'), $user->lang('ACP_DOWNLOADCENTER_INTEGRITY_ORPHAN_VERSION_DETAILS', (int) $row['version_id'], (int) $row['item_id'], (string) $row['version_number']), $user->lang('ACP_DOWNLOADCENTER_INTEGRITY_FIX_ORPHAN_VERSION'), '', 'delete_orphan_version', (int) $row['version_id']);
+        }
+        $db->sql_freeresult($result);
+
+        // 12. External versions with invalid URL syntax.
+        $sql = 'SELECT v.version_id, v.item_id, v.download_url, i.item_name
+            FROM ' . $versions_table . ' v
+            LEFT JOIN ' . $items_table . ' i ON i.item_id = v.item_id
+            WHERE v.download_type = \'external\'
+                AND v.download_url <> \'\'
+            ORDER BY v.version_id ASC';
+        $result = $db->sql_query_limit($sql, 100);
+        while ($row = $db->sql_fetchrow($result))
+        {
+            $external_url = trim((string) $row['download_url']);
+            if (!preg_match('#^https?://#i', $external_url) || !filter_var($external_url, FILTER_VALIDATE_URL))
+            {
+                $add_issue('critical', $user->lang('ACP_DOWNLOADCENTER_INTEGRITY_INVALID_EXTERNAL_URL'), $user->lang('ACP_DOWNLOADCENTER_INTEGRITY_INVALID_EXTERNAL_URL_DETAILS', (int) $row['version_id'], $external_url, (string) $row['item_name']), $user->lang('ACP_DOWNLOADCENTER_INTEGRITY_FIX_EXTERNAL_URL'), $this->u_action_for_mode('items') . '&amp;action=edit&amp;item_id=' . (int) $row['item_id']);
+            }
+        }
+        $db->sql_freeresult($result);
+
+        // 13. Versions with conflicting local/external target data left by older releases.
+        $sql = 'SELECT v.version_id, v.item_id, v.download_type, v.download_file, v.download_url, i.item_name
+            FROM ' . $versions_table . ' v
+            LEFT JOIN ' . $items_table . ' i ON i.item_id = v.item_id
+            WHERE (v.download_type = \'external\' AND v.download_file <> \'\')
+                OR (v.download_type = \'local\' AND v.download_url <> \'\')
+            ORDER BY v.version_id ASC';
+        $result = $db->sql_query_limit($sql, 100);
+        while ($row = $db->sql_fetchrow($result))
+        {
+            $add_issue('info', $user->lang('ACP_DOWNLOADCENTER_INTEGRITY_MIXED_DOWNLOAD_TARGET'), $user->lang('ACP_DOWNLOADCENTER_INTEGRITY_MIXED_DOWNLOAD_TARGET_DETAILS', (int) $row['version_id'], (string) $row['download_type'], (string) $row['item_name']), $user->lang('ACP_DOWNLOADCENTER_INTEGRITY_FIX_MIXED_DOWNLOAD_TARGET'), $this->u_action_for_mode('items') . '&amp;action=edit&amp;item_id=' . (int) $row['item_id'], 'clean_mixed_target', (int) $row['version_id']);
+        }
+        $db->sql_freeresult($result);
+
+        // 14. Item download counters out of sync with the sum of version counters.
+        $sql = 'SELECT i.item_id, i.item_name, i.item_downloads, SUM(v.version_downloads) AS version_downloads_total
+            FROM ' . $items_table . ' i
+            LEFT JOIN ' . $versions_table . ' v ON v.item_id = i.item_id
+            GROUP BY i.item_id, i.item_name, i.item_downloads
+            ORDER BY i.item_id ASC';
+        $result = $db->sql_query_limit($sql, 100);
+        while ($row = $db->sql_fetchrow($result))
+        {
+            $item_downloads = (int) $row['item_downloads'];
+            $version_downloads_total = (int) $row['version_downloads_total'];
+            if ($item_downloads !== $version_downloads_total)
+            {
+                $add_issue('info', $user->lang('ACP_DOWNLOADCENTER_INTEGRITY_DOWNLOAD_COUNTER_MISMATCH'), $user->lang('ACP_DOWNLOADCENTER_INTEGRITY_DOWNLOAD_COUNTER_MISMATCH_DETAILS', (int) $row['item_id'], (string) $row['item_name'], $item_downloads, $version_downloads_total), $user->lang('ACP_DOWNLOADCENTER_INTEGRITY_FIX_DOWNLOAD_COUNTER_MISMATCH'), $this->u_action_for_mode('items') . '&amp;action=edit&amp;item_id=' . (int) $row['item_id'], 'rebuild_download_counters', (int) $row['item_id']);
+            }
+        }
+        $db->sql_freeresult($result);
+
+        // 15. Physical files not linked to any version.
         $orphan_files = 0;
         foreach ($this->get_local_file_library($db) as $file)
         {
@@ -469,6 +928,191 @@ class main_module
         ]);
     }
 
+    protected function run_integrity_fix($db, $user, $fix_action, $fix_id)
+    {
+        $items_table = $this->table_prefix . 'downloadcenter_items';
+        $versions_table = $this->table_prefix . 'downloadcenter_versions';
+        $downloads_table = $this->table_prefix . 'downloadcenter_downloads';
+        $screenshots_table = $this->table_prefix . 'downloadcenter_screenshots';
+
+        $fix_id = (int) $fix_id;
+        $fixed_total = 0;
+
+        switch ($fix_action)
+        {
+            case 'fix_current_version':
+                if ($fix_id > 0)
+                {
+                    $this->assign_fallback_current_version($db, $items_table, $versions_table, $fix_id);
+                    $this->add_log($db, $user, 'integrity_fix_current_version', $user->lang('ACP_DOWNLOADCENTER_LOG_INTEGRITY_FIX_CURRENT_VERSION', (string) $fix_id), $fix_id);
+                    $fixed_total = 1;
+                }
+            break;
+
+            case 'clean_mixed_target':
+                if ($fix_id > 0)
+                {
+                    $sql = 'SELECT * FROM ' . $versions_table . ' WHERE version_id = ' . (int) $fix_id;
+                    $result = $db->sql_query_limit($sql, 1);
+                    $version_row = $db->sql_fetchrow($result);
+                    $db->sql_freeresult($result);
+
+                    if ($version_row)
+                    {
+                        if ((string) $version_row['download_type'] === 'external')
+                        {
+                            $sql = 'UPDATE ' . $versions_table . "
+                                SET download_file = '', file_size = ''
+                                WHERE version_id = " . (int) $fix_id;
+                            $db->sql_query($sql);
+                            $fixed_total = 1;
+                        }
+                        else if ((string) $version_row['download_type'] === 'local')
+                        {
+                            $sql = 'UPDATE ' . $versions_table . "
+                                SET download_url = ''
+                                WHERE version_id = " . (int) $fix_id;
+                            $db->sql_query($sql);
+                            $fixed_total = 1;
+                        }
+
+                        if ($fixed_total)
+                        {
+                            $this->add_log($db, $user, 'integrity_clean_mixed_target', $user->lang('ACP_DOWNLOADCENTER_LOG_INTEGRITY_CLEAN_MIXED_TARGET', (string) $fix_id), (int) $version_row['item_id'], $fix_id);
+                        }
+                    }
+                }
+            break;
+
+            case 'rebuild_download_counters':
+                if ($fix_id > 0)
+                {
+                    $fixed_total = $this->rebuild_download_counters_for_item($db, $fix_id);
+                    $this->add_log($db, $user, 'integrity_rebuild_download_counters', $user->lang('ACP_DOWNLOADCENTER_LOG_INTEGRITY_REBUILD_DOWNLOAD_COUNTERS', (string) $fix_id), $fix_id);
+                }
+            break;
+
+            case 'delete_orphan_download':
+                if ($fix_id > 0)
+                {
+                    $sql = 'DELETE FROM ' . $downloads_table . '
+                        WHERE download_id = ' . (int) $fix_id . '
+                            AND (item_id NOT IN (SELECT item_id FROM ' . $items_table . ')
+                                OR version_id NOT IN (SELECT version_id FROM ' . $versions_table . '))';
+                    $db->sql_query($sql);
+                    $fixed_total = (int) $db->sql_affectedrows();
+                    if ($fixed_total)
+                    {
+                        $this->add_log($db, $user, 'integrity_delete_orphan_download', $user->lang('ACP_DOWNLOADCENTER_LOG_INTEGRITY_DELETE_ORPHAN_DOWNLOAD', (string) $fix_id));
+                    }
+                }
+            break;
+
+            case 'delete_orphan_screenshot':
+                if ($fix_id > 0)
+                {
+                    $sql = 'SELECT s.* FROM ' . $screenshots_table . ' s
+                        LEFT JOIN ' . $items_table . ' i ON i.item_id = s.item_id
+                        WHERE s.screenshot_id = ' . (int) $fix_id . '
+                            AND i.item_id IS NULL';
+                    $result = $db->sql_query_limit($sql, 1);
+                    $screenshot_row = $db->sql_fetchrow($result);
+                    $db->sql_freeresult($result);
+
+                    if ($screenshot_row)
+                    {
+                        if (!empty($screenshot_row['image_file']))
+                        {
+                            $path = $this->screenshot_file_path($screenshot_row['image_file']);
+                            if (is_file($path))
+                            {
+                                @unlink($path);
+                            }
+                        }
+
+                        $sql = 'DELETE FROM ' . $screenshots_table . ' WHERE screenshot_id = ' . (int) $fix_id;
+                        $db->sql_query($sql);
+                        $fixed_total = (int) $db->sql_affectedrows();
+                        if ($fixed_total)
+                        {
+                            $this->add_log($db, $user, 'integrity_delete_orphan_screenshot', $user->lang('ACP_DOWNLOADCENTER_LOG_INTEGRITY_DELETE_ORPHAN_SCREENSHOT', (string) $fix_id));
+                        }
+                    }
+                }
+            break;
+
+            case 'delete_orphan_version':
+                if ($fix_id > 0)
+                {
+                    $sql = 'SELECT v.* FROM ' . $versions_table . ' v
+                        LEFT JOIN ' . $items_table . ' i ON i.item_id = v.item_id
+                        WHERE v.version_id = ' . (int) $fix_id . '
+                            AND i.item_id IS NULL';
+                    $result = $db->sql_query_limit($sql, 1);
+                    $version_row = $db->sql_fetchrow($result);
+                    $db->sql_freeresult($result);
+
+                    if ($version_row)
+                    {
+                        $this->delete_local_file_for_version($version_row, $db, $versions_table);
+                        $sql = 'DELETE FROM ' . $downloads_table . ' WHERE version_id = ' . (int) $fix_id;
+                        $db->sql_query($sql);
+                        $sql = 'DELETE FROM ' . $versions_table . ' WHERE version_id = ' . (int) $fix_id;
+                        $db->sql_query($sql);
+                        $fixed_total = 1;
+                        $this->add_log($db, $user, 'integrity_delete_orphan_version', $user->lang('ACP_DOWNLOADCENTER_LOG_INTEGRITY_DELETE_ORPHAN_VERSION', (string) $fix_id));
+                    }
+                }
+            break;
+        }
+
+        return $fixed_total;
+    }
+
+    protected function rebuild_download_counters_for_item($db, $item_id)
+    {
+        $versions_table = $this->table_prefix . 'downloadcenter_versions';
+        $downloads_table = $this->table_prefix . 'downloadcenter_downloads';
+        $items_table = $this->table_prefix . 'downloadcenter_items';
+        $updated_total = 0;
+
+        $sql = 'SELECT version_id
+            FROM ' . $versions_table . '
+            WHERE item_id = ' . (int) $item_id;
+        $result = $db->sql_query($sql);
+        while ($row = $db->sql_fetchrow($result))
+        {
+            $version_id = (int) $row['version_id'];
+            $sql_count = 'SELECT COUNT(download_id) AS total_downloads
+                FROM ' . $downloads_table . '
+                WHERE version_id = ' . (int) $version_id;
+            $count_result = $db->sql_query($sql_count);
+            $version_total = (int) $db->sql_fetchfield('total_downloads');
+            $db->sql_freeresult($count_result);
+
+            $sql_update = 'UPDATE ' . $versions_table . '
+                SET version_downloads = ' . (int) $version_total . '
+                WHERE version_id = ' . (int) $version_id;
+            $db->sql_query($sql_update);
+            $updated_total++;
+        }
+        $db->sql_freeresult($result);
+
+        $sql_count = 'SELECT COUNT(download_id) AS total_downloads
+            FROM ' . $downloads_table . '
+            WHERE item_id = ' . (int) $item_id;
+        $count_result = $db->sql_query($sql_count);
+        $item_total = (int) $db->sql_fetchfield('total_downloads');
+        $db->sql_freeresult($count_result);
+
+        $sql_update = 'UPDATE ' . $items_table . '
+            SET item_downloads = ' . (int) $item_total . '
+            WHERE item_id = ' . (int) $item_id;
+        $db->sql_query($sql_update);
+
+        return $updated_total + 1;
+    }
+
     protected function assign_diagnostic_row($template, $ok, $title, $message)
     {
         $template->assign_block_vars('diagnostics', [
@@ -488,15 +1132,34 @@ class main_module
                 trigger_error('FORM_INVALID');
             }
 
+            $view_access = $this->valid_access_mode($request->variable('downloadcenter_view_access', 'all'), 'all');
+            $download_access = $this->inherit_access_floor($view_access, $this->valid_access_mode($request->variable('downloadcenter_download_access', 'registered'), 'registered'));
+            $submit_access = $this->normalise_submit_access($view_access, $request->variable('downloadcenter_submit_access', 'registered'));
+
             $config->set('mundophpbb_downloadcenter_enabled', $request->variable('downloadcenter_enabled', 0));
             $config->set('mundophpbb_downloadcenter_min_posts', max(0, $request->variable('downloadcenter_min_posts', 0)));
             $config->set('mundophpbb_downloadcenter_allow_submissions', $request->variable('downloadcenter_allow_submissions', 1));
-            $config->set('mundophpbb_downloadcenter_require_rules_accept', $request->variable('downloadcenter_require_rules_accept', 1));
-            $config->set('mundophpbb_downloadcenter_rules_url', $this->sanitize_db_text(trim($request->variable('downloadcenter_rules_url', '', true))));
-            $config->set('mundophpbb_downloadcenter_view_access', $this->valid_access_mode($request->variable('downloadcenter_view_access', 'all'), 'all'));
-            $config->set('mundophpbb_downloadcenter_download_access', $this->valid_access_mode($request->variable('downloadcenter_download_access', 'registered'), 'registered'));
-            $config->set('mundophpbb_downloadcenter_submit_access', $this->valid_access_mode($request->variable('downloadcenter_submit_access', 'registered'), 'registered'));
+            $config->set('mundophpbb_downloadcenter_view_access', $view_access);
+            $config->set('mundophpbb_downloadcenter_download_access', $download_access);
+            $config->set('mundophpbb_downloadcenter_submit_access', $submit_access);
+            $config->set('mundophpbb_downloadcenter_permission_mode', $request->variable('downloadcenter_permission_mode', 'global') === 'acl' ? 'acl' : 'global');
             $config->set('mundophpbb_downloadcenter_duplicate_window', max(0, $request->variable('downloadcenter_duplicate_window', 3600)));
+            $rules_topic_input = trim($request->variable('downloadcenter_rules_topic_id', '', true));
+            $rules_topic_id = 0;
+
+            if ($rules_topic_input !== '')
+            {
+                if (preg_match('#(?:^|[?&])t=([0-9]+)#', $rules_topic_input, $rules_topic_match))
+                {
+                    $rules_topic_id = (int) $rules_topic_match[1];
+                }
+                else
+                {
+                    $rules_topic_id = (int) $rules_topic_input;
+                }
+            }
+
+            $config->set('mundophpbb_downloadcenter_rules_topic_id', max(0, $rules_topic_id));
             $selected_support_forum_id = max(0, $request->variable('downloadcenter_support_forum_id', 0));
             if ($selected_support_forum_id > 0 && !$this->is_valid_support_forum($selected_support_forum_id))
             {
@@ -509,6 +1172,10 @@ class main_module
             $config->set('mundophpbb_downloadcenter_logs_per_page', max(1, $request->variable('downloadcenter_logs_per_page', 50)));
             $config->set('mundophpbb_downloadcenter_allowed_extensions', $this->normalise_allowed_extensions($request->variable('downloadcenter_allowed_extensions', '', true)));
             $config->set('mundophpbb_downloadcenter_max_upload_mb', max(1, $request->variable('downloadcenter_max_upload_mb', 20)));
+            $config->set('mundophpbb_downloadcenter_show_public_stats', $request->variable('downloadcenter_show_public_stats', 1));
+            $config->set('mundophpbb_downloadcenter_feed_enabled', $request->variable('downloadcenter_feed_enabled', 1));
+            $config->set('mundophpbb_downloadcenter_rate_limit_count', max(0, $request->variable('downloadcenter_rate_limit_count', 0)));
+            $config->set('mundophpbb_downloadcenter_rate_limit_window', max(10, $request->variable('downloadcenter_rate_limit_window', 60)));
 
             global $db;
             $this->add_log($db, $user, 'settings_saved', $user->lang('ACP_DOWNLOADCENTER_LOG_SETTINGS_SAVED'));
@@ -518,16 +1185,26 @@ class main_module
 
         $selected_support_forum_id = isset($config['mundophpbb_downloadcenter_support_forum_id']) ? (int) $config['mundophpbb_downloadcenter_support_forum_id'] : 0;
         $this->assign_support_forum_options($template, $selected_support_forum_id);
+        $this->assign_acl_permission_diagnostics($template, $user);
 
         $template->assign_vars([
             'DOWNLOADCENTER_ENABLED'   => (bool) $config['mundophpbb_downloadcenter_enabled'],
             'DOWNLOADCENTER_MIN_POSTS' => (int) $config['mundophpbb_downloadcenter_min_posts'],
             'DOWNLOADCENTER_ALLOW_SUBMISSIONS' => isset($config['mundophpbb_downloadcenter_allow_submissions']) ? (bool) $config['mundophpbb_downloadcenter_allow_submissions'] : true,
-            'DOWNLOADCENTER_REQUIRE_RULES_ACCEPT' => !isset($config['mundophpbb_downloadcenter_require_rules_accept']) || (bool) $config['mundophpbb_downloadcenter_require_rules_accept'],
-            'DOWNLOADCENTER_RULES_URL' => isset($config['mundophpbb_downloadcenter_rules_url']) ? $config['mundophpbb_downloadcenter_rules_url'] : '',
-            'DOWNLOADCENTER_VIEW_ACCESS' => isset($config['mundophpbb_downloadcenter_view_access']) ? $config['mundophpbb_downloadcenter_view_access'] : 'all',
-            'DOWNLOADCENTER_DOWNLOAD_ACCESS' => isset($config['mundophpbb_downloadcenter_download_access']) ? $config['mundophpbb_downloadcenter_download_access'] : 'registered',
-            'DOWNLOADCENTER_SUBMIT_ACCESS' => isset($config['mundophpbb_downloadcenter_submit_access']) ? $config['mundophpbb_downloadcenter_submit_access'] : 'registered',
+            'DOWNLOADCENTER_PERMISSION_MODE' => isset($config['mundophpbb_downloadcenter_permission_mode']) ? (string) $config['mundophpbb_downloadcenter_permission_mode'] : 'global',
+            'S_PERMISSION_MODE_GLOBAL' => !isset($config['mundophpbb_downloadcenter_permission_mode']) || $config['mundophpbb_downloadcenter_permission_mode'] !== 'acl',
+            'S_PERMISSION_MODE_ACL' => isset($config['mundophpbb_downloadcenter_permission_mode']) && $config['mundophpbb_downloadcenter_permission_mode'] === 'acl',
+            'DOWNLOADCENTER_PERMISSION_MODE_SUMMARY' => $this->permission_mode_summary($user, $config),
+            'DOWNLOADCENTER_VIEW_ACCESS' => $this->valid_access_mode(isset($config['mundophpbb_downloadcenter_view_access']) ? $config['mundophpbb_downloadcenter_view_access'] : 'all', 'all'),
+            'DOWNLOADCENTER_DOWNLOAD_ACCESS' => $this->inherit_access_floor(isset($config['mundophpbb_downloadcenter_view_access']) ? $config['mundophpbb_downloadcenter_view_access'] : 'all', isset($config['mundophpbb_downloadcenter_download_access']) ? $config['mundophpbb_downloadcenter_download_access'] : 'registered'),
+            'DOWNLOADCENTER_SUBMIT_ACCESS' => $this->normalise_submit_access(isset($config['mundophpbb_downloadcenter_view_access']) ? $config['mundophpbb_downloadcenter_view_access'] : 'all', isset($config['mundophpbb_downloadcenter_submit_access']) ? $config['mundophpbb_downloadcenter_submit_access'] : 'registered'),
+            'DOWNLOADCENTER_PERMISSION_VIEW_SUMMARY' => $this->access_mode_label($user, $this->valid_access_mode(isset($config['mundophpbb_downloadcenter_view_access']) ? $config['mundophpbb_downloadcenter_view_access'] : 'all', 'all')),
+            'DOWNLOADCENTER_PERMISSION_DOWNLOAD_SUMMARY' => $this->access_mode_label($user, $this->inherit_access_floor(isset($config['mundophpbb_downloadcenter_view_access']) ? $config['mundophpbb_downloadcenter_view_access'] : 'all', isset($config['mundophpbb_downloadcenter_download_access']) ? $config['mundophpbb_downloadcenter_download_access'] : 'registered')),
+            'DOWNLOADCENTER_PERMISSION_SUBMIT_SUMMARY' => $this->access_mode_label($user, $this->normalise_submit_access(isset($config['mundophpbb_downloadcenter_view_access']) ? $config['mundophpbb_downloadcenter_view_access'] : 'all', isset($config['mundophpbb_downloadcenter_submit_access']) ? $config['mundophpbb_downloadcenter_submit_access'] : 'registered')),
+            'DOWNLOADCENTER_PERMISSION_EFFECT_SUMMARY' => $this->permission_effect_summary($user, $config),
+            'DOWNLOADCENTER_PERMISSION_WARNING' => $this->permission_warning($user, $config),
+            'S_PERMISSION_HAS_WARNING' => $this->permission_warning($user, $config) !== '',
+            'S_PERMISSION_SUBMISSIONS_DISABLED' => !(isset($config['mundophpbb_downloadcenter_allow_submissions']) ? (bool) $config['mundophpbb_downloadcenter_allow_submissions'] : true),
             'S_VIEW_ACCESS_ALL' => (!isset($config['mundophpbb_downloadcenter_view_access']) || $config['mundophpbb_downloadcenter_view_access'] === 'all'),
             'S_VIEW_ACCESS_REGISTERED' => (isset($config['mundophpbb_downloadcenter_view_access']) && $config['mundophpbb_downloadcenter_view_access'] === 'registered'),
             'S_VIEW_ACCESS_ADMIN' => (isset($config['mundophpbb_downloadcenter_view_access']) && $config['mundophpbb_downloadcenter_view_access'] === 'admin'),
@@ -537,6 +1214,7 @@ class main_module
             'S_SUBMIT_ACCESS_REGISTERED' => (!isset($config['mundophpbb_downloadcenter_submit_access']) || $config['mundophpbb_downloadcenter_submit_access'] === 'registered'),
             'S_SUBMIT_ACCESS_ADMIN' => (isset($config['mundophpbb_downloadcenter_submit_access']) && $config['mundophpbb_downloadcenter_submit_access'] === 'admin'),
             'DOWNLOADCENTER_DUPLICATE_WINDOW' => isset($config['mundophpbb_downloadcenter_duplicate_window']) ? (int) $config['mundophpbb_downloadcenter_duplicate_window'] : 3600,
+            'DOWNLOADCENTER_RULES_TOPIC_ID' => isset($config['mundophpbb_downloadcenter_rules_topic_id']) ? (int) $config['mundophpbb_downloadcenter_rules_topic_id'] : 0,
             'DOWNLOADCENTER_SUPPORT_FORUM_ID' => isset($config['mundophpbb_downloadcenter_support_forum_id']) ? (int) $config['mundophpbb_downloadcenter_support_forum_id'] : 0,
             'DOWNLOADCENTER_NOTIFICATIONS_ENABLED' => !isset($config['mundophpbb_downloadcenter_notifications_enabled']) || (bool) $config['mundophpbb_downloadcenter_notifications_enabled'],
             'DOWNLOADCENTER_PUBLIC_PER_PAGE' => isset($config['mundophpbb_downloadcenter_public_per_page']) ? (int) $config['mundophpbb_downloadcenter_public_per_page'] : 12,
@@ -545,7 +1223,157 @@ class main_module
             'DOWNLOADCENTER_ALLOWED_EXTENSIONS' => $this->get_allowed_extensions_string(),
             'DOWNLOADCENTER_MAX_UPLOAD_MB' => $this->get_max_upload_mb(),
             'DOWNLOADCENTER_UPLOAD_RULES' => $this->upload_rules_text($user),
+            'DOWNLOADCENTER_SHOW_PUBLIC_STATS' => !isset($config['mundophpbb_downloadcenter_show_public_stats']) || (bool) $config['mundophpbb_downloadcenter_show_public_stats'],
+            'DOWNLOADCENTER_FEED_ENABLED' => !isset($config['mundophpbb_downloadcenter_feed_enabled']) || (bool) $config['mundophpbb_downloadcenter_feed_enabled'],
+            'DOWNLOADCENTER_RATE_LIMIT_COUNT' => isset($config['mundophpbb_downloadcenter_rate_limit_count']) ? (int) $config['mundophpbb_downloadcenter_rate_limit_count'] : 0,
+            'DOWNLOADCENTER_RATE_LIMIT_WINDOW' => isset($config['mundophpbb_downloadcenter_rate_limit_window']) ? (int) $config['mundophpbb_downloadcenter_rate_limit_window'] : 60,
         ]);
+    }
+
+
+
+    protected function assign_acl_permission_diagnostics($template, $user)
+    {
+        global $auth;
+
+        $permissions = [
+            'u_downloadcenter_view' => $user->lang('ACP_DOWNLOADCENTER_ACL_VIEW'),
+            'u_downloadcenter_download' => $user->lang('ACP_DOWNLOADCENTER_ACL_DOWNLOAD'),
+            'u_downloadcenter_submit' => $user->lang('ACP_DOWNLOADCENTER_ACL_SUBMIT'),
+            'm_downloadcenter_approve' => $user->lang('ACP_DOWNLOADCENTER_ACL_APPROVE'),
+            'a_downloadcenter_manage' => $user->lang('ACP_DOWNLOADCENTER_ACL_MANAGE'),
+        ];
+
+        $missing_count = 0;
+        foreach ($permissions as $permission => $label)
+        {
+            $granted = $auth->acl_get($permission) || $auth->acl_get('a_board');
+            if (!$granted)
+            {
+                $missing_count++;
+            }
+
+            $template->assign_block_vars('acl_permissions', [
+                'PERMISSION' => $permission,
+                'LABEL' => $label,
+                'STATUS' => $granted ? $user->lang('ACP_DOWNLOADCENTER_ACL_GRANTED') : $user->lang('ACP_DOWNLOADCENTER_ACL_NOT_GRANTED'),
+                'STATUS_CLASS' => $granted ? 'ok' : 'warn',
+            ]);
+        }
+
+        $template->assign_vars([
+            'S_ACL_DIAGNOSTIC_HAS_WARNINGS' => $missing_count > 0,
+            'DOWNLOADCENTER_ACL_DIAGNOSTIC_SUMMARY' => $missing_count > 0
+                ? $user->lang('ACP_DOWNLOADCENTER_ACL_DIAGNOSTIC_WARNING', $missing_count)
+                : $user->lang('ACP_DOWNLOADCENTER_ACL_DIAGNOSTIC_OK'),
+        ]);
+    }
+
+    protected function inherit_access_floor($view_mode, $requested_mode)
+    {
+        $weights = ['all' => 0, 'registered' => 1, 'admin' => 2];
+        $view_mode = $this->valid_access_mode($view_mode, 'all');
+        $requested_mode = $this->valid_access_mode($requested_mode, 'registered');
+
+        return ($weights[$view_mode] >= $weights[$requested_mode]) ? $view_mode : $requested_mode;
+    }
+
+    protected function normalise_submit_access($view_mode, $requested_mode)
+    {
+        $submit_access = $this->inherit_access_floor($view_mode, $this->valid_access_mode($requested_mode, 'registered'));
+
+        return ($submit_access === 'all') ? 'registered' : $submit_access;
+    }
+
+    protected function access_mode_label($user, $mode)
+    {
+        $mode = $this->valid_access_mode($mode, 'registered');
+
+        switch ($mode)
+        {
+            case 'all':
+                return $user->lang('ACP_DOWNLOADCENTER_ACCESS_ALL');
+            case 'admin':
+                return $user->lang('ACP_DOWNLOADCENTER_ACCESS_ADMIN');
+            case 'registered':
+            default:
+                return $user->lang('ACP_DOWNLOADCENTER_ACCESS_REGISTERED');
+        }
+    }
+
+    protected function permission_mode_summary($user, $config)
+    {
+        return (isset($config['mundophpbb_downloadcenter_permission_mode']) && $config['mundophpbb_downloadcenter_permission_mode'] === 'acl')
+            ? $user->lang('ACP_DOWNLOADCENTER_PERMISSION_MODE_ACL_SUMMARY')
+            : $user->lang('ACP_DOWNLOADCENTER_PERMISSION_MODE_GLOBAL_SUMMARY');
+    }
+
+    protected function permission_effect_summary($user, $config)
+    {
+        if (isset($config['mundophpbb_downloadcenter_permission_mode']) && $config['mundophpbb_downloadcenter_permission_mode'] === 'acl')
+        {
+            return $user->lang('ACP_DOWNLOADCENTER_PERMISSION_EFFECT_ACL_TEXT');
+        }
+
+        $view_access = $this->valid_access_mode(isset($config['mundophpbb_downloadcenter_view_access']) ? $config['mundophpbb_downloadcenter_view_access'] : 'all', 'all');
+        $download_access = $this->inherit_access_floor($view_access, isset($config['mundophpbb_downloadcenter_download_access']) ? $config['mundophpbb_downloadcenter_download_access'] : 'registered');
+        $submit_access = $this->normalise_submit_access($view_access, isset($config['mundophpbb_downloadcenter_submit_access']) ? $config['mundophpbb_downloadcenter_submit_access'] : 'registered');
+        $min_posts = isset($config['mundophpbb_downloadcenter_min_posts']) ? (int) $config['mundophpbb_downloadcenter_min_posts'] : 0;
+
+        $summary = $user->lang(
+            'ACP_DOWNLOADCENTER_PERMISSION_EFFECT_SUMMARY_TEXT',
+            $this->access_mode_label($user, $view_access),
+            $this->access_mode_label($user, $download_access),
+            $this->access_mode_label($user, $submit_access)
+        );
+
+        if ($min_posts > 0)
+        {
+            $summary .= ' ' . $user->lang('ACP_DOWNLOADCENTER_PERMISSION_MIN_POSTS_NOTE', (string) $min_posts);
+        }
+
+        return $summary;
+    }
+
+    protected function permission_warning($user, $config)
+    {
+        if (isset($config['mundophpbb_downloadcenter_permission_mode']) && $config['mundophpbb_downloadcenter_permission_mode'] === 'acl')
+        {
+            return $user->lang('ACP_DOWNLOADCENTER_PERMISSION_WARNING_ACL_MODE');
+        }
+
+        $enabled = !isset($config['mundophpbb_downloadcenter_enabled']) || (bool) $config['mundophpbb_downloadcenter_enabled'];
+        $allow_submissions = isset($config['mundophpbb_downloadcenter_allow_submissions']) ? (bool) $config['mundophpbb_downloadcenter_allow_submissions'] : true;
+        $view_access = $this->valid_access_mode(isset($config['mundophpbb_downloadcenter_view_access']) ? $config['mundophpbb_downloadcenter_view_access'] : 'all', 'all');
+        $download_access = $this->inherit_access_floor($view_access, isset($config['mundophpbb_downloadcenter_download_access']) ? $config['mundophpbb_downloadcenter_download_access'] : 'registered');
+        $submit_access = $this->normalise_submit_access($view_access, isset($config['mundophpbb_downloadcenter_submit_access']) ? $config['mundophpbb_downloadcenter_submit_access'] : 'registered');
+
+        if (!$enabled)
+        {
+            return $user->lang('ACP_DOWNLOADCENTER_PERMISSION_WARNING_DISABLED');
+        }
+
+        if ($view_access === 'admin')
+        {
+            return $user->lang('ACP_DOWNLOADCENTER_PERMISSION_WARNING_ADMIN_VIEW');
+        }
+
+        if ($download_access === 'admin')
+        {
+            return $user->lang('ACP_DOWNLOADCENTER_PERMISSION_WARNING_ADMIN_DOWNLOAD');
+        }
+
+        if (!$allow_submissions)
+        {
+            return $user->lang('ACP_DOWNLOADCENTER_PERMISSION_WARNING_SUBMISSIONS_DISABLED');
+        }
+
+        if ($submit_access === 'admin')
+        {
+            return $user->lang('ACP_DOWNLOADCENTER_PERMISSION_WARNING_ADMIN_SUBMIT');
+        }
+
+        return '';
     }
 
     protected function valid_access_mode($mode, $default)
@@ -568,8 +1396,8 @@ class main_module
                 trigger_error('FORM_INVALID');
             }
 
-            $name = $this->sanitize_db_text(trim($request->variable('category_name', '', true)));
-            $desc = $this->sanitize_db_text(trim($request->variable('category_desc', '', true)));
+            $name = trim($request->variable('category_name', '', true));
+            $desc = trim($request->variable('category_desc', '', true));
             $order = max(0, $request->variable('category_order', 0));
             $enabled = $request->variable('category_enabled', 0);
 
@@ -734,13 +1562,21 @@ class main_module
                 if ($version_row)
                 {
                     $item_id = (int) $version_row['item_id'];
-                    $this->delete_local_file_for_version($version_row);
+                    $was_current_version = $this->is_current_version_for_item($db, $items_table, $item_id, (int) $version_id);
+                    $this->delete_local_file_for_version($version_row, $db, $versions_table);
                     $sql = 'DELETE FROM ' . $downloads_table . ' WHERE version_id = ' . (int) $version_id;
                     $db->sql_query($sql);
                     $sql = 'DELETE FROM ' . $versions_table . ' WHERE version_id = ' . (int) $version_id;
                     $db->sql_query($sql);
+
+                    if ($was_current_version)
+                    {
+                        $this->assign_fallback_current_version($db, $items_table, $versions_table, $item_id);
+                    }
+
                     $this->sync_item_download_count($db, $item_id);
                     $this->add_log($db, $user, 'version_deleted', $user->lang('ACP_DOWNLOADCENTER_LOG_VERSION_DELETED', (string) $version_id), $item_id, $version_id);
+                    $this->sync_support_topic_for_item($db, $config, $user, $items_table, $versions_table, $item_id, $phpbb_root_path, $phpEx);
                 }
 
                 trigger_error($user->lang('ACP_DOWNLOADCENTER_VERSION_DELETED') . adm_back_link($this->u_action . '&amp;action=edit&amp;item_id=' . (int) $item_id));
@@ -754,6 +1590,30 @@ class main_module
                 ]));
             }
         }
+
+        if ($action === 'set_current_version' && $version_id > 0)
+        {
+            $sql = 'SELECT * FROM ' . $versions_table . ' WHERE version_id = ' . (int) $version_id;
+            $result = $db->sql_query_limit($sql, 1);
+            $version_row = $db->sql_fetchrow($result);
+            $db->sql_freeresult($result);
+
+            if (!$version_row)
+            {
+                trigger_error($user->lang('ACP_DOWNLOADCENTER_VERSION_REQUIRED') . adm_back_link($this->u_action));
+            }
+
+            $item_id = (int) $version_row['item_id'];
+            $sql = 'UPDATE ' . $items_table . '
+                SET item_current_version_id = ' . (int) $version_id . ', item_updated = ' . (int) $time . '
+                WHERE item_id = ' . (int) $item_id;
+            $db->sql_query($sql);
+            $this->add_log($db, $user, 'version_set_current', $user->lang('ACP_DOWNLOADCENTER_LOG_VERSION_SET_CURRENT', (string) $version_id), $item_id, $version_id);
+            $this->sync_support_topic_for_item($db, $config, $user, $items_table, $versions_table, $item_id, $phpbb_root_path, $phpEx);
+
+            trigger_error($user->lang('ACP_DOWNLOADCENTER_VERSION_SET_CURRENT') . adm_back_link($this->u_action . '&amp;action=edit&amp;item_id=' . (int) $item_id));
+        }
+
 
         if ($action === 'delete_file' && $version_id > 0)
         {
@@ -909,7 +1769,7 @@ class main_module
             $screenshot_data = [
                 'item_id' => $item_id,
                 'image_file' => $uploaded_screenshot['file_name'],
-                'image_caption' => $this->sanitize_db_text(trim($request->variable('screenshot_caption', '', true))),
+                'image_caption' => trim($request->variable('screenshot_caption', '', true)),
                 'image_order' => max(0, $request->variable('screenshot_order', 0)),
                 'image_created' => $time,
             ];
@@ -920,6 +1780,200 @@ class main_module
             $this->redirect_to_acp_anchor($this->u_action . '&amp;action=edit&amp;item_id=' . (int) $item_id . '&amp;screenshot_status=added#downloadcenter-screenshots');
         }
 
+        if ($request->is_set_post('submit_version'))
+        {
+            if (!check_form_key('mundophpbb_downloadcenter_items'))
+            {
+                trigger_error('FORM_INVALID');
+            }
+
+            if ($item_id <= 0)
+            {
+                trigger_error($user->lang('ACP_DOWNLOADCENTER_SAVE_ITEM_BEFORE_VERSION') . adm_back_link($this->u_action));
+            }
+
+            $edit_version_id = $request->variable('edit_version_id', 0);
+            $editing_existing_version = false;
+            $previous_version_row = false;
+            if ($edit_version_id > 0)
+            {
+                $sql = 'SELECT * FROM ' . $versions_table . '
+                    WHERE version_id = ' . (int) $edit_version_id . '
+                        AND item_id = ' . (int) $item_id;
+                $result = $db->sql_query_limit($sql, 1);
+                $previous_version_row = $db->sql_fetchrow($result);
+                $db->sql_freeresult($result);
+
+                if (!$previous_version_row)
+                {
+                    trigger_error($user->lang('ACP_DOWNLOADCENTER_VERSION_REQUIRED') . adm_back_link($this->u_action . '&amp;action=edit&amp;item_id=' . (int) $item_id));
+                }
+                $editing_existing_version = true;
+            }
+
+            $version_number = trim($request->variable('version_number', '', true));
+            $download_type = $request->variable('download_type', 'external');
+            $download_url = trim($request->variable('download_url', '', true));
+            $download_file = trim($request->variable('download_existing_file', '', true));
+            if ($download_file === '')
+            {
+                // Backward-compatible fallback for older templates or manual technical usage.
+                $download_file = trim($request->variable('download_file', '', true));
+            }
+            $download_file = basename($download_file);
+            $file_size = '';
+            $uploaded_file = $this->handle_local_upload($request, $user, $phpbb_root_path);
+
+            if ($uploaded_file)
+            {
+                $download_type = 'local';
+                $download_file = $uploaded_file['file_name'];
+                $file_size = $uploaded_file['file_size'];
+            }
+            else if ($download_type === 'local' && $download_file !== '')
+            {
+                $existing_path = $this->local_file_path($download_file);
+                if (!is_file($existing_path))
+                {
+                    trigger_error($user->lang('ACP_DOWNLOADCENTER_EXISTING_FILE_NOT_FOUND') . adm_back_link($this->u_action . '&amp;action=edit&amp;item_id=' . (int) $item_id));
+                }
+                if (!$this->is_allowed_existing_file($download_file))
+                {
+                    trigger_error($user->lang('ACP_DOWNLOADCENTER_UPLOAD_EXTENSION_NOT_ALLOWED', $this->get_allowed_extensions_string()) . adm_back_link($this->u_action . '&amp;action=edit&amp;item_id=' . (int) $item_id));
+                }
+                $file_size = $this->format_file_size(filesize($existing_path));
+            }
+            else if ($editing_existing_version && $download_type === 'local' && !empty($previous_version_row['download_file']))
+            {
+                $download_file = (string) $previous_version_row['download_file'];
+                $file_size = (string) $previous_version_row['file_size'];
+            }
+
+            if ($version_number === '')
+            {
+                trigger_error($user->lang('ACP_DOWNLOADCENTER_VERSION_REQUIRED') . adm_back_link($this->u_action . '&amp;action=edit&amp;item_id=' . (int) $item_id));
+            }
+
+            if ($download_type === 'external' && $download_url === '')
+            {
+                trigger_error($user->lang('ACP_DOWNLOADCENTER_EXTERNAL_URL_REQUIRED') . adm_back_link($this->u_action . '&amp;action=edit&amp;item_id=' . (int) $item_id));
+            }
+
+            if ($download_type === 'external' && (!preg_match('#^https?://#i', $download_url) || !filter_var($download_url, FILTER_VALIDATE_URL)))
+            {
+                trigger_error($user->lang('ACP_DOWNLOADCENTER_EXTERNAL_URL_INVALID') . adm_back_link($this->u_action . '&amp;action=edit&amp;item_id=' . (int) $item_id));
+            }
+
+            if ($download_type === 'local' && $download_file === '')
+            {
+                trigger_error($user->lang('ACP_DOWNLOADCENTER_LOCAL_FILE_REQUIRED') . adm_back_link($this->u_action . '&amp;action=edit&amp;item_id=' . (int) $item_id));
+            }
+
+            if ($download_type === 'external')
+            {
+                // Keep external versions clean: the URL is the only download target.
+                $download_file = '';
+                $file_size = '';
+            }
+            else
+            {
+                // Keep local versions clean: the stored file is the only download target.
+                $download_url = '';
+            }
+
+            $version_data = [
+                'item_id' => $item_id,
+                'version_number' => $version_number,
+                'phpbb_version' => trim($request->variable('phpbb_version', '', true)),
+                'php_version' => trim($request->variable('php_version', '', true)),
+                'version_changelog' => trim($request->variable('version_changelog', '', true)),
+                'download_type' => $download_type,
+                'download_url' => $download_url,
+                'download_file' => $download_file,
+                'file_size' => $file_size,
+                'version_enabled' => 1,
+            ];
+
+            if ($editing_existing_version)
+            {
+                $sql = 'UPDATE ' . $versions_table . ' SET ' . $db->sql_build_array('UPDATE', $version_data) . '
+                    WHERE version_id = ' . (int) $edit_version_id . '
+                        AND item_id = ' . (int) $item_id;
+                $db->sql_query($sql);
+                $saved_version_id = (int) $edit_version_id;
+                $this->add_log($db, $user, 'version_updated', $user->lang('ACP_DOWNLOADCENTER_LOG_VERSION_UPDATED', $version_number), $item_id, $saved_version_id);
+            }
+            else
+            {
+                $version_data['version_created'] = $time;
+                $sql = 'INSERT INTO ' . $versions_table . ' ' . $db->sql_build_array('INSERT', $version_data);
+                $db->sql_query($sql);
+                $saved_version_id = (int) $db->sql_nextid();
+                $this->add_log($db, $user, 'version_created', $user->lang('ACP_DOWNLOADCENTER_LOG_VERSION_CREATED', $version_number), $item_id, $saved_version_id);
+
+                $sql = 'UPDATE ' . $items_table . '
+                    SET item_current_version_id = ' . (int) $saved_version_id . ', item_updated = ' . (int) $time . '
+                    WHERE item_id = ' . (int) $item_id;
+                $db->sql_query($sql);
+            }
+
+            if ($editing_existing_version)
+            {
+                $sql = 'UPDATE ' . $items_table . '
+                    SET item_updated = ' . (int) $time . '
+                    WHERE item_id = ' . (int) $item_id;
+                $db->sql_query($sql);
+            }
+
+            $this->sync_support_topic_for_item($db, $config, $user, $items_table, $versions_table, $item_id, $phpbb_root_path, $phpEx);
+
+            $message_key = $editing_existing_version ? 'ACP_DOWNLOADCENTER_VERSION_UPDATED' : 'ACP_DOWNLOADCENTER_VERSION_SAVED';
+            trigger_error($user->lang($message_key) . adm_back_link($this->u_action . '&amp;action=edit&amp;item_id=' . (int) $item_id));
+        }
+
+        if ($request->is_set_post('submit_current_changelog'))
+        {
+            if (!check_form_key('mundophpbb_downloadcenter_items'))
+            {
+                trigger_error('FORM_INVALID');
+            }
+
+            if ($item_id <= 0)
+            {
+                trigger_error($user->lang('ACP_DOWNLOADCENTER_SAVE_ITEM_BEFORE_VERSION') . adm_back_link($this->u_action));
+            }
+
+            $latest_version_id = $request->variable('latest_version_id', 0);
+            $latest_changelog = trim($request->variable('latest_version_changelog', '', true));
+
+            if ($latest_version_id <= 0)
+            {
+                trigger_error($user->lang('ACP_DOWNLOADCENTER_VERSION_REQUIRED') . adm_back_link($this->u_action . '&amp;action=edit&amp;item_id=' . (int) $item_id));
+            }
+
+            $sql = 'SELECT version_id FROM ' . $versions_table . '
+                WHERE version_id = ' . (int) $latest_version_id . '
+                    AND item_id = ' . (int) $item_id;
+            $result = $db->sql_query_limit($sql, 1);
+            $latest_row = $db->sql_fetchrow($result);
+            $db->sql_freeresult($result);
+
+            if (!$latest_row)
+            {
+                trigger_error($user->lang('ACP_DOWNLOADCENTER_VERSION_REQUIRED') . adm_back_link($this->u_action . '&amp;action=edit&amp;item_id=' . (int) $item_id));
+            }
+
+            $sql = 'UPDATE ' . $versions_table . "
+                SET version_changelog = '" . $db->sql_escape($latest_changelog) . "'
+                WHERE version_id = " . (int) $latest_version_id;
+            $db->sql_query($sql);
+            $this->add_log($db, $user, 'version_changelog_updated', $user->lang('ACP_DOWNLOADCENTER_LOG_VERSION_CHANGELOG_UPDATED', (string) $latest_version_id), $item_id, $latest_version_id);
+
+            $this->sync_support_topic_for_item($db, $config, $user, $items_table, $versions_table, $item_id, $phpbb_root_path, $phpEx);
+
+            trigger_error($user->lang('ACP_DOWNLOADCENTER_CHANGELOG_SAVED') . adm_back_link($this->u_action . '&amp;action=edit&amp;item_id=' . (int) $item_id));
+        }
+
         if ($request->is_set_post('submit_item'))
         {
             if (!check_form_key('mundophpbb_downloadcenter_items'))
@@ -927,7 +1981,7 @@ class main_module
                 trigger_error('FORM_INVALID');
             }
 
-            $name = $this->sanitize_db_text(trim($request->variable('item_name', '', true)));
+            $name = trim($request->variable('item_name', '', true));
             if ($name === '')
             {
                 trigger_error($user->lang('ACP_DOWNLOADCENTER_ITEM_NAME_REQUIRED') . adm_back_link($this->u_action));
@@ -941,15 +1995,13 @@ class main_module
                 'topic_id' => max(0, $request->variable('topic_id', 0)),
                 'item_name' => $name,
                 'item_slug' => $this->slugify($name),
-                'item_short_desc' => $this->sanitize_db_text(trim($request->variable('item_short_desc', '', true))),
-                'item_desc' => $this->sanitize_db_text(trim($request->variable('item_desc', '', true))),
+                'item_short_desc' => trim($request->variable('item_short_desc', '', true)),
+                'item_desc' => trim($request->variable('item_desc', '', true)),
                 'item_icon' => $item_icon,
                 'item_enabled' => $request->variable('item_enabled', 0),
                 'item_approved' => $request->variable('item_approved', 0),
                 'item_updated' => $time,
             ];
-
-            $is_new_item = ($item_id <= 0);
 
             if ($item_id > 0)
             {
@@ -966,110 +2018,13 @@ class main_module
                 $this->add_log($db, $user, 'item_created', $user->lang('ACP_DOWNLOADCENTER_LOG_ITEM_CREATED', $name), $item_id);
             }
 
-            $add_version = (bool) $request->variable('add_version', 0);
-
-            if (!$is_new_item && $item_id > 0 && $request->is_set_post('latest_version_changelog'))
-            {
-                $latest_version_id = $request->variable('latest_version_id', 0);
-                $latest_changelog = $this->sanitize_db_text(trim($request->variable('latest_version_changelog', '', true)));
-
-                if ($latest_version_id > 0)
-                {
-                    $sql = 'SELECT version_id FROM ' . $versions_table . '
-                        WHERE version_id = ' . (int) $latest_version_id . '
-                            AND item_id = ' . (int) $item_id;
-                    $result = $db->sql_query_limit($sql, 1);
-                    $latest_row = $db->sql_fetchrow($result);
-                    $db->sql_freeresult($result);
-
-                    if ($latest_row)
-                    {
-                        $sql = 'UPDATE ' . $versions_table . "
-                            SET version_changelog = '" . $db->sql_escape($latest_changelog) . "'
-                            WHERE version_id = " . (int) $latest_version_id;
-                        $db->sql_query($sql);
-                        $this->add_log($db, $user, 'version_changelog_updated', $user->lang('ACP_DOWNLOADCENTER_LOG_VERSION_CHANGELOG_UPDATED', (string) $latest_version_id), $item_id, $latest_version_id);
-                    }
-                }
-            }
-
-            if ($add_version)
-            {
-                $version_number = $this->sanitize_db_text(trim($request->variable('version_number', '', true)));
-                $download_type = $request->variable('download_type', 'external');
-                $download_url = $this->sanitize_db_text(trim($request->variable('download_url', '', true)));
-                $download_file = trim($request->variable('download_existing_file', '', true));
-                if ($download_file === '')
-                {
-                    // Backward-compatible fallback for older templates or manual technical usage.
-                    $download_file = trim($request->variable('download_file', '', true));
-                }
-                $download_file = basename($download_file);
-                $file_size = '';
-                $uploaded_file = $this->handle_local_upload($request, $user, $phpbb_root_path);
-
-                if ($uploaded_file)
-                {
-                    $download_type = 'local';
-                    $download_file = $uploaded_file['file_name'];
-                    $file_size = $uploaded_file['file_size'];
-                }
-                else if ($download_type === 'local' && $download_file !== '')
-                {
-                    $existing_path = $this->local_file_path($download_file);
-                    if (!is_file($existing_path))
-                    {
-                        trigger_error($user->lang('ACP_DOWNLOADCENTER_EXISTING_FILE_NOT_FOUND') . adm_back_link($this->u_action));
-                    }
-                    if (!$this->is_allowed_existing_file($download_file))
-                    {
-                        trigger_error($user->lang('ACP_DOWNLOADCENTER_UPLOAD_EXTENSION_NOT_ALLOWED', $this->get_allowed_extensions_string()) . adm_back_link($this->u_action));
-                    }
-                    $file_size = $this->format_file_size(filesize($existing_path));
-                }
-
-                if ($version_number === '')
-                {
-                    trigger_error($user->lang('ACP_DOWNLOADCENTER_VERSION_REQUIRED') . adm_back_link($this->u_action));
-                }
-
-                if ($download_type === 'external' && $download_url === '')
-                {
-                    trigger_error($user->lang('ACP_DOWNLOADCENTER_EXTERNAL_URL_REQUIRED') . adm_back_link($this->u_action));
-                }
-
-                if ($download_type === 'local' && $download_file === '')
-                {
-                    trigger_error($user->lang('ACP_DOWNLOADCENTER_LOCAL_FILE_REQUIRED') . adm_back_link($this->u_action));
-                }
-
-                $version_data = [
-                    'item_id' => $item_id,
-                    'version_number' => $version_number,
-                    'phpbb_version' => $this->sanitize_db_text(trim($request->variable('phpbb_version', '', true))),
-                    'php_version' => $this->sanitize_db_text(trim($request->variable('php_version', '', true))),
-                    'version_changelog' => $this->sanitize_db_text(trim($request->variable('version_changelog', '', true))),
-                    'download_type' => $download_type,
-                    'download_url' => $download_url,
-                    'download_file' => $download_file,
-                    'file_size' => $file_size,
-                    'version_enabled' => 1,
-                    'version_created' => $time,
-                ];
-
-                $sql = 'INSERT INTO ' . $versions_table . ' ' . $db->sql_build_array('INSERT', $version_data);
-                $db->sql_query($sql);
-                $new_version_id = (int) $db->sql_nextid();
-                $this->add_log($db, $user, 'version_created', $user->lang('ACP_DOWNLOADCENTER_LOG_VERSION_CREATED', $version_number), $item_id, $new_version_id);
-            }
-
             $support_topic_id = $this->sync_support_topic_for_item($db, $config, $user, $items_table, $versions_table, $item_id, $phpbb_root_path, $phpEx);
             if ($support_topic_id > 0)
             {
                 $data['topic_id'] = $support_topic_id;
             }
 
-            trigger_error($user->lang('ACP_DOWNLOADCENTER_ITEM_SAVED') . adm_back_link($this->u_action));
+            trigger_error($user->lang('ACP_DOWNLOADCENTER_ITEM_SAVED') . adm_back_link($this->u_action . '&amp;action=edit&amp;item_id=' . (int) $item_id));
         }
 
         if ($action === 'delete' && $item_id > 0)
@@ -1101,6 +2056,7 @@ class main_module
             'item_id' => 0,
             'category_id' => 0,
             'topic_id' => 0,
+            'item_current_version_id' => 0,
             'item_name' => '',
             'item_short_desc' => '',
             'item_desc' => '',
@@ -1109,7 +2065,7 @@ class main_module
             'item_approved' => 1,
         ];
 
-        if ($action === 'edit' && $item_id > 0)
+        if (($action === 'edit' || $action === 'edit_version') && $item_id > 0)
         {
             $sql = 'SELECT * FROM ' . $items_table . ' WHERE item_id = ' . (int) $item_id;
             $result = $db->sql_query($sql);
@@ -1124,10 +2080,36 @@ class main_module
         $edit_latest_version = false;
         if ((int) $edit_item['item_id'] > 0)
         {
-            $sql = 'SELECT * FROM ' . $versions_table . ' WHERE item_id = ' . (int) $edit_item['item_id'] . ' ORDER BY version_created DESC, version_id DESC';
+            $edit_latest_version = $this->get_latest_version_for_item($db, $versions_table, (int) $edit_item['item_id']);
+            if (!$edit_latest_version)
+            {
+                $edit_latest_version = false;
+            }
+        }
+
+        $edit_version = [
+            'version_id' => 0,
+            'version_number' => '',
+            'phpbb_version' => 'phpBB 3.3.x',
+            'php_version' => 'PHP >= 8.1',
+            'download_type' => 'external',
+            'download_url' => '',
+            'download_file' => '',
+            'version_changelog' => '',
+        ];
+        if ($action === 'edit_version' && (int) $edit_item['item_id'] > 0 && $version_id > 0)
+        {
+            $sql = 'SELECT * FROM ' . $versions_table . '
+                WHERE version_id = ' . (int) $version_id . '
+                    AND item_id = ' . (int) $edit_item['item_id'];
             $result = $db->sql_query_limit($sql, 1);
-            $edit_latest_version = $db->sql_fetchrow($result);
+            $edit_version_row = $db->sql_fetchrow($result);
             $db->sql_freeresult($result);
+
+            if ($edit_version_row)
+            {
+                $edit_version = array_merge($edit_version, $edit_version_row);
+            }
         }
 
         if ((int) $edit_item['item_id'] > 0)
@@ -1136,20 +2118,32 @@ class main_module
             $result = $db->sql_query($sql);
             while ($version_row = $db->sql_fetchrow($result))
             {
+                $version_target_status = $this->get_version_target_status($version_row, $user);
+                $download_target = ($version_row['download_type'] === 'external') ? trim((string) $version_row['download_url']) : trim((string) $version_row['download_file']);
+
                 $template->assign_block_vars('version_history', [
                     'VERSION_ID' => (int) $version_row['version_id'],
+                    'S_CURRENT_VERSION' => ($edit_latest_version && (int) $edit_latest_version['version_id'] === (int) $version_row['version_id']),
                     'VERSION_NUMBER' => $this->clean_version_label($version_row['version_number']),
                     'PHPBB_VERSION' => $version_row['phpbb_version'],
                     'PHP_VERSION' => $version_row['php_version'],
-                    'DOWNLOAD_TYPE' => $version_row['download_type'],
-                    'DOWNLOAD_TARGET' => ($version_row['download_type'] === 'external') ? $version_row['download_url'] : $version_row['download_file'],
-                    'FILE_SIZE' => $version_row['file_size'],
+                    'DOWNLOAD_TYPE' => $version_row['download_type'] === 'local' ? $user->lang('ACP_DOWNLOADCENTER_DOWNLOAD_TYPE_LOCAL') : $user->lang('ACP_DOWNLOADCENTER_DOWNLOAD_TYPE_EXTERNAL'),
+                    'DOWNLOAD_TARGET' => $download_target !== '' ? $download_target : '-',
+                    'DOWNLOAD_TARGET_STATUS' => $version_target_status['label'],
+                    'DOWNLOAD_TARGET_STATUS_EXPLAIN' => $version_target_status['explain'],
+                    'DOWNLOAD_TARGET_STATUS_CLASS' => $version_target_status['class'],
+                    'FILE_SIZE' => $version_row['file_size'] ?: '-',
                     'DOWNLOADS' => (int) $version_row['version_downloads'],
                     'CREATED' => $user->format_date((int) $version_row['version_created']),
                     'CHANGELOG' => $version_row['version_changelog'],
                     'S_LOCAL_FILE' => $version_row['download_type'] === 'local',
+                    'S_EXTERNAL_LINK' => $version_row['download_type'] === 'external',
+                    'S_EXTERNAL_LINK_VALID' => $version_target_status['code'] === 'external_ok',
                     'S_FILE_EXISTS' => $this->version_file_exists($version_row),
                     'S_FILE_MISSING' => ($version_row['download_type'] === 'local' && !$this->version_file_exists($version_row)),
+                    'U_EXTERNAL_LINK' => $version_row['download_type'] === 'external' ? $download_target : '',
+                    'U_EDIT' => $this->u_action . '&amp;action=edit_version&amp;item_id=' . (int) $edit_item['item_id'] . '&amp;version_id=' . (int) $version_row['version_id'] . '#downloadcenter-version-data',
+                    'U_SET_CURRENT' => $this->u_action . '&amp;action=set_current_version&amp;item_id=' . (int) $edit_item['item_id'] . '&amp;version_id=' . (int) $version_row['version_id'],
                     'U_DELETE_FILE' => $this->u_action . '&amp;action=delete_file&amp;item_id=' . (int) $edit_item['item_id'] . '&amp;version_id=' . (int) $version_row['version_id'],
                     'U_DELETE' => $this->u_action . '&amp;action=delete_version&amp;item_id=' . (int) $edit_item['item_id'] . '&amp;version_id=' . (int) $version_row['version_id'],
                 ]);
@@ -1211,12 +2205,18 @@ class main_module
         $result = $db->sql_query_limit($sql, $per_page, $start);
         while ($row = $db->sql_fetchrow($result))
         {
+            $latest_version = $this->get_latest_version_for_item($db, $versions_table, (int) $row['item_id']);
+            $operational_status = $this->get_item_operational_status($row, $latest_version, $config, $user);
+
             $template->assign_block_vars('items', [
                 'ITEM_ID' => (int) $row['item_id'],
                 'ITEM_NAME' => $row['item_name'],
                 'CATEGORY_NAME' => $row['category_name'] ?: '-',
                 'USERNAME' => $row['username'] ?: '-',
-                'LATEST_VERSION' => $row['latest_version'] ?: '-',
+                'LATEST_VERSION' => !empty($latest_version['version_number']) ? $this->clean_version_label($latest_version['version_number']) : '-',
+                'OPERATIONAL_STATUS' => $operational_status['label'],
+                'OPERATIONAL_STATUS_EXPLAIN' => $operational_status['explain'],
+                'OPERATIONAL_STATUS_CLASS' => $operational_status['class'],
                 'ITEM_ENABLED' => (bool) $row['item_enabled'],
                 'ITEM_APPROVED' => (bool) $row['item_approved'],
                 'ITEM_DOWNLOADS' => (int) $row['item_downloads'],
@@ -1229,10 +2229,16 @@ class main_module
         }
         $db->sql_freeresult($result);
 
-        $this->assign_file_library_options($db, $template, $edit_latest_version ? (string) $edit_latest_version['download_file'] : '');
+        $this->assign_file_library_options($db, $template, $edit_version ? (string) $edit_version['download_file'] : ($edit_latest_version ? (string) $edit_latest_version['download_file'] : ''));
         $this->assign_item_image_options($template, $edit_item['item_icon']);
 
         $screenshot_status = $request->variable('screenshot_status', '');
+        $edit_operational_status = ((int) $edit_item['item_id'] > 0) ? $this->get_item_operational_status($edit_item, $edit_latest_version ?: [], $config, $user) : [
+            'label' => '',
+            'explain' => '',
+            'class' => 'neutral',
+            'code' => '',
+        ];
 
         $template->assign_vars([
             'SCREENSHOT_STATUS' => $screenshot_status,
@@ -1255,6 +2261,17 @@ class main_module
             'EDIT_ITEM_ICON' => $edit_item['item_icon'],
             'EDIT_ITEM_ENABLED' => (bool) $edit_item['item_enabled'],
             'EDIT_ITEM_APPROVED' => (bool) $edit_item['item_approved'],
+            'EDIT_VERSION_ID' => (int) $edit_version['version_id'],
+            'S_EDITING_VERSION' => (int) $edit_version['version_id'] > 0,
+            'EDIT_VERSION_NUMBER_VALUE' => $edit_version['version_number'],
+            'EDIT_VERSION_PHPBB_VERSION' => $edit_version['phpbb_version'],
+            'EDIT_VERSION_PHP_VERSION' => $edit_version['php_version'],
+            'EDIT_VERSION_DOWNLOAD_TYPE' => $edit_version['download_type'],
+            'EDIT_VERSION_DOWNLOAD_URL' => $edit_version['download_url'],
+            'EDIT_VERSION_CHANGELOG' => $edit_version['version_changelog'],
+            'S_EDIT_VERSION_EXTERNAL' => $edit_version['download_type'] === 'external',
+            'S_EDIT_VERSION_LOCAL' => $edit_version['download_type'] === 'local',
+            'U_CANCEL_VERSION_EDIT' => $this->u_action . '&amp;action=edit&amp;item_id=' . (int) $edit_item['item_id'] . '#downloadcenter-version-data',
             'EDIT_LATEST_VERSION' => $edit_latest_version ? $edit_latest_version['version_number'] : '',
             'EDIT_LATEST_PHPBB_VERSION' => $edit_latest_version ? $edit_latest_version['phpbb_version'] : '',
             'EDIT_LATEST_PHP_VERSION' => $edit_latest_version ? $edit_latest_version['php_version'] : '',
@@ -1268,6 +2285,19 @@ class main_module
             'EDIT_LATEST_DOWNLOAD_FILE' => $edit_latest_version ? $edit_latest_version['download_file'] : '',
             'EDIT_LATEST_DOWNLOAD_URL' => $edit_latest_version ? $edit_latest_version['download_url'] : '',
             'S_HAS_LATEST_VERSION' => (bool) $edit_latest_version,
+            'EDIT_OPERATIONAL_STATUS' => $edit_operational_status['label'],
+            'EDIT_OPERATIONAL_STATUS_EXPLAIN' => $edit_operational_status['explain'],
+            'EDIT_OPERATIONAL_STATUS_CLASS' => $edit_operational_status['class'],
+            'EDIT_OPERATIONAL_STATUS_CODE' => $edit_operational_status['code'],
+            'S_EDIT_HAS_OPERATIONAL_STATUS' => ((int) $edit_item['item_id'] > 0),
+            'S_EDIT_STATUS_READY' => $edit_operational_status['code'] === 'ready',
+            'S_EDIT_STATUS_DISABLED' => $edit_operational_status['code'] === 'disabled',
+            'S_EDIT_STATUS_PENDING' => $edit_operational_status['code'] === 'pending',
+            'S_EDIT_STATUS_NO_VERSION' => $edit_operational_status['code'] === 'no_version',
+            'S_EDIT_STATUS_FILE_MISSING' => $edit_operational_status['code'] === 'file_missing',
+            'S_EDIT_STATUS_EMPTY_LOCAL_FILE' => $edit_operational_status['code'] === 'empty_local_file',
+            'S_EDIT_STATUS_EXTERNAL_INVALID' => $edit_operational_status['code'] === 'external_invalid',
+            'S_EDIT_STATUS_ADMIN_ONLY' => $edit_operational_status['code'] === 'admin_only',
         ]);
     }
 
@@ -1276,7 +2306,7 @@ class main_module
 
     protected function build_item_icon_value($db, $request, $user, $item_id, $screenshots_table)
     {
-        $current = $this->sanitize_db_text(trim($request->variable('item_icon_current', '', true)));
+        $current = trim($request->variable('item_icon_current', '', true));
         $icon = $current;
 
         if ($request->variable('item_icon_clear', 0))
@@ -1284,7 +2314,7 @@ class main_module
             return '';
         }
 
-        $external_url = $this->sanitize_db_text(trim($request->variable('item_icon_url', '', true)));
+        $external_url = trim($request->variable('item_icon_url', '', true));
         if ($external_url !== '')
         {
             $icon = $external_url;
@@ -1632,16 +2662,187 @@ class main_module
             && is_file($this->local_file_path($version_row['download_file']));
     }
 
+    protected function get_version_target_status(array $version_row, $user)
+    {
+        $download_type = isset($version_row['download_type']) ? (string) $version_row['download_type'] : 'local';
+
+        if ($download_type === 'external')
+        {
+            $external_url = trim((string) $version_row['download_url']);
+            if ($external_url === '')
+            {
+                return [
+                    'code' => 'external_missing',
+                    'class' => 'critical',
+                    'label' => $user->lang('ACP_DOWNLOADCENTER_VERSION_TARGET_EXTERNAL_MISSING'),
+                    'explain' => $user->lang('ACP_DOWNLOADCENTER_VERSION_TARGET_EXTERNAL_MISSING_EXPLAIN'),
+                ];
+            }
+            if (!preg_match('#^https?://#i', $external_url) || !filter_var($external_url, FILTER_VALIDATE_URL))
+            {
+                return [
+                    'code' => 'external_invalid',
+                    'class' => 'critical',
+                    'label' => $user->lang('ACP_DOWNLOADCENTER_VERSION_TARGET_EXTERNAL_INVALID'),
+                    'explain' => $user->lang('ACP_DOWNLOADCENTER_VERSION_TARGET_EXTERNAL_INVALID_EXPLAIN'),
+                ];
+            }
+
+            return [
+                'code' => 'external_ok',
+                'class' => 'ok',
+                'label' => $user->lang('ACP_DOWNLOADCENTER_VERSION_TARGET_EXTERNAL_OK'),
+                'explain' => $user->lang('ACP_DOWNLOADCENTER_VERSION_TARGET_EXTERNAL_OK_EXPLAIN'),
+            ];
+        }
+
+        $local_file = trim((string) $version_row['download_file']);
+        if ($local_file === '')
+        {
+            return [
+                'code' => 'local_missing_name',
+                'class' => 'critical',
+                'label' => $user->lang('ACP_DOWNLOADCENTER_VERSION_TARGET_LOCAL_EMPTY'),
+                'explain' => $user->lang('ACP_DOWNLOADCENTER_VERSION_TARGET_LOCAL_EMPTY_EXPLAIN'),
+            ];
+        }
+
+        if (!$this->version_file_exists($version_row))
+        {
+            return [
+                'code' => 'local_missing_file',
+                'class' => 'critical',
+                'label' => $user->lang('ACP_DOWNLOADCENTER_VERSION_TARGET_LOCAL_MISSING'),
+                'explain' => $user->lang('ACP_DOWNLOADCENTER_VERSION_TARGET_LOCAL_MISSING_EXPLAIN'),
+            ];
+        }
+
+        return [
+            'code' => 'local_ok',
+            'class' => 'ok',
+            'label' => $user->lang('ACP_DOWNLOADCENTER_VERSION_TARGET_LOCAL_OK'),
+            'explain' => $user->lang('ACP_DOWNLOADCENTER_VERSION_TARGET_LOCAL_OK_EXPLAIN'),
+        ];
+    }
+
+    protected function get_item_operational_status(array $item, array $latest_version, $config, $user)
+    {
+        if (empty($item['item_enabled']))
+        {
+            return [
+                'code' => 'disabled',
+                'class' => 'neutral',
+                'label' => $user->lang('ACP_DOWNLOADCENTER_OPERATIONAL_DISABLED'),
+                'explain' => $user->lang('ACP_DOWNLOADCENTER_OPERATIONAL_DISABLED_EXPLAIN'),
+            ];
+        }
+
+        if (empty($item['item_approved']))
+        {
+            return [
+                'code' => 'pending',
+                'class' => 'warning',
+                'label' => $user->lang('ACP_DOWNLOADCENTER_OPERATIONAL_PENDING'),
+                'explain' => $user->lang('ACP_DOWNLOADCENTER_OPERATIONAL_PENDING_EXPLAIN'),
+            ];
+        }
+
+        if (empty($latest_version))
+        {
+            return [
+                'code' => 'no_version',
+                'class' => 'warning',
+                'label' => $user->lang('ACP_DOWNLOADCENTER_OPERATIONAL_NO_VERSION'),
+                'explain' => $user->lang('ACP_DOWNLOADCENTER_OPERATIONAL_NO_VERSION_EXPLAIN'),
+            ];
+        }
+
+        $download_type = isset($latest_version['download_type']) ? (string) $latest_version['download_type'] : 'local';
+        if ($download_type === 'external')
+        {
+            $external_url = trim((string) $latest_version['download_url']);
+            if ($external_url === '' || !preg_match('#^https?://#i', $external_url) || !filter_var($external_url, FILTER_VALIDATE_URL))
+            {
+                return [
+                    'code' => 'external_invalid',
+                    'class' => 'critical',
+                    'label' => $user->lang('ACP_DOWNLOADCENTER_OPERATIONAL_EXTERNAL_INVALID'),
+                    'explain' => $user->lang('ACP_DOWNLOADCENTER_OPERATIONAL_EXTERNAL_INVALID_EXPLAIN'),
+                ];
+            }
+        }
+        else
+        {
+            if (trim((string) $latest_version['download_file']) === '')
+            {
+                return [
+                    'code' => 'empty_local_file',
+                    'class' => 'critical',
+                    'label' => $user->lang('ACP_DOWNLOADCENTER_OPERATIONAL_EMPTY_LOCAL_FILE'),
+                    'explain' => $user->lang('ACP_DOWNLOADCENTER_OPERATIONAL_EMPTY_LOCAL_FILE_EXPLAIN'),
+                ];
+            }
+
+            if (!$this->version_file_exists($latest_version))
+            {
+                return [
+                    'code' => 'file_missing',
+                    'class' => 'critical',
+                    'label' => $user->lang('ACP_DOWNLOADCENTER_OPERATIONAL_FILE_MISSING'),
+                    'explain' => $user->lang('ACP_DOWNLOADCENTER_OPERATIONAL_FILE_MISSING_EXPLAIN'),
+                ];
+            }
+        }
+
+        $view_access = isset($config['mundophpbb_downloadcenter_view_access']) ? (string) $config['mundophpbb_downloadcenter_view_access'] : 'all';
+        $download_access = $this->inherit_access_floor($view_access, isset($config['mundophpbb_downloadcenter_download_access']) ? (string) $config['mundophpbb_downloadcenter_download_access'] : 'registered');
+        if ($view_access === 'admin' || $download_access === 'admin')
+        {
+            return [
+                'code' => 'admin_only',
+                'class' => 'warning',
+                'label' => $user->lang('ACP_DOWNLOADCENTER_OPERATIONAL_ADMIN_ONLY'),
+                'explain' => $user->lang('ACP_DOWNLOADCENTER_OPERATIONAL_ADMIN_ONLY_EXPLAIN'),
+            ];
+        }
+
+        return [
+            'code' => 'ready',
+            'class' => 'ok',
+            'label' => $user->lang('ACP_DOWNLOADCENTER_OPERATIONAL_READY'),
+            'explain' => $user->lang('ACP_DOWNLOADCENTER_OPERATIONAL_READY_EXPLAIN'),
+        ];
+    }
+
     protected function local_file_path($file_name)
     {
         return $this->local_storage_directory() . basename((string) $file_name);
     }
 
-    protected function delete_local_file_for_version($version_row)
+    protected function delete_local_file_for_version($version_row, $db = null, $versions_table = '')
     {
         if (!is_array($version_row) || (string) $version_row['download_type'] !== 'local' || trim((string) $version_row['download_file']) === '')
         {
             return false;
+        }
+
+        if ($db && $versions_table)
+        {
+            $file_name_sql = $db->sql_escape((string) $version_row['download_file']);
+            $version_id = isset($version_row['version_id']) ? (int) $version_row['version_id'] : 0;
+            $sql = 'SELECT COUNT(version_id) AS total
+                FROM ' . $versions_table . "
+                WHERE download_type = 'local'
+                    AND download_file = '" . $file_name_sql . "'
+                    AND version_id <> " . $version_id;
+            $result = $db->sql_query($sql);
+            $total = (int) $db->sql_fetchfield('total');
+            $db->sql_freeresult($result);
+
+            if ($total > 0)
+            {
+                return false;
+            }
         }
 
         $path = $this->local_file_path($version_row['download_file']);
@@ -1653,13 +2854,53 @@ class main_module
         return false;
     }
 
+    protected function is_current_version_for_item($db, $items_table, $item_id, $version_id)
+    {
+        $sql = 'SELECT item_current_version_id
+            FROM ' . $items_table . '
+            WHERE item_id = ' . (int) $item_id;
+        $result = $db->sql_query_limit($sql, 1);
+        $current_version_id = (int) $db->sql_fetchfield('item_current_version_id');
+        $db->sql_freeresult($result);
+
+        return $current_version_id === (int) $version_id;
+    }
+
+    protected function assign_fallback_current_version($db, $items_table, $versions_table, $item_id)
+    {
+        $sql = 'SELECT version_id
+            FROM ' . $versions_table . '
+            WHERE item_id = ' . (int) $item_id . '
+                AND version_enabled = 1
+            ORDER BY version_created DESC, version_id DESC';
+        $result = $db->sql_query_limit($sql, 1);
+        $fallback_version_id = (int) $db->sql_fetchfield('version_id');
+        $db->sql_freeresult($result);
+
+        $sql = 'UPDATE ' . $items_table . '
+            SET item_current_version_id = ' . (int) $fallback_version_id . ',
+                item_updated = ' . time() . '
+            WHERE item_id = ' . (int) $item_id;
+        $db->sql_query($sql);
+
+        return $fallback_version_id;
+    }
+
     protected function delete_local_files_for_item($db, $versions_table, $item_id)
     {
+        $deleted_files = [];
         $sql = 'SELECT * FROM ' . $versions_table . ' WHERE item_id = ' . (int) $item_id;
         $result = $db->sql_query($sql);
         while ($version_row = $db->sql_fetchrow($result))
         {
+            $file_name = isset($version_row['download_file']) ? (string) $version_row['download_file'] : '';
+            if ($file_name === '' || isset($deleted_files[$file_name]))
+            {
+                continue;
+            }
+
             $this->delete_local_file_for_version($version_row);
+            $deleted_files[$file_name] = true;
         }
         $db->sql_freeresult($result);
     }
@@ -1798,7 +3039,7 @@ class main_module
                 'DOWNLOAD_STATUS' => $download_status,
                 'DOWNLOAD_OK' => $download_ok,
                 'FILE_SIZE' => !empty($latest_version) && !empty($latest_version['file_size']) ? $latest_version['file_size'] : '-',
-                'ITEM_SHORT_DESC' => $this->render_short_text($row['item_short_desc']),
+                'ITEM_SHORT_DESC' => $row['item_short_desc'],
                 'ITEM_DESC' => $this->excerpt_text($row['item_desc'], 700),
                 'LATEST_CHANGELOG' => !empty($latest_version) && !empty($latest_version['version_changelog']) ? $latest_version['version_changelog'] : '',
                 'SCREENSHOT_COUNT' => $screenshot_count,
@@ -1855,18 +3096,78 @@ class main_module
             }
         }
 
+        if ($action === 'delete_orphan_files')
+        {
+            if (confirm_box(true))
+            {
+                $deleted = 0;
+                $files_for_cleanup = $this->get_local_file_library($db, true);
+                foreach ($files_for_cleanup as $file)
+                {
+                    $candidate = basename((string) ($file['filename'] ?? ''));
+                    if ($candidate === '' || !empty($file['used']))
+                    {
+                        continue;
+                    }
+
+                    if (!empty($this->get_file_usage($db, $candidate)))
+                    {
+                        continue;
+                    }
+
+                    $path = $this->local_file_path($candidate);
+                    if (is_file($path) && @unlink($path))
+                    {
+                        $deleted++;
+                    }
+                }
+
+                if ($deleted > 0)
+                {
+                    $this->add_log($db, $user, 'orphan_files_deleted', $user->lang('ACP_DOWNLOADCENTER_LOG_ORPHAN_FILES_DELETED', $deleted));
+                }
+
+                trigger_error($user->lang('ACP_DOWNLOADCENTER_ORPHAN_FILES_DELETED', $deleted) . adm_back_link($this->u_action_for_mode('files')));
+            }
+            else
+            {
+                confirm_box(false, $user->lang('ACP_DOWNLOADCENTER_CONFIRM_DELETE_ORPHAN_FILES'), build_hidden_fields([
+                    'action' => 'delete_orphan_files',
+                ]));
+            }
+        }
+
         $query = trim($request->variable('file_q', '', true));
+        $status_filter = $request->variable('file_status', 'all');
+        if (!in_array($status_filter, ['all', 'used', 'orphan'], true))
+        {
+            $status_filter = 'all';
+        }
         $start = max(0, $request->variable('start', 0));
         $per_page = max(1, (int) ($config['mundophpbb_downloadcenter_acp_per_page'] ?? 20));
 
         $files = $this->get_local_file_library($db, true);
+        if ($status_filter === 'used')
+        {
+            $files = array_values(array_filter($files, static function ($file) {
+                return !empty($file['used']);
+            }));
+        }
+        else if ($status_filter === 'orphan')
+        {
+            $files = array_values(array_filter($files, static function ($file) {
+                return empty($file['used']);
+            }));
+        }
+
         if ($query !== '')
         {
             $needle = utf8_strtolower($query);
             $files = array_values(array_filter($files, static function ($file) use ($needle) {
                 return strpos(utf8_strtolower($file['filename']), $needle) !== false
                     || strpos(utf8_strtolower($file['display_name']), $needle) !== false
-                    || strpos(utf8_strtolower($file['usage_label']), $needle) !== false;
+                    || strpos(utf8_strtolower($file['usage_label']), $needle) !== false
+                    || strpos(utf8_strtolower($file['extension']), $needle) !== false;
             }));
         }
 
@@ -1895,8 +3196,10 @@ class main_module
                 'FILENAME' => $file['filename'],
                 'DISPLAY_NAME' => $file['display_name'],
                 'SIZE' => $file['size'],
+                'EXTENSION' => $file['extension'],
                 'MODIFIED' => $file['modified'],
                 'USAGE_LABEL' => $file['usage_label'],
+                'USAGE_COUNT' => (int) ($file['usage_count'] ?? 0),
                 'S_USED' => !empty($file['used']),
                 'U_DELETE' => $this->u_action_for_mode('files') . '&amp;action=delete_library_file&amp;file=' . rawurlencode($file['filename']),
             ]);
@@ -1907,16 +3210,26 @@ class main_module
         {
             $base_url .= '&amp;file_q=' . rawurlencode($query);
         }
+        if ($status_filter !== 'all')
+        {
+            $base_url .= '&amp;file_status=' . rawurlencode($status_filter);
+        }
 
         $template->assign_vars([
             'FILE_LIBRARY_QUERY' => $query,
+            'FILE_LIBRARY_STATUS' => $status_filter,
+            'S_FILE_STATUS_ALL' => $status_filter === 'all',
+            'S_FILE_STATUS_USED' => $status_filter === 'used',
+            'S_FILE_STATUS_ORPHAN' => $status_filter === 'orphan',
             'FILE_LIBRARY_TOTAL' => $total_files,
             'FILE_LIBRARY_USED_TOTAL' => $used_total,
             'FILE_LIBRARY_ORPHAN_TOTAL' => $orphan_total,
             'FILE_LIBRARY_TOTAL_SIZE' => $this->format_file_size($total_bytes),
             'FILE_LIBRARY_PAGINATION' => $this->make_pagination($base_url, $total_files, $per_page, $start),
             'S_HAS_FILE_LIBRARY' => $total_files > 0,
+            'S_HAS_ORPHAN_FILES' => $orphan_total > 0,
             'U_FILES_CLEAR' => $this->u_action_for_mode('files'),
+            'U_DELETE_ORPHAN_FILES' => $this->u_action_for_mode('files') . '&amp;action=delete_orphan_files',
         ]);
     }
 
@@ -1926,6 +3239,10 @@ class main_module
         $action_filter = trim($request->variable('log_action', '', true));
         $user_filter = trim($request->variable('log_user', '', true));
         $item_filter = max(0, $request->variable('log_item_id', 0));
+        $version_filter = max(0, $request->variable('log_version_id', 0));
+        $message_filter = trim($request->variable('log_message', '', true));
+        $date_from_filter = trim($request->variable('log_date_from', '', true));
+        $date_to_filter = trim($request->variable('log_date_to', '', true));
         $clear = $request->variable('clear', 0);
 
         if ($clear)
@@ -1943,6 +3260,10 @@ class main_module
                     'log_action' => $action_filter,
                     'log_user' => $user_filter,
                     'log_item_id' => $item_filter,
+                    'log_version_id' => $version_filter,
+                    'log_message' => $message_filter,
+                    'log_date_from' => $date_from_filter,
+                    'log_date_to' => $date_to_filter,
                 ]));
             }
         }
@@ -1960,6 +3281,30 @@ class main_module
         {
             $where[] = 'item_id = ' . (int) $item_filter;
         }
+        if ($version_filter > 0)
+        {
+            $where[] = 'version_id = ' . (int) $version_filter;
+        }
+        if ($message_filter !== '')
+        {
+            $where[] = "log_message " . $db->sql_like_expression($db->get_any_char() . $db->sql_escape($message_filter) . $db->get_any_char());
+        }
+        if ($date_from_filter !== '' && preg_match('/^\\d{4}-\\d{2}-\\d{2}$/', $date_from_filter))
+        {
+            $from_time = strtotime($date_from_filter . ' 00:00:00');
+            if ($from_time !== false)
+            {
+                $where[] = 'log_time >= ' . (int) $from_time;
+            }
+        }
+        if ($date_to_filter !== '' && preg_match('/^\\d{4}-\\d{2}-\\d{2}$/', $date_to_filter))
+        {
+            $to_time = strtotime($date_to_filter . ' 23:59:59');
+            if ($to_time !== false)
+            {
+                $where[] = 'log_time <= ' . (int) $to_time;
+            }
+        }
 
         global $config;
         $start = max(0, $request->variable('start', 0));
@@ -1972,20 +3317,56 @@ class main_module
         $db->sql_freeresult($result);
         $start = $this->normalize_start($start, $per_page, $total_logs);
 
+        $today_start = strtotime(date('Y-m-d 00:00:00'));
+        $sql = 'SELECT COUNT(*) AS total FROM ' . $logs_table . ' WHERE log_time >= ' . (int) $today_start;
+        $result = $db->sql_query($sql);
+        $logs_today = (int) $db->sql_fetchfield('total');
+        $db->sql_freeresult($result);
+
+        $sql = "SELECT COUNT(*) AS total FROM " . $logs_table . " WHERE log_action " . $db->sql_like_expression('integrity' . $db->get_any_char());
+        $result = $db->sql_query($sql);
+        $integrity_logs = (int) $db->sql_fetchfield('total');
+        $db->sql_freeresult($result);
+
+        $sql = 'SELECT log_action, COUNT(*) AS total
+            FROM ' . $logs_table . $sql_where . '
+            GROUP BY log_action
+            ORDER BY total DESC, log_action ASC';
+        $result = $db->sql_query_limit($sql, 8);
+        while ($row = $db->sql_fetchrow($result))
+        {
+            $label_key = 'ACP_DOWNLOADCENTER_LOG_ACTION_' . strtoupper($row['log_action']);
+            $template->assign_block_vars('log_action_stats', [
+                'ACTION' => $row['log_action'],
+                'LABEL' => $user->lang($label_key),
+                'TOTAL' => (int) $row['total'],
+                'U_FILTER' => $this->u_action . '&amp;log_action=' . urlencode($row['log_action']),
+            ]);
+        }
+        $db->sql_freeresult($result);
+
         $sql = 'SELECT * FROM ' . $logs_table . $sql_where . ' ORDER BY log_time DESC, log_id DESC';
         $result = $db->sql_query_limit($sql, $per_page, $start);
         while ($row = $db->sql_fetchrow($result))
         {
+            $label_key = 'ACP_DOWNLOADCENTER_LOG_ACTION_' . strtoupper($row['log_action']);
+            $item_id = (int) $row['item_id'];
+            $version_id = (int) $row['version_id'];
+
             $template->assign_block_vars('logs', [
                 'LOG_ID' => (int) $row['log_id'],
                 'TIME' => $user->format_date((int) $row['log_time']),
                 'USERNAME' => $row['username'] ?: '-',
                 'USER_ID' => (int) $row['user_id'],
                 'ACTION' => $row['log_action'],
+                'ACTION_LABEL' => $user->lang($label_key),
                 'MESSAGE' => $row['log_message'],
-                'ITEM_ID' => (int) $row['item_id'],
-                'VERSION_ID' => (int) $row['version_id'],
+                'ITEM_ID' => $item_id,
+                'VERSION_ID' => $version_id,
                 'USER_IP' => $row['user_ip'],
+                'U_ITEM' => $item_id > 0 ? $this->u_action_for_mode('items') . '&amp;action=edit&amp;item_id=' . $item_id : '',
+                'U_ITEM_LOGS' => $item_id > 0 ? $this->u_action . '&amp;log_item_id=' . $item_id : '',
+                'U_VERSION_LOGS' => $version_id > 0 ? $this->u_action . '&amp;log_version_id=' . $version_id : '',
             ]);
         }
         $db->sql_freeresult($result);
@@ -1993,8 +3374,15 @@ class main_module
         $actions = [
             'settings_saved', 'category_created', 'category_updated', 'category_deleted',
             'item_created', 'item_updated', 'item_deleted', 'item_approved', 'item_unapproved',
-            'version_created', 'version_deleted', 'version_file_deleted', 'support_topic_created', 'support_topic_updated',
-            'public_submission', 'download', 'logs_cleared',
+            'item_image_uploaded', 'item_image_cleared',
+            'version_created', 'version_updated', 'version_set_current', 'version_changelog_updated', 'version_deleted', 'version_file_deleted',
+            'screenshot_created', 'screenshot_deleted',
+            'library_file_deleted', 'orphan_files_deleted',
+            'support_topic_created', 'support_topic_updated',
+            'public_submission', 'download',
+            'integrity_fix_current_version', 'integrity_clean_mixed_target', 'integrity_rebuild_download_counters',
+            'integrity_delete_orphan_download', 'integrity_delete_orphan_screenshot', 'integrity_delete_orphan_version',
+            'logs_cleared',
         ];
 
         foreach ($actions as $action)
@@ -2010,13 +3398,25 @@ class main_module
             'log_action' => $action_filter,
             'log_user' => $user_filter,
             'log_item_id' => $item_filter,
+            'log_version_id' => $version_filter,
+            'log_message' => $message_filter,
+            'log_date_from' => $date_from_filter,
+            'log_date_to' => $date_to_filter,
         ]);
 
         $template->assign_vars([
             'LOG_ACTION_FILTER' => $action_filter,
             'LOG_USER_FILTER' => $user_filter,
             'LOG_ITEM_ID_FILTER' => $item_filter,
+            'LOG_VERSION_ID_FILTER' => $version_filter,
+            'LOG_MESSAGE_FILTER' => $message_filter,
+            'LOG_DATE_FROM_FILTER' => $date_from_filter,
+            'LOG_DATE_TO_FILTER' => $date_to_filter,
+            'LOGS_TOTAL_MATCHING' => $total_logs,
+            'LOGS_TODAY' => $logs_today,
+            'LOGS_INTEGRITY_TOTAL' => $integrity_logs,
             'U_CLEAR_LOGS' => $this->u_action . '&amp;clear=1',
+            'U_LOGS_INTEGRITY' => $this->u_action . '&amp;log_action=integrity_fix_current_version',
             'LOGS_PAGINATION' => $this->make_pagination($log_pagination_url, $total_logs, $per_page, $start),
             'LOGS_PAGE_NUMBER' => $this->make_page_number($total_logs, $per_page, $start),
             'S_LOGS_HAS_PAGINATION' => $total_logs > $per_page,
@@ -2086,8 +3486,10 @@ class main_module
                 'FILENAME' => $file['filename'],
                 'DISPLAY_NAME' => $file['display_name'],
                 'SIZE' => $file['size'],
+                'EXTENSION' => $file['extension'],
                 'MODIFIED' => $file['modified'],
                 'USAGE_LABEL' => $file['usage_label'],
+                'USAGE_COUNT' => (int) ($file['usage_count'] ?? 0),
                 'S_USED' => $file['used'],
                 'S_SELECTED' => $selected_file !== '' && $selected_file === $file['filename'],
             ]);
@@ -2166,8 +3568,10 @@ class main_module
                 'display_name' => $this->friendly_file_name($entry),
                 'size' => $this->format_file_size(filesize($path)),
                 'bytes' => (int) filesize($path),
+                'extension' => $extension,
                 'modified' => date('Y-m-d H:i', (int) filemtime($path)),
                 'used' => $used,
+                'usage_count' => $used ? count($usage[$entry]) : 0,
                 'usage_label' => $used ? implode(', ', array_slice($usage[$entry], 0, 3)) . (count($usage[$entry]) > 3 ? '...' : '') : '',
                 'mtime' => (int) filemtime($path),
             ];
@@ -2233,6 +3637,11 @@ class main_module
         }
 
         if ((int) $file['error'] !== UPLOAD_ERR_OK)
+        {
+            trigger_error($user->lang('ACP_DOWNLOADCENTER_UPLOAD_FAILED'));
+        }
+
+        if (empty($file['size']) || (int) $file['size'] <= 0)
         {
             trigger_error($user->lang('ACP_DOWNLOADCENTER_UPLOAD_FAILED'));
         }
@@ -2314,7 +3723,7 @@ class main_module
         foreach ($parts as $part)
         {
             $part = trim($part, '. ');
-            if ($part !== '' && preg_match('/^[a-z0-9]{1,10}$/', $part))
+            if ($part !== '' && preg_match('/^[a-z0-9]{1,10}$/', $part) && !$this->is_blocked_upload_extension($part))
             {
                 $allowed[$part] = $part;
             }
@@ -2340,7 +3749,7 @@ class main_module
         foreach ($parts as $part)
         {
             $part = trim($part, '. ');
-            if ($part !== '' && preg_match('/^[a-z0-9]{1,10}$/', $part))
+            if ($part !== '' && preg_match('/^[a-z0-9]{1,10}$/', $part) && !$this->is_blocked_upload_extension($part))
             {
                 $allowed[$part] = $part;
             }
@@ -2390,10 +3799,9 @@ class main_module
             return false;
         }
 
-        $dangerous = ['php', 'php3', 'php4', 'php5', 'phtml', 'phar', 'cgi', 'pl', 'asp', 'aspx', 'jsp', 'exe', 'sh', 'bat', 'cmd', 'com', 'scr', 'js', 'html', 'htm'];
-        foreach (array_slice($parts, 0, -1) as $part)
+        foreach ($parts as $part)
         {
-            if (in_array(strtolower($part), $dangerous, true))
+            if ($this->is_blocked_upload_extension($part))
             {
                 return false;
             }
@@ -2410,26 +3818,20 @@ class main_module
     }
 
 
-    protected function render_short_text($text)
+    protected function blocked_upload_extensions()
     {
-        $text = (string) $text;
-        if ($text === '')
-        {
-            return '';
-        }
+        return [
+            'php', 'php3', 'php4', 'php5', 'phtml', 'phar', 'cgi', 'pl',
+            'asp', 'aspx', 'jsp', 'exe', 'sh', 'bash', 'bat', 'cmd', 'com',
+            'scr', 'msi', 'dll', 'jar', 'js', 'mjs', 'html', 'htm', 'svg',
+            'xml', 'xhtml', 'shtml', 'htaccess', 'htpasswd'
+        ];
+    }
 
-        $text = htmlspecialchars($text, ENT_COMPAT, 'UTF-8');
-        $text = preg_replace('#\[b\](.*?)\[/b\]#is', '<strong>$1</strong>', $text);
-        $text = preg_replace('#\[i\](.*?)\[/i\]#is', '<em>$1</em>', $text);
-        $text = preg_replace('#\[u\](.*?)\[/u\]#is', '<span style="text-decoration: underline;">$1</span>', $text);
-        $text = preg_replace('#\[s\](.*?)\[/s\]#is', '<span style="text-decoration: line-through;">$1</span>', $text);
-        $text = preg_replace('#\[url\](https?://[^\s\[]+?)\[/url\]#is', '<a href="$1" rel="nofollow noopener" target="_blank">$1</a>', $text);
-        $text = preg_replace('#\[url=(https?://[^\s\]]+?)\](.*?)\[/url\]#is', '<a href="$1" rel="nofollow noopener" target="_blank">$2</a>', $text);
-        $text = preg_replace_callback('#\[size=(85|100|120|150|200)\](.*?)\[/size\]#is', function ($matches) {
-            return '<span style="font-size: ' . (int) $matches[1] . '%;">' . $matches[2] . '</span>';
-        }, $text);
-
-        return nl2br($text, false);
+    protected function is_blocked_upload_extension($extension)
+    {
+        $extension = strtolower(trim((string) $extension, '. '));
+        return $extension === '' || in_array($extension, $this->blocked_upload_extensions(), true);
     }
 
 
@@ -2614,6 +4016,33 @@ class main_module
 
     protected function get_latest_version_for_item($db, $versions_table, $item_id)
     {
+        $items_table = $this->table_prefix . 'downloadcenter_items';
+        $current_version_id = 0;
+
+        $sql = 'SELECT item_current_version_id
+            FROM ' . $items_table . '
+            WHERE item_id = ' . (int) $item_id;
+        $result = $db->sql_query_limit($sql, 1);
+        $current_version_id = (int) $db->sql_fetchfield('item_current_version_id');
+        $db->sql_freeresult($result);
+
+        if ($current_version_id > 0)
+        {
+            $sql = 'SELECT *
+                FROM ' . $versions_table . '
+                WHERE version_id = ' . (int) $current_version_id . '
+                    AND item_id = ' . (int) $item_id . '
+                    AND version_enabled = 1';
+            $result = $db->sql_query_limit($sql, 1);
+            $row = $db->sql_fetchrow($result);
+            $db->sql_freeresult($result);
+
+            if ($row)
+            {
+                return $row;
+            }
+        }
+
         $sql = 'SELECT *
             FROM ' . $versions_table . '
             WHERE item_id = ' . (int) $item_id . '
@@ -2855,25 +4284,6 @@ class main_module
         return $base_url . ($query ? '&amp;' . implode('&amp;', $query) : '');
     }
 
-
-
-    protected function sanitize_db_text($text)
-    {
-        $text = (string) $text;
-
-        // Keep extension data compatible with MySQL/MariaDB utf8 (3-byte) installations.
-        // Emoji and other 4-byte Unicode characters cause SQL 1366 when the database is not utf8mb4.
-        if ($text !== '')
-        {
-            $clean = @preg_replace('/[\x{10000}-\x{10FFFF}\x{FE00}-\x{FE0F}\x{200D}]/u', '', $text);
-            if ($clean !== null)
-            {
-                $text = $clean;
-            }
-        }
-
-        return $text;
-    }
 
     protected function make_page_number($total_items, $per_page, $start)
     {

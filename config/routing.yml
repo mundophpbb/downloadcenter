@@ -49,3 +49,8 @@ mundophpbb_downloadcenter_item_image:
     defaults: { _controller: mundophpbb.downloadcenter.controller.download:item_image }
     requirements:
         file_name: '[^/]+'
+
+
+mundophpbb_downloadcenter_feed:
+    path: /downloadcenter/feed
+    defaults: { _controller: mundophpbb.downloadcenter.controller.main:feed }

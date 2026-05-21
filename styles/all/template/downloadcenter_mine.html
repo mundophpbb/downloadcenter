@@ -11,27 +11,84 @@
         <!-- IF S_CAN_SUBMIT --><p class="downloadcenter-mine-action"><a class="button" href="{U_DOWNLOADCENTER_SUBMIT}">{L_DOWNLOADCENTER_SUBMIT_ITEM}</a></p><!-- ENDIF -->
     </div>
 
+    <div class="downloadcenter-mine-dashboard">
+        <a class="downloadcenter-mine-stat <!-- IF S_FILTER_ALL -->active<!-- ENDIF -->" href="{U_MINE_ALL}">
+            <span>{L_DOWNLOADCENTER_MY_TOTAL_ALL}</span>
+            <strong>{MY_TOTAL_ALL}</strong>
+        </a>
+        <a class="downloadcenter-mine-stat published <!-- IF S_FILTER_PUBLISHED -->active<!-- ENDIF -->" href="{U_MINE_PUBLISHED}">
+            <span>{L_DOWNLOADCENTER_STATUS_PUBLISHED}</span>
+            <strong>{MY_TOTAL_PUBLISHED}</strong>
+        </a>
+        <a class="downloadcenter-mine-stat pending <!-- IF S_FILTER_PENDING -->active<!-- ENDIF -->" href="{U_MINE_PENDING}">
+            <span>{L_DOWNLOADCENTER_STATUS_PENDING}</span>
+            <strong>{MY_TOTAL_PENDING}</strong>
+        </a>
+        <a class="downloadcenter-mine-stat disabled <!-- IF S_FILTER_DISABLED -->active<!-- ENDIF -->" href="{U_MINE_DISABLED}">
+            <span>{L_DOWNLOADCENTER_STATUS_DISABLED}</span>
+            <strong>{MY_TOTAL_DISABLED}</strong>
+        </a>
+        <a class="downloadcenter-mine-stat no-version <!-- IF S_FILTER_NO_VERSION -->active<!-- ENDIF -->" href="{U_MINE_NO_VERSION}">
+            <span>{L_DOWNLOADCENTER_MY_NO_VERSION}</span>
+            <strong>{MY_TOTAL_NO_VERSION}</strong>
+        </a>
+    </div>
+
+    <form class="downloadcenter-filter-panel downloadcenter-mine-filters" method="get" action="{U_DOWNLOADCENTER_MINE}">
+        <div class="downloadcenter-filter-grid">
+            <label>
+                <span>{L_SEARCH_KEYWORDS}</span>
+                <input type="search" name="q" value="{SEARCH_QUERY}" placeholder="{L_DOWNLOADCENTER_MY_SEARCH_PLACEHOLDER}" />
+            </label>
+            <label>
+                <span>{L_DOWNLOADCENTER_STATUS}</span>
+                <select name="status">
+                    <option value="all"<!-- IF S_FILTER_ALL --> selected="selected"<!-- ENDIF -->>{L_DOWNLOADCENTER_MY_STATUS_ALL}</option>
+                    <option value="published"<!-- IF S_FILTER_PUBLISHED --> selected="selected"<!-- ENDIF -->>{L_DOWNLOADCENTER_STATUS_PUBLISHED}</option>
+                    <option value="pending"<!-- IF S_FILTER_PENDING --> selected="selected"<!-- ENDIF -->>{L_DOWNLOADCENTER_STATUS_PENDING}</option>
+                    <option value="disabled"<!-- IF S_FILTER_DISABLED --> selected="selected"<!-- ENDIF -->>{L_DOWNLOADCENTER_STATUS_DISABLED}</option>
+                    <option value="no_version"<!-- IF S_FILTER_NO_VERSION --> selected="selected"<!-- ENDIF -->>{L_DOWNLOADCENTER_MY_NO_VERSION}</option>
+                </select>
+            </label>
+            <div class="downloadcenter-filter-actions">
+                <input class="button1" type="submit" value="{L_DOWNLOADCENTER_APPLY_FILTERS}" />
+                <!-- IF S_HAS_ACTIVE_MINE_FILTERS --><a class="button2" href="{U_DOWNLOADCENTER_MINE}">{L_DOWNLOADCENTER_CLEAR_FILTERS}</a><!-- ENDIF -->
+            </div>
+        </div>
+    </form>
+
     <!-- IF .my_items -->
+        <div class="downloadcenter-mine-results-head">
+            <strong>{TOTAL_MY_ITEMS}</strong> {L_DOWNLOADCENTER_MY_RESULTS_LABEL}
+        </div>
+
         <div class="downloadcenter-mine-list" role="list">
             <!-- BEGIN my_items -->
-                <article class="downloadcenter-mine-card" role="listitem">
+                <article class="downloadcenter-mine-card status-{my_items.STATUS_CLASS}" role="listitem">
                     <div class="downloadcenter-mine-main">
                         <div class="downloadcenter-mine-title-row">
                             <!-- IF my_items.U_ITEM --><a class="downloadcenter-mine-title" href="{my_items.U_ITEM}">{my_items.ITEM_NAME}</a><!-- ELSE --><strong class="downloadcenter-mine-title">{my_items.ITEM_NAME}</strong><!-- ENDIF -->
-                            <span class="downloadcenter-status-badge">{my_items.STATUS}</span>
+                            <span class="downloadcenter-status-badge status-{my_items.STATUS_CLASS}">{my_items.STATUS}</span>
+                            <!-- IF not my_items.S_HAS_VERSION --><span class="downloadcenter-status-badge status-no-version">{L_DOWNLOADCENTER_MY_NO_VERSION}</span><!-- ENDIF -->
                         </div>
-                        <!-- IF my_items.ITEM_SHORT_DESC --><p class="downloadcenter-mine-desc">{my_items.ITEM_SHORT_DESC}</p><!-- ENDIF -->
+                        <!-- IF my_items.ITEM_SHORT_DESC --><div class="downloadcenter-mine-desc">{my_items.ITEM_SHORT_DESC}</div><!-- ENDIF -->
+
+                        <p class="downloadcenter-mine-status-note">{my_items.STATUS_EXPLAIN}</p>
 
                         <div class="downloadcenter-mine-meta">
                             <span><strong>{L_DOWNLOADCENTER_CATEGORY}{L_COLON}</strong> {my_items.CATEGORY_NAME}</span>
                             <span><strong>{L_DOWNLOADCENTER_VERSION_NUMBER}{L_COLON}</strong> {my_items.LATEST_VERSION}</span>
+                            <!-- IF my_items.PHPBB_VERSION --><span><strong>{L_DOWNLOADCENTER_PHPBB_COMPAT}{L_COLON}</strong> {my_items.PHPBB_VERSION}</span><!-- ENDIF -->
+                            <!-- IF my_items.PHP_VERSION --><span><strong>{L_DOWNLOADCENTER_PHP_COMPAT}{L_COLON}</strong> {my_items.PHP_VERSION}</span><!-- ENDIF -->
                             <span><strong>{L_DOWNLOADCENTER_DOWNLOADS}{L_COLON}</strong> {my_items.ITEM_DOWNLOADS}</span>
+                            <span><strong>{L_DOWNLOADCENTER_CREATED}{L_COLON}</strong> {my_items.ITEM_CREATED}</span>
                             <span><strong>{L_DOWNLOADCENTER_UPDATED}{L_COLON}</strong> {my_items.ITEM_UPDATED}</span>
                         </div>
                     </div>
 
                     <div class="downloadcenter-mine-actions">
-                        <a class="button2" href="{my_items.U_EDIT}">{L_DOWNLOADCENTER_EDIT}</a>
+                        <!-- IF my_items.U_ITEM --><a class="button2" href="{my_items.U_ITEM}">{L_DOWNLOADCENTER_VIEW_DETAILS}</a><!-- ENDIF -->
+                        <a class="button1" href="{my_items.U_EDIT}">{L_DOWNLOADCENTER_EDIT}</a>
                     </div>
                 </article>
             <!-- END my_items -->
@@ -39,7 +96,12 @@
         <!-- IF PAGINATION --><div class="pagination downloadcenter-pagination">{PAGE_NUMBER} &bull; {PAGINATION}</div><!-- ENDIF -->
     <!-- ELSE -->
         <div class="downloadcenter-empty-state">
-            <p>{L_DOWNLOADCENTER_NO_MY_SUBMISSIONS}</p>
+            <!-- IF S_HAS_ACTIVE_MINE_FILTERS -->
+                <p>{L_DOWNLOADCENTER_NO_MY_SUBMISSIONS_FILTERED}</p>
+                <p><a class="button2" href="{U_DOWNLOADCENTER_MINE}">{L_DOWNLOADCENTER_CLEAR_FILTERS}</a></p>
+            <!-- ELSE -->
+                <p>{L_DOWNLOADCENTER_NO_MY_SUBMISSIONS}</p>
+            <!-- ENDIF -->
         </div>
     <!-- ENDIF -->
 </div>

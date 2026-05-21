@@ -8,6 +8,7 @@
             <p class="downloadcenter-help">{L_DOWNLOADCENTER_INDEX_HELP}</p>
         </div>
         <div class="downloadcenter-catalog-actions">
+            <!-- IF U_DOWNLOADCENTER_FEED --><a class="button" href="{U_DOWNLOADCENTER_FEED}">{L_DOWNLOADCENTER_FEED}</a><!-- ENDIF -->
             <a class="button" href="{U_DOWNLOADCENTER_RULES}">{L_DOWNLOADCENTER_RULES_TITLE}</a>
             <!-- IF S_CAN_SUBMIT --><a class="button button1" href="{U_DOWNLOADCENTER_SUBMIT}">{L_DOWNLOADCENTER_SUBMIT_ITEM}</a><!-- ENDIF -->
             <!-- IF S_SHOW_MY_SUBMISSIONS --><a class="button" href="{U_DOWNLOADCENTER_MINE}">{L_DOWNLOADCENTER_MY_SUBMISSIONS}</a><!-- ENDIF -->
@@ -15,11 +16,36 @@
     </section>
 
     <!-- IF S_SHOW_ADMIN_PENDING_NOTICE -->
-        <div class="panel downloadcenter-admin-notice"><div class="inner"><p><strong>{PENDING_TOTAL}</strong> {L_DOWNLOADCENTER_ADMIN_PENDING_NOTICE}</p></div></div>
+        <div class="panel downloadcenter-admin-notice">
+            <div class="inner">
+                <div class="downloadcenter-admin-notice-head">
+                    <strong>{PENDING_TOTAL}</strong>
+                    <span>{L_DOWNLOADCENTER_ADMIN_PENDING_NOTICE}</span>
+                </div>
+                <p>{L_DOWNLOADCENTER_ADMIN_PENDING_NOTICE_EXPLAIN}</p>
+                <!-- IF S_HAS_ADMIN_PENDING_PREVIEW -->
+                    <ul class="downloadcenter-admin-pending-list">
+                        <!-- BEGIN admin_pending_items -->
+                            <li><strong>{admin_pending_items.ITEM_NAME}</strong> <span>{L_DOWNLOADCENTER_BY_AUTHOR} {admin_pending_items.AUTHOR} &bull; {admin_pending_items.DATE}</span></li>
+                        <!-- END admin_pending_items -->
+                    </ul>
+                <!-- ENDIF -->
+                <p class="downloadcenter-help">{L_DOWNLOADCENTER_ADMIN_PENDING_NOTICE_ACTION}</p>
+            </div>
+        </div>
     <!-- ENDIF -->
 
     <!-- IF DOWNLOAD_BLOCK_REASON -->
         <div class="panel downloadcenter-warning"><div class="inner"><p>{DOWNLOAD_BLOCK_REASON}</p></div></div>
+    <!-- ENDIF -->
+
+    <!-- IF S_SHOW_PUBLIC_STATS -->
+    <section class="downloadcenter-public-stats<!-- IF DOWNLOAD_BLOCK_REASON or S_SHOW_ADMIN_PENDING_NOTICE --> has-preceding-notice<!-- ENDIF -->" aria-label="{L_DOWNLOADCENTER_PUBLIC_STATS}">
+            <div><strong>{PUBLIC_STATS_ITEMS}</strong><span>{L_DOWNLOADCENTER_ITEMS_SHORT}</span></div>
+            <div><strong>{PUBLIC_STATS_CATEGORIES}</strong><span>{L_DOWNLOADCENTER_CATEGORIES}</span></div>
+            <div><strong>{PUBLIC_STATS_DOWNLOADS}</strong><span>{L_DOWNLOADCENTER_DOWNLOADS}</span></div>
+            <!-- IF S_HAS_PUBLIC_STATS_UPDATED --><div><strong>{PUBLIC_STATS_UPDATED}</strong><span>{L_DOWNLOADCENTER_LAST_UPDATE}</span></div><!-- ENDIF -->
+        </section>
     <!-- ENDIF -->
 
     <!-- IF .categories -->
@@ -29,6 +55,34 @@
                 <a class="downloadcenter-category-pill<!-- IF categories.S_SELECTED --> active<!-- ENDIF --><!-- IF not categories.S_HAS_ITEMS --> is-empty<!-- ENDIF -->" href="{categories.U_CATEGORY}">{categories.CATEGORY_NAME} <span>{categories.CATEGORY_COUNT}</span></a>
             <!-- END categories -->
         </nav>
+
+        <!-- IF not S_HAS_SELECTED_CATEGORY -->
+            <section class="downloadcenter-category-overview" aria-label="{L_DOWNLOADCENTER_CATEGORY_OVERVIEW}">
+                <!-- BEGIN categories -->
+                    <a class="downloadcenter-category-card<!-- IF not categories.S_HAS_ITEMS --> is-empty<!-- ENDIF -->" href="{categories.U_CATEGORY}">
+                        <strong>{categories.CATEGORY_NAME}</strong>
+                        <!-- IF categories.S_HAS_DESC --><span class="downloadcenter-category-card-desc">{categories.CATEGORY_DESC}</span><!-- ENDIF -->
+                        <span class="downloadcenter-category-card-meta">
+                            <em>{categories.CATEGORY_COUNT} {L_DOWNLOADCENTER_ITEMS_SHORT}</em>
+                            <em>{categories.CATEGORY_DOWNLOADS} {L_DOWNLOADCENTER_DOWNLOADS}</em>
+                        </span>
+                    </a>
+                <!-- END categories -->
+            </section>
+        <!-- ELSE -->
+            <section class="downloadcenter-selected-category">
+                <div>
+                    <span>{L_DOWNLOADCENTER_SELECTED_CATEGORY}</span>
+                    <h3>{SELECTED_CATEGORY_NAME}</h3>
+                    <!-- IF S_SELECTED_CATEGORY_HAS_DESC --><p>{SELECTED_CATEGORY_DESC}</p><!-- ENDIF -->
+                </div>
+                <dl>
+                    <div><dt>{L_DOWNLOADCENTER_ITEMS_SHORT}</dt><dd>{SELECTED_CATEGORY_COUNT}</dd></div>
+                    <div><dt>{L_DOWNLOADCENTER_DOWNLOADS}</dt><dd>{SELECTED_CATEGORY_DOWNLOADS}</dd></div>
+                    <!-- IF S_SELECTED_CATEGORY_HAS_UPDATE --><div><dt>{L_DOWNLOADCENTER_UPDATED}</dt><dd>{SELECTED_CATEGORY_UPDATED}</dd></div><!-- ENDIF -->
+                </dl>
+            </section>
+        <!-- ENDIF -->
     <!-- ENDIF -->
 
     <section class="downloadcenter-toolbar">
@@ -36,55 +90,113 @@
             <strong>{L_DOWNLOADCENTER_FILTERS_TITLE}</strong>
             <span>{L_DOWNLOADCENTER_SEARCH_PLACEHOLDER}</span>
         </div>
-        <form class="downloadcenter-filters" method="post" action="{U_DOWNLOADCENTER_INDEX}">
-            <input type="search" name="q" value="{SEARCH_QUERY}" placeholder="{L_DOWNLOADCENTER_SEARCH_PLACEHOLDER}">
-            <select name="c">
+        <form class="downloadcenter-filters" method="get" action="{U_DOWNLOADCENTER_INDEX}">
+            <label class="downloadcenter-sr-only" for="downloadcenter-search-query">{L_DOWNLOADCENTER_SEARCH_LABEL}</label>
+            <input id="downloadcenter-search-query" type="search" name="q" value="{SEARCH_QUERY}" placeholder="{L_DOWNLOADCENTER_SEARCH_PLACEHOLDER}" autocomplete="off">
+            <label class="downloadcenter-sr-only" for="downloadcenter-filter-category">{L_DOWNLOADCENTER_CATEGORY_FILTERS}</label>
+            <select id="downloadcenter-filter-category" name="c">
                 <option value="0">{L_DOWNLOADCENTER_ALL_CATEGORIES}</option>
                 <!-- BEGIN categories -->
                     <option value="{categories.CATEGORY_ID}"<!-- IF categories.S_SELECTED --> selected="selected"<!-- ENDIF -->>{categories.CATEGORY_NAME} ({categories.CATEGORY_COUNT})</option>
                 <!-- END categories -->
             </select>
-            <select name="sort">
+            <label class="downloadcenter-sr-only" for="downloadcenter-filter-phpbb">{L_DOWNLOADCENTER_FILTER_PHPBB}</label>
+            <select id="downloadcenter-filter-phpbb" name="phpbb" aria-label="{L_DOWNLOADCENTER_FILTER_PHPBB}">
+                <option value="">{L_DOWNLOADCENTER_FILTER_PHPBB}</option>
+                <!-- BEGIN phpbb_filters -->
+                    <option value="{phpbb_filters.VALUE}"<!-- IF phpbb_filters.S_SELECTED --> selected="selected"<!-- ENDIF -->>{phpbb_filters.LABEL}</option>
+                <!-- END phpbb_filters -->
+            </select>
+            <label class="downloadcenter-sr-only" for="downloadcenter-filter-php">{L_DOWNLOADCENTER_FILTER_PHP}</label>
+            <select id="downloadcenter-filter-php" name="php" aria-label="{L_DOWNLOADCENTER_FILTER_PHP}">
+                <option value="">{L_DOWNLOADCENTER_FILTER_PHP}</option>
+                <!-- BEGIN php_filters -->
+                    <option value="{php_filters.VALUE}"<!-- IF php_filters.S_SELECTED --> selected="selected"<!-- ENDIF -->>{php_filters.LABEL}</option>
+                <!-- END php_filters -->
+            </select>
+            <label class="downloadcenter-sr-only" for="downloadcenter-filter-sort">{L_DOWNLOADCENTER_SORT_LABEL}</label>
+            <select id="downloadcenter-filter-sort" name="sort">
                 <option value="newest"<!-- IF S_SORT_NEWEST --> selected="selected"<!-- ENDIF -->>{L_DOWNLOADCENTER_SORT_NEWEST}</option>
+                <option value="updated"<!-- IF S_SORT_UPDATED --> selected="selected"<!-- ENDIF -->>{L_DOWNLOADCENTER_SORT_UPDATED}</option>
                 <option value="downloads"<!-- IF S_SORT_DOWNLOADS --> selected="selected"<!-- ENDIF -->>{L_DOWNLOADCENTER_SORT_DOWNLOADS}</option>
                 <option value="name"<!-- IF S_SORT_NAME --> selected="selected"<!-- ENDIF -->>{L_DOWNLOADCENTER_SORT_NAME}</option>
             </select>
-            <button class="button button1" type="submit" name="search" value="1">{L_DOWNLOADCENTER_APPLY_FILTERS}</button>
+            <button class="button button1" type="submit">{L_DOWNLOADCENTER_APPLY_FILTERS}</button>
             <a class="button" href="{U_DOWNLOADCENTER_INDEX}">{L_RESET}</a>
         </form>
     </section>
 
+    <div class="downloadcenter-result-summary" role="status" aria-live="polite">
+        <span>
+            <!-- IF S_HAS_ACTIVE_FILTERS -->
+                {L_DOWNLOADCENTER_FILTERED_RESULTS}: <strong>{TOTAL_ITEMS}</strong>
+            <!-- ELSE -->
+                {L_DOWNLOADCENTER_TOTAL_RESULTS}: <strong>{TOTAL_ITEMS}</strong>
+            <!-- ENDIF -->
+        </span>
+        <!-- IF S_HAS_RESULT_RANGE -->
+            <span class="downloadcenter-result-range">{L_DOWNLOADCENTER_RESULT_RANGE}: <strong>{ITEMS_FIRST}</strong>&ndash;<strong>{ITEMS_LAST}</strong></span>
+        <!-- ENDIF -->
+    </div>
+
     <!-- IF .items -->
-        <div class="downloadcenter-list">
+        <div class="downloadcenter-card-grid">
             <!-- BEGIN items -->
-                <article class="downloadcenter-result-card">
-                    <a class="downloadcenter-result-icon" href="{items.U_ITEM}" aria-hidden="true" tabindex="-1">
-                        <!-- IF items.ITEM_ICON -->
-                            <img src="{items.ITEM_ICON}" alt="">
-                        <!-- ELSE -->
-                            <span>&#8681;</span>
-                        <!-- ENDIF -->
-                    </a>
+                <article class="downloadcenter-public-card<!-- IF items.S_FILE_AVAILABLE and items.S_CAN_DOWNLOAD --> is-ready<!-- ELSEIF not items.S_HAS_VERSION --> is-unpublished<!-- ELSEIF items.S_FILE_MISSING --> is-unavailable<!-- ELSE --> is-locked<!-- ENDIF -->" aria-labelledby="downloadcenter-item-title-{items.ITEM_ID}">
+                    <div class="downloadcenter-public-card-top">
+                        <a class="downloadcenter-result-icon" href="{items.U_ITEM}" aria-hidden="true" tabindex="-1">
+                            <!-- IF items.ITEM_ICON -->
+                                <img src="{items.ITEM_ICON}" alt="">
+                            <!-- ELSE -->
+                                <span>&#8681;</span>
+                            <!-- ENDIF -->
+                        </a>
 
-                    <div class="downloadcenter-result-body">
-                        <div class="downloadcenter-result-heading">
-                            <h3><a href="{items.U_ITEM}">{items.ITEM_NAME}</a></h3>
-                            <!-- IF items.VERSION_NUMBER --><span class="downloadcenter-version-badge">v{items.VERSION_NUMBER}</span><!-- ENDIF -->
-                        </div>
-
-                        <!-- IF items.ITEM_SHORT_DESC --><p class="downloadcenter-result-desc">{items.ITEM_SHORT_DESC}</p><!-- ENDIF -->
-
-                        <div class="downloadcenter-result-tags">
-                            <!-- IF items.CATEGORY_NAME --><span>{items.CATEGORY_NAME}</span><!-- ENDIF -->
-                            <!-- IF items.AUTHOR_NAME --><span>{L_DOWNLOADCENTER_BY_AUTHOR}: {items.AUTHOR_NAME}</span><!-- ENDIF -->
-                            <!-- IF items.PHPBB_VERSION --><span>{items.PHPBB_VERSION}</span><!-- ENDIF -->
-                            <!-- IF items.FILE_SIZE --><span>{items.FILE_SIZE}</span><!-- ENDIF -->
+                        <div class="downloadcenter-public-card-title">
+                            <div class="downloadcenter-public-card-badges">
+                                <!-- IF items.S_FILE_AVAILABLE and items.S_CAN_DOWNLOAD -->
+                                    <span class="downloadcenter-state-badge state-ready">{L_DOWNLOADCENTER_STATUS_AVAILABLE}</span>
+                                <!-- ELSEIF not items.S_HAS_VERSION -->
+                                    <span class="downloadcenter-state-badge state-muted">{L_DOWNLOADCENTER_STATUS_NO_VERSION}</span>
+                                <!-- ELSEIF items.S_FILE_MISSING -->
+                                    <span class="downloadcenter-state-badge state-warning">{L_DOWNLOADCENTER_STATUS_UNAVAILABLE}</span>
+                                <!-- ELSE -->
+                                    <span class="downloadcenter-state-badge state-locked">{L_DOWNLOADCENTER_STATUS_RESTRICTED}</span>
+                                <!-- ENDIF -->
+                                <!-- IF items.S_RECENTLY_UPDATED --><span class="downloadcenter-state-badge state-new">{L_DOWNLOADCENTER_STATUS_RECENTLY_UPDATED}</span><!-- ENDIF -->
+                            </div>
+                            <h3 id="downloadcenter-item-title-{items.ITEM_ID}"><a href="{items.U_ITEM}">{items.ITEM_NAME}</a></h3>
+                            <!-- IF items.CATEGORY_NAME --><p class="downloadcenter-public-card-category">{items.CATEGORY_NAME}</p><!-- ENDIF -->
                         </div>
                     </div>
 
-                    <div class="downloadcenter-result-side">
-                        <div class="downloadcenter-download-count"><strong>{items.DOWNLOADS}</strong><span>{L_DOWNLOADCENTER_DOWNLOADS}</span></div>
-                        <a class="button" href="{items.U_ITEM}">{L_DOWNLOADCENTER_VIEW_DETAILS}</a>
+                    <!-- IF items.ITEM_SHORT_DESC --><div class="downloadcenter-result-desc">{items.ITEM_SHORT_DESC}</div><!-- ENDIF -->
+
+                    <dl class="downloadcenter-public-card-meta">
+                        <div><dt>{L_DOWNLOADCENTER_VERSION}</dt><dd><!-- IF items.VERSION_NUMBER -->v{items.VERSION_NUMBER}<!-- ELSE -->&mdash;<!-- ENDIF --></dd></div>
+                        <div><dt>{L_DOWNLOADCENTER_DOWNLOADS}</dt><dd>{items.DOWNLOADS}</dd></div>
+                        <!-- IF items.PHPBB_VERSION --><div><dt>{L_DOWNLOADCENTER_PHPBB_VERSION}</dt><dd>{items.PHPBB_VERSION}</dd></div><!-- ENDIF -->
+                        <!-- IF items.PHP_VERSION --><div><dt>{L_DOWNLOADCENTER_PHP_VERSION}</dt><dd>{items.PHP_VERSION}</dd></div><!-- ENDIF -->
+                        <!-- IF items.FILE_SIZE --><div><dt>{L_DOWNLOADCENTER_FILE_SIZE}</dt><dd>{items.FILE_SIZE}</dd></div><!-- ENDIF -->
+                        <!-- IF items.ITEM_UPDATED --><div><dt>{L_DOWNLOADCENTER_UPDATED}</dt><dd>{items.ITEM_UPDATED}</dd></div><!-- ENDIF -->
+                    </dl>
+
+                    <div class="downloadcenter-public-card-footer">
+                        <div class="downloadcenter-public-card-author">
+                            <!-- IF items.AUTHOR_NAME --><span>{L_DOWNLOADCENTER_BY_AUTHOR}: {items.AUTHOR_NAME}</span><!-- ENDIF -->
+                        </div>
+                        <div class="downloadcenter-public-card-actions">
+                            <a class="button" href="{items.U_ITEM}" aria-label="{L_DOWNLOADCENTER_VIEW_DETAILS}: {items.ITEM_NAME}">{L_DOWNLOADCENTER_VIEW_DETAILS}</a>
+                            <!-- IF items.U_DOWNLOAD and items.S_CAN_DOWNLOAD and items.S_FILE_AVAILABLE -->
+                                <a class="button button1 downloadcenter-card-download" href="{items.U_DOWNLOAD}" aria-label="{L_DOWNLOADCENTER_DOWNLOAD_CURRENT}: {items.ITEM_NAME}">{L_DOWNLOADCENTER_DOWNLOAD_CURRENT}</a>
+                            <!-- ELSEIF items.S_FILE_MISSING -->
+                                <span class="button downloadcenter-disabled-button" role="button" aria-disabled="true" tabindex="-1">{L_DOWNLOADCENTER_FILE_UNAVAILABLE}</span>
+                            <!-- ELSEIF items.U_DOWNLOAD -->
+                                <span class="button downloadcenter-disabled-button" role="button" aria-disabled="true" tabindex="-1">{L_DOWNLOADCENTER_DOWNLOAD_LOCKED}</span>
+                            <!-- ELSEIF not items.S_HAS_VERSION -->
+                                <span class="button downloadcenter-disabled-button" role="button" aria-disabled="true" tabindex="-1">{L_DOWNLOADCENTER_DOWNLOAD_NOT_PUBLISHED}</span>
+                            <!-- ENDIF -->
+                        </div>
                     </div>
                 </article>
             <!-- END items -->
@@ -92,7 +204,8 @@
         <!-- IF PAGINATION --><div class="pagination downloadcenter-pagination">{PAGE_NUMBER} &bull; {PAGINATION}</div><!-- ENDIF -->
     <!-- ELSE -->
         <div class="downloadcenter-empty-state">
-            <strong>{L_DOWNLOADCENTER_NO_ITEMS}</strong>
+            <strong><!-- IF S_HAS_ACTIVE_FILTERS -->{L_DOWNLOADCENTER_NO_FILTERED_ITEMS}<!-- ELSE -->{L_DOWNLOADCENTER_NO_ITEMS}<!-- ENDIF --></strong>
+            <!-- IF S_HAS_ACTIVE_FILTERS --><p>{L_DOWNLOADCENTER_NO_FILTERED_ITEMS_EXPLAIN}</p><p><a class="button" href="{U_DOWNLOADCENTER_INDEX}">{L_DOWNLOADCENTER_CLEAR_FILTERS}</a></p><!-- ENDIF -->
         </div>
     <!-- ENDIF -->
 </div>

@@ -8,6 +8,13 @@
 .downloadcenter-acp-stat { flex: 1 1 160px; padding: 12px; border: 1px solid #ccc; background: #f7f7f7; border-radius: 4px; }
 .downloadcenter-acp-stat strong { display: block; font-size: 24px; line-height: 1.2; }
 .downloadcenter-acp-stat span { display: block; margin-top: 4px; }
+.downloadcenter-dashboard-alert-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin: 12px 0 18px; }
+.downloadcenter-dashboard-alert { background: #f7f9fb; border: 1px solid #d4dde6; border-left: 5px solid #8aa9c0; border-radius: 5px; padding: 10px 12px; }
+.downloadcenter-dashboard-alert.warning { background: #fff8e5; border-left-color: #d49a28; }
+.downloadcenter-dashboard-alert.critical { background: #fff2f2; border-left-color: #b63b3b; }
+.downloadcenter-dashboard-alert.ok { background: #f1f8ed; border-left-color: #5a9b54; }
+.downloadcenter-dashboard-alert strong { color: #105289; display: block; margin-bottom: 4px; }
+.downloadcenter-dashboard-actions { display: flex; flex-wrap: wrap; gap: 7px; margin: 10px 0 18px; }
 .downloadcenter-bbcode-toolbar { align-items: center; background: #eef3f8; border: 1px solid #c9d4df; border-radius: 4px 4px 0 0; box-sizing: border-box; display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 7px 8px; }
 .downloadcenter-bbcode-group { align-items: center; display: inline-flex; gap: 3px; }
 .downloadcenter-bbcode-group + .downloadcenter-bbcode-group { border-left: 1px solid #ccd7e2; padding-left: 6px; }
@@ -18,6 +25,9 @@
 .downloadcenter-bbcode-strike { text-decoration: line-through; }
 .downloadcenter-bbcode-size-label { align-items: center; color: #42566a; display: inline-flex; font-size: 12px; gap: 5px; margin-left: auto; white-space: nowrap; }
 .downloadcenter-bbcode-size-label select { background: #fff; border: 1px solid #aebdca; border-radius: 3px; color: #23435f; font-size: 12px; height: 26px; padding: 2px 4px; }
+.downloadcenter-bbcode-color-label { align-items: center; color: #42566a; display: inline-flex; font-size: 12px; gap: 5px; white-space: nowrap; }
+.downloadcenter-bbcode-color-label input[type="color"] { background: #fff; border: 1px solid #aebdca; border-radius: 3px; height: 26px; padding: 1px; width: 34px; }
+
 .downloadcenter-bbcode-help { color: #667; font-size: 11px; margin: 5px 0 8px; }
 
 .downloadcenter-file-picker { max-width: 100%; min-width: 520px; }
@@ -32,11 +42,16 @@
 .downloadcenter-file-orphan { color: #a33; font-weight: 700; }
 .downloadcenter-file-search { margin: 12px 0; }
 .downloadcenter-file-search input[type=text] { min-width: 280px; }
+.downloadcenter-acp-warning { background: #fff8e5; border: 1px solid #e2c178; border-left: 5px solid #d49a28; border-radius: 5px; margin: 12px 0 16px; padding: 10px 12px; }
+.downloadcenter-acp-warning strong { color: #7a4b00; display: block; margin-bottom: 4px; }
+.downloadcenter-acp-warning p { margin: 4px 0 0; }
 .downloadcenter-diagnostics { margin: 12px 0 18px; }
 .downloadcenter-diag-row { background: #f7f7f7; border: 1px solid #d8d8d8; border-left-width: 5px; border-radius: 4px; margin: 8px 0; padding: 10px 12px; }
 .downloadcenter-diag-row.ok { border-left-color: #5a9b54; }
 .downloadcenter-diag-row.warn { border-left-color: #c45f4a; background: #fff6f3; }
 .downloadcenter-diag-row strong { display: block; margin-bottom: 3px; }
+.downloadcenter-prelaunch-grid { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); margin: 12px 0 18px; }
+.downloadcenter-report-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 16px; }
 .downloadcenter-diag-status { display: inline-block; font-size: 11px; font-weight: bold; margin-right: 6px; text-transform: uppercase; }
 .downloadcenter-diag-summary { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
 .downloadcenter-diag-summary span { background: #f7f7f7; border: 1px solid #d8d8d8; border-radius: 4px; padding: 8px 10px; }
@@ -89,8 +104,58 @@
 .downloadcenter-review-footer { background: #f1f5f8; border-top: 1px solid #d8e2eb; color: #566; display: flex; flex-wrap: wrap; gap: 12px; padding: 9px 13px; }
 @media (max-width: 900px) { .downloadcenter-review-body { grid-template-columns: 1fr; } }
 
+.downloadcenter-permission-summary { background: #eef6fb; border: 1px solid #c6d8e6; border-left: 5px solid #3b7da9; border-radius: 5px; margin: 10px 0 16px; padding: 10px 12px; }
+.downloadcenter-permission-summary h3 { color: #105289; font-size: 13px; margin: 0 0 8px; }
+.downloadcenter-permission-grid { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin: 8px 0; }
+.downloadcenter-permission-card { background: #fff; border: 1px solid #d5dde5; border-radius: 4px; padding: 8px 10px; }
+.downloadcenter-permission-card strong { color: #105289; display: block; margin-bottom: 3px; }
+.downloadcenter-permission-card span { color: #333; }
+.downloadcenter-permission-warning { background: #fff8e5; border: 1px solid #e0bf84; border-left: 5px solid #d49a28; border-radius: 5px; color: #5f4300; margin: 8px 0 14px; padding: 9px 11px; }
+.downloadcenter-permission-note { color: #556; line-height: 1.45; margin: 6px 0 0; }
+.downloadcenter-acl-checklist { background: #f7f9fb; border: 1px solid #d5dde5; border-left: 5px solid #6f93b0; border-radius: 5px; margin: 10px 0 16px; padding: 10px 12px; }
+.downloadcenter-acl-checklist h3 { color: #105289; font-size: 13px; margin: 0 0 6px; }
+.downloadcenter-acl-checklist table { margin-top: 8px; }
+.downloadcenter-acl-status { border-radius: 10px; display: inline-block; font-size: 10px; font-weight: 700; line-height: 1; padding: 4px 7px; text-transform: uppercase; }
+.downloadcenter-acl-status.ok { background: #edf8ee; color: #28602b; }
+.downloadcenter-acl-status.warn { background: #fff3e0; color: #815000; }
+.downloadcenter-acl-help { color: #556; line-height: 1.45; margin: 7px 0 0; }
+
+
+.downloadcenter-logs-toolbar { align-items: flex-start; display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; margin: 10px 0 14px; }
+.downloadcenter-logs-kpis { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); margin: 12px 0 16px; }
+.downloadcenter-logs-kpi { background: #f7f9fb; border: 1px solid #cfd9e3; border-left: 5px solid #3b7da9; border-radius: 6px; padding: 10px 12px; }
+.downloadcenter-logs-kpi strong { color: #105289; display: block; font-size: 22px; line-height: 1.1; margin-bottom: 3px; }
+.downloadcenter-logs-kpi span { color: #4f6172; font-weight: 700; }
+.downloadcenter-logs-summary { background: #eef6fb; border: 1px solid #c6d8e6; border-left: 5px solid #3b7da9; border-radius: 6px; margin: 10px 0 16px; padding: 10px 12px; }
+.downloadcenter-logs-summary strong { color: #105289; display: block; margin-bottom: 8px; }
+.downloadcenter-logs-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; }
+.downloadcenter-logs-chips li { display: inline-block; list-style: none; margin: 0; padding: 0; }
+.downloadcenter-logs-chip { background: #fff; border: 1px solid #c9d6e2; border-radius: 14px; color: #105289; display: inline-block; font-weight: 700; padding: 5px 9px; text-decoration: none; }
+.downloadcenter-logs-chip:hover { background: #dceaf7; text-decoration: none; }
+.downloadcenter-logs-filter fieldset { background: #f8fafc; border-radius: 6px; }
+.downloadcenter-logs-filter dl { box-sizing: border-box; display: inline-block; margin-right: 16px; min-width: 260px; vertical-align: top; width: calc(50% - 20px); }
+.downloadcenter-logs-filter dt { min-height: 22px; }
+.downloadcenter-logs-filter dd input[type=text], .downloadcenter-logs-filter dd input[type=number], .downloadcenter-logs-filter dd input[type=date], .downloadcenter-logs-filter dd select { box-sizing: border-box; max-width: 100%; width: 100%; }
+.downloadcenter-log-action-code { background: #eef3f7; border: 1px solid #cdd8e2; border-radius: 3px; color: #586b7c; display: inline-block; font-size: 11px; margin-top: 3px; padding: 2px 5px; }
+.downloadcenter-log-ref-list { display: flex; flex-direction: column; gap: 3px; }
+.downloadcenter-log-ref-list span { color: #586b7c; }
+.downloadcenter-log-message { line-height: 1.4; max-width: 520px; }
+.downloadcenter-log-user-id { color: #667; display: block; font-size: 11px; margin-top: 2px; }
+@media (max-width: 800px) { .downloadcenter-logs-filter dl { display: block; margin-right: 0; width: 100%; } }
+
 .downloadcenter-inline-note { background: #f7f9fb; border-left: 4px solid #105289; color: #333; margin: 8px 0 12px; padding: 8px 10px; }
 .downloadcenter-success-note { background: #edf8ef; border-left: 4px solid #22863a; color: #145523; margin: 8px 0 12px; padding: 8px 10px; }
+.downloadcenter-operational-box { background: #f7f9fb; border: 1px solid #d5dde5; border-left: 5px solid #8aa9c0; border-radius: 5px; margin: 8px 0 14px; padding: 10px 12px; }
+.downloadcenter-operational-box.ok { background: #edf8ef; border-left-color: #22863a; }
+.downloadcenter-operational-box.warning { background: #fff8e5; border-left-color: #d49a28; }
+.downloadcenter-operational-box.critical { background: #fff2f2; border-left-color: #b63b3b; }
+.downloadcenter-operational-box.neutral { background: #f3f5f7; border-left-color: #7b8794; }
+.downloadcenter-status-pill { border: 1px solid #cbd5df; border-radius: 12px; display: inline-block; font-size: 11px; font-weight: 700; line-height: 1; padding: 5px 8px; white-space: nowrap; }
+.downloadcenter-status-pill.ok { background: #edf8ef; border-color: #b9d8b9; color: #28602b; }
+.downloadcenter-status-pill.warning { background: #fff8e5; border-color: #e0bf84; color: #815000; }
+.downloadcenter-status-pill.critical { background: #fff2f2; border-color: #dfb6b6; color: #8a1f1f; }
+.downloadcenter-status-pill.neutral { background: #eef3f7; border-color: #ccd9e4; color: #44515f; }
+.downloadcenter-status-explain { color: #667; display: block; font-size: 11px; line-height: 1.35; margin-top: 4px; }
 .downloadcenter-inline-submit { margin: 8px 0 16px; text-align: left; }
 
 .downloadcenter-item-image-box { background: #f7f9fb; border: 1px solid #cfd9e3; border-radius: 6px; margin: 8px 0 12px; padding: 10px; }
@@ -103,8 +168,224 @@
 .downloadcenter-item-image-option { align-items: center; display: flex; gap: 8px; }
 .downloadcenter-item-image-option img { border: 1px solid #cfd9e3; border-radius: 3px; height: 38px; object-fit: cover; width: 48px; }
 
+
+/* v1.0.95 - ACP visual consistency, accessibility and responsive polish */
+.downloadcenter-acp-guide,
+.downloadcenter-acp-note,
+.downloadcenter-acp-pending-alert {
+    background: #f7f9fb;
+    border: 1px solid #d4dde6;
+    border-left: 5px solid #3b7da9;
+    border-radius: 6px;
+    box-sizing: border-box;
+    line-height: 1.45;
+    margin: 10px 0 16px;
+    padding: 11px 13px;
+}
+.downloadcenter-acp-guide h2,
+.downloadcenter-acp-note strong,
+.downloadcenter-acp-pending-alert strong {
+    color: #105289;
+}
+.downloadcenter-acp-guide h2 {
+    border: 0;
+    font-size: 15px;
+    margin: 0 0 5px;
+    padding: 0;
+}
+.downloadcenter-acp-guide p,
+.downloadcenter-acp-note p,
+.downloadcenter-acp-pending-alert p {
+    margin: 4px 0 0;
+}
+.downloadcenter-acp-pending-alert {
+    background: #fff8e5;
+    border-left-color: #d49a28;
+}
+.downloadcenter-acp-badge {
+    background: #b63b3b;
+    border-radius: 12px;
+    color: #fff;
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    margin-left: 4px;
+    padding: 4px 8px;
+}
+.downloadcenter-acp-stats-grid,
+.downloadcenter-file-stats,
+.downloadcenter-integrity-summary,
+.downloadcenter-diag-summary {
+    align-items: stretch;
+}
+.downloadcenter-acp-stat,
+.downloadcenter-file-stat,
+.downloadcenter-integrity-summary span,
+.downloadcenter-diag-summary span {
+    box-sizing: border-box;
+    min-width: 0;
+}
+.downloadcenter-acp-stat strong,
+.downloadcenter-file-stat strong,
+.downloadcenter-logs-kpi strong {
+    overflow-wrap: anywhere;
+}
+.downloadcenter-dashboard-actions .button1,
+.downloadcenter-dashboard-actions .button2,
+.downloadcenter-review-actions .button1,
+.downloadcenter-review-actions .button2,
+.downloadcenter-screenshot-actions .button1,
+.downloadcenter-screenshot-actions .button2,
+.downloadcenter-inline-submit .button1,
+.downloadcenter-inline-submit .button2,
+.downloadcenter-logs-toolbar .button1,
+.downloadcenter-logs-toolbar .button2 {
+    margin-bottom: 3px;
+}
+.downloadcenter-acp-status-key {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 8px 0 12px;
+}
+.downloadcenter-acp-table-scroll {
+    max-width: 100%;
+    overflow-x: auto;
+}
+.downloadcenter-file-picker,
+.downloadcenter-logs-filter dl {
+    min-width: 0;
+}
+.downloadcenter-file-search input[type=text],
+.downloadcenter-logs-filter dd input[type=text],
+.downloadcenter-logs-filter dd input[type=number],
+.downloadcenter-logs-filter dd input[type=date],
+.downloadcenter-logs-filter dd select,
+.downloadcenter-item-image-tools input[type=text],
+.downloadcenter-item-image-tools input[type=file] {
+    box-sizing: border-box;
+    max-width: 100%;
+}
+.downloadcenter-review-card,
+.downloadcenter-screenshot-card,
+.downloadcenter-operational-box,
+.downloadcenter-integrity-issue,
+.downloadcenter-acl-checklist,
+.downloadcenter-permission-summary,
+.downloadcenter-logs-summary,
+.downloadcenter-logs-kpi,
+.downloadcenter-diag-row,
+.downloadcenter-dashboard-alert,
+.downloadcenter-acp-release-card,
+.downloadcenter-acp-warning {
+    box-shadow: 0 1px 2px rgba(0,0,0,.04);
+}
+.downloadcenter-log-message,
+.downloadcenter-version-changelog-box,
+.downloadcenter-current-changelog-box,
+.downloadcenter-review-desc,
+.downloadcenter-review-changelog {
+    overflow-wrap: anywhere;
+}
+.downloadcenter-acp-screen-reader {
+    border: 0;
+    clip: rect(1px, 1px, 1px, 1px);
+    height: 1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
+}
+.downloadcenter-acp-release-card a:focus,
+.downloadcenter-acp-guide a:focus,
+.downloadcenter-acp-note a:focus,
+.downloadcenter-dashboard-actions a:focus,
+.downloadcenter-review-actions a:focus,
+.downloadcenter-screenshot-actions a:focus,
+.downloadcenter-integrity-issue a:focus,
+.downloadcenter-logs-chip:focus,
+.downloadcenter-logs-filter input:focus,
+.downloadcenter-logs-filter select:focus,
+.downloadcenter-file-search input:focus,
+.downloadcenter-bbcode-btn:focus,
+.downloadcenter-file-picker:focus,
+.downloadcenter-status-pill:focus {
+    outline: 2px solid #105289;
+    outline-offset: 2px;
+}
+.downloadcenter-logs-filter fieldset,
+.downloadcenter-acp fieldset {
+    box-sizing: border-box;
+}
+.downloadcenter-logs-chips,
+.downloadcenter-dashboard-actions,
+.downloadcenter-review-actions {
+    align-items: center;
+}
+@media (max-width: 900px) {
+    .downloadcenter-acp-stats-grid,
+    .downloadcenter-file-stats,
+    .downloadcenter-integrity-summary,
+    .downloadcenter-diag-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+    .downloadcenter-acp-stat,
+    .downloadcenter-file-stat,
+    .downloadcenter-integrity-summary span,
+    .downloadcenter-diag-summary span {
+        width: auto;
+    }
+}
+@media (max-width: 700px) {
+    .downloadcenter-acp-guide,
+    .downloadcenter-acp-note,
+    .downloadcenter-acp-pending-alert,
+    .downloadcenter-acp-release-card,
+    .downloadcenter-acp-warning,
+    .downloadcenter-operational-box,
+    .downloadcenter-permission-summary,
+    .downloadcenter-acl-checklist,
+    .downloadcenter-logs-summary {
+        padding: 10px;
+    }
+    .downloadcenter-dashboard-actions,
+    .downloadcenter-review-actions,
+    .downloadcenter-screenshot-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+    .downloadcenter-dashboard-actions .button1,
+    .downloadcenter-dashboard-actions .button2,
+    .downloadcenter-review-actions .button1,
+    .downloadcenter-review-actions .button2,
+    .downloadcenter-screenshot-actions .button1,
+    .downloadcenter-screenshot-actions .button2 {
+        box-sizing: border-box;
+        text-align: center;
+        width: 100%;
+    }
+    .downloadcenter-file-search input[type=text] {
+        min-width: 0;
+        width: 100%;
+    }
+    .downloadcenter-version-title {
+        white-space: normal;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .downloadcenter-acp * {
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+    }
+}
+
 </style>
 
+<div class="downloadcenter-acp">
 <div class="downloadcenter-acp-guide">
     <h2>{L_ACP_DOWNLOADCENTER_QUICK_GUIDE}</h2>
     <p>{L_ACP_DOWNLOADCENTER_QUICK_GUIDE_EXPLAIN}</p>
@@ -117,7 +398,7 @@
 </div>
 
 <!-- IF S_HAS_PENDING_GLOBAL -->
-<div class="downloadcenter-acp-pending-alert">
+<div class="downloadcenter-acp-pending-alert" role="status" aria-live="polite">
     <strong>{L_ACP_DOWNLOADCENTER_PENDING_ALERT} <span class="downloadcenter-acp-badge">{PENDING_TOTAL_GLOBAL}</span></strong>
     <p>{L_ACP_DOWNLOADCENTER_PENDING_ALERT_EXPLAIN}</p>
     <p><a class="button2" href="{U_PENDING}">{L_ACP_DOWNLOADCENTER_REVIEW_PENDING}</a></p>
@@ -131,12 +412,78 @@
 </div>
 
 <div class="downloadcenter-acp-stats-grid">
-    <div class="downloadcenter-acp-stat"><strong>{DASHBOARD_TOTAL_CATEGORIES}</strong><span>{L_ACP_DOWNLOADCENTER_DASHBOARD_TOTAL_CATEGORIES}</span></div>
-    <div class="downloadcenter-acp-stat"><strong>{DASHBOARD_TOTAL_PUBLISHED_ITEMS}</strong><span>{L_ACP_DOWNLOADCENTER_DASHBOARD_TOTAL_PUBLISHED_ITEMS}</span></div>
+    <div class="downloadcenter-acp-stat"><strong>{DASHBOARD_TOTAL_ITEMS}</strong><span>{L_ACP_DOWNLOADCENTER_DASHBOARD_TOTAL_ITEMS}</span></div>
+    <div class="downloadcenter-acp-stat"><strong>{DASHBOARD_READY_ITEMS}</strong><span>{L_ACP_DOWNLOADCENTER_DASHBOARD_READY_ITEMS}</span></div>
+    <div class="downloadcenter-acp-stat"><strong>{DASHBOARD_ITEMS_WITHOUT_VERSION}</strong><span>{L_ACP_DOWNLOADCENTER_DASHBOARD_WITHOUT_VERSION}</span></div>
+    <div class="downloadcenter-acp-stat"><strong>{DASHBOARD_ITEMS_WITH_FILE_PROBLEMS}</strong><span>{L_ACP_DOWNLOADCENTER_DASHBOARD_FILE_PROBLEMS}</span></div>
     <div class="downloadcenter-acp-stat"><strong>{DASHBOARD_TOTAL_PENDING_ITEMS}</strong><span>{L_ACP_DOWNLOADCENTER_DASHBOARD_TOTAL_PENDING_ITEMS}</span></div>
-    <div class="downloadcenter-acp-stat"><strong>{DASHBOARD_TOTAL_VERSIONS}</strong><span>{L_ACP_DOWNLOADCENTER_DASHBOARD_TOTAL_VERSIONS}</span></div>
     <div class="downloadcenter-acp-stat"><strong>{DASHBOARD_TOTAL_DOWNLOADS}</strong><span>{L_ACP_DOWNLOADCENTER_DASHBOARD_TOTAL_DOWNLOADS}</span></div>
 </div>
+
+<div class="downloadcenter-dashboard-alert-grid">
+    <!-- IF S_DASHBOARD_HAS_ATTENTION -->
+    <div class="downloadcenter-dashboard-alert warning" role="status">
+        <strong>{L_ACP_DOWNLOADCENTER_DASHBOARD_ATTENTION_TITLE}</strong>
+        <p>{L_ACP_DOWNLOADCENTER_DASHBOARD_ATTENTION_EXPLAIN}</p>
+    </div>
+    <!-- ELSE -->
+    <div class="downloadcenter-dashboard-alert ok" role="status">
+        <strong>{L_ACP_DOWNLOADCENTER_DASHBOARD_OK_TITLE}</strong>
+        <p>{L_ACP_DOWNLOADCENTER_DASHBOARD_OK_EXPLAIN}</p>
+    </div>
+    <!-- ENDIF -->
+    <!-- IF S_DASHBOARD_HAS_ITEMS_WITHOUT_VERSION -->
+    <div class="downloadcenter-dashboard-alert warning" role="status">
+        <strong>{L_ACP_DOWNLOADCENTER_DASHBOARD_WITHOUT_VERSION}</strong>
+        <p>{L_ACP_DOWNLOADCENTER_DASHBOARD_WITHOUT_VERSION_EXPLAIN}</p>
+    </div>
+    <!-- ENDIF -->
+    <!-- IF S_DASHBOARD_HAS_FILE_PROBLEMS -->
+    <div class="downloadcenter-dashboard-alert critical" role="alert">
+        <strong>{L_ACP_DOWNLOADCENTER_DASHBOARD_FILE_PROBLEMS}</strong>
+        <p>{L_ACP_DOWNLOADCENTER_DASHBOARD_FILE_PROBLEMS_EXPLAIN}</p>
+    </div>
+    <!-- ENDIF -->
+    <!-- IF S_DASHBOARD_HAS_ADMIN_ONLY -->
+    <div class="downloadcenter-dashboard-alert warning" role="status">
+        <strong>{L_ACP_DOWNLOADCENTER_DASHBOARD_ADMIN_ONLY}</strong>
+        <p>{L_ACP_DOWNLOADCENTER_DASHBOARD_ADMIN_ONLY_EXPLAIN}</p>
+    </div>
+    <!-- ENDIF -->
+</div>
+
+<div class="downloadcenter-dashboard-actions">
+    <a class="button2" href="{U_ITEMS}">{L_ACP_DOWNLOADCENTER_ITEMS}</a>
+    <a class="button2" href="{U_PENDING}">{L_ACP_DOWNLOADCENTER_REVIEW_PENDING}</a>
+    <a class="button2" href="{U_INTEGRITY}">{L_ACP_DOWNLOADCENTER_INTEGRITY}</a>
+    <a class="button2" href="{U_FILES}">{L_ACP_DOWNLOADCENTER_FILES}</a>
+</div>
+
+<!-- IF S_DASHBOARD_HAS_ATTENTION -->
+<h2>{L_ACP_DOWNLOADCENTER_DASHBOARD_ATTENTION_ITEMS}</h2>
+<table class="table1 zebra-table">
+    <thead>
+        <tr>
+            <th>{L_ACP_DOWNLOADCENTER_ITEM_NAME}</th>
+            <th>{L_ACP_DOWNLOADCENTER_CATEGORY}</th>
+            <th>{L_ACP_DOWNLOADCENTER_AUTHOR}</th>
+            <th>{L_ACP_DOWNLOADCENTER_DOWNLOAD_STATUS}</th>
+            <th>{L_ACP_DOWNLOADCENTER_ACTIONS}</th>
+        </tr>
+    </thead>
+    <tbody>
+    <!-- BEGIN dashboard_attention_items -->
+        <tr>
+            <td><strong>{dashboard_attention_items.ITEM_NAME}</strong><br><span>ID: {dashboard_attention_items.ITEM_ID}</span></td>
+            <td>{dashboard_attention_items.CATEGORY_NAME}</td>
+            <td>{dashboard_attention_items.USERNAME}</td>
+            <td><span class="downloadcenter-status-pill {dashboard_attention_items.STATUS_CLASS}">{dashboard_attention_items.STATUS}</span><span class="downloadcenter-status-explain">{dashboard_attention_items.STATUS_EXPLAIN}</span></td>
+            <td><a href="{dashboard_attention_items.U_EDIT}">{L_EDIT}</a></td>
+        </tr>
+    <!-- END dashboard_attention_items -->
+    </tbody>
+</table>
+<!-- ENDIF -->
 
 <h2>{L_ACP_DOWNLOADCENTER_DASHBOARD_TOP_ITEMS}</h2>
 <table class="table1 zebra-table">
@@ -259,12 +606,39 @@
 </div>
 
 <div class="downloadcenter-diag-summary">
+    <span>{L_ACP_DOWNLOADCENTER_DIAG_VERSION}{L_COLON} <strong>{DIAG_EXTENSION_VERSION}</strong></span>
+    <span>{L_ACP_DOWNLOADCENTER_PERMISSION_MODE}{L_COLON} <strong>{DIAG_PERMISSION_MODE}</strong></span>
     <span>{L_ACP_DOWNLOADCENTER_DIAG_FILES_TOTAL}{L_COLON} <strong>{DIAG_TOTAL_FILES}</strong></span>
     <span>{L_ACP_DOWNLOADCENTER_DIAG_FILES_ORPHAN}{L_COLON} <strong>{DIAG_ORPHAN_FILES}</strong></span>
     <span>{L_ACP_DOWNLOADCENTER_DIAG_FILES_MISSING}{L_COLON} <strong>{DIAG_MISSING_FILES}</strong></span>
     <span>upload_max_filesize{L_COLON} <strong>{DIAG_PHP_UPLOAD_MAX}</strong></span>
     <span>post_max_size{L_COLON} <strong>{DIAG_PHP_POST_MAX}</strong></span>
     <span>{L_ACP_DOWNLOADCENTER_MAX_UPLOAD_MB}{L_COLON} <strong>{DIAG_EXTENSION_LIMIT}</strong></span>
+</div>
+
+<div class="downloadcenter-acp-note">
+    <strong>{L_ACP_DOWNLOADCENTER_DIAG_REBUILD_TITLE}</strong>
+    <p>{L_ACP_DOWNLOADCENTER_DIAG_REBUILD_EXPLAIN}</p>
+    <form method="post" action="{U_DIAGNOSTICS}" class="downloadcenter-inline-form">
+        <input type="submit" class="button1" name="diagnostics_rebuild" value="{L_ACP_DOWNLOADCENTER_DIAG_REBUILD_BUTTON}" />
+        {S_FORM_TOKEN}
+    </form>
+</div>
+
+<div class="downloadcenter-acp-note">
+    <strong>{L_ACP_DOWNLOADCENTER_PRELAUNCH_TITLE}</strong>
+    <p>{L_ACP_DOWNLOADCENTER_PRELAUNCH_EXPLAIN}</p>
+    <div class="downloadcenter-prelaunch-grid">
+        <!-- BEGIN prelaunch_checks -->
+            <div class="downloadcenter-diag-row {prelaunch_checks.STATUS_CLASS}">
+                <strong><span class="downloadcenter-diag-status">{prelaunch_checks.STATUS}</span>{prelaunch_checks.TITLE}</strong>
+                <div>{prelaunch_checks.MESSAGE}</div>
+            </div>
+        <!-- END prelaunch_checks -->
+    </div>
+    <div class="downloadcenter-report-actions">
+        <a class="button2" href="{U_DIAGNOSTICS_REPORT}">{L_ACP_DOWNLOADCENTER_EXPORT_DIAGNOSTIC_REPORT}</a>
+    </div>
 </div>
 
 <div class="downloadcenter-diagnostics">
@@ -291,6 +665,13 @@
     <span>{L_ACP_DOWNLOADCENTER_INTEGRITY_INFO}{L_COLON} <strong>{INTEGRITY_INFO_TOTAL}</strong></span>
 </div>
 
+<div class="downloadcenter-dashboard-actions">
+    <a class="button2" href="{U_ITEMS}">{L_ACP_DOWNLOADCENTER_INTEGRITY_ACTION_ITEMS}</a>
+    <a class="button2" href="{U_FILES}">{L_ACP_DOWNLOADCENTER_INTEGRITY_ACTION_FILES}</a>
+    <a class="button2" href="{U_SETTINGS}">{L_ACP_DOWNLOADCENTER_INTEGRITY_ACTION_SETTINGS}</a>
+    <a class="button2" href="{U_INTEGRITY}">{L_ACP_DOWNLOADCENTER_INTEGRITY_ACTION_REFRESH}</a>
+</div>
+
 <!-- IF not S_INTEGRITY_HAS_ISSUES -->
 <div class="downloadcenter-integrity-empty">
     <strong>{L_ACP_DOWNLOADCENTER_INTEGRITY_NO_ISSUES}</strong>
@@ -304,6 +685,14 @@
     <div>{integrity_issues.DETAILS}</div>
     <!-- IF integrity_issues.SUGGESTION --><div class="downloadcenter-integrity-suggestion"><em>{integrity_issues.SUGGESTION}</em></div><!-- ENDIF -->
     <!-- IF integrity_issues.S_HAS_ACTION --><p><a class="button2" href="{integrity_issues.U_ACTION}">{L_ACP_DOWNLOADCENTER_INTEGRITY_OPEN_RELATED}</a></p><!-- ENDIF -->
+    <!-- IF integrity_issues.S_HAS_FIX -->
+    <form method="post" action="{U_INTEGRITY}" class="downloadcenter-inline-form">
+        <input type="hidden" name="fix_action" value="{integrity_issues.FIX_ACTION}" />
+        <input type="hidden" name="fix_id" value="{integrity_issues.FIX_ID}" />
+        <input type="submit" class="button1" name="integrity_fix" value="{L_ACP_DOWNLOADCENTER_INTEGRITY_APPLY_FIX}" />
+        {S_FORM_TOKEN}
+    </form>
+    <!-- ENDIF -->
 </div>
 <!-- END integrity_issues -->
 <!-- ENDIF -->
@@ -334,17 +723,61 @@
         </dl>
 
         <dl>
-            <dt><label for="downloadcenter_require_rules_accept">{L_ACP_DOWNLOADCENTER_REQUIRE_RULES_ACCEPT}{L_COLON}</label><br><span>{L_ACP_DOWNLOADCENTER_REQUIRE_RULES_ACCEPT_EXPLAIN}</span></dt>
+            <dt><label for="downloadcenter_permission_mode">{L_ACP_DOWNLOADCENTER_PERMISSION_MODE}{L_COLON}</label><br><span>{L_ACP_DOWNLOADCENTER_PERMISSION_MODE_EXPLAIN}</span></dt>
             <dd>
-                <label><input type="radio" class="radio" name="downloadcenter_require_rules_accept" value="1"<!-- IF DOWNLOADCENTER_REQUIRE_RULES_ACCEPT --> checked="checked"<!-- ENDIF -->> {L_YES}</label>
-                <label><input type="radio" class="radio" name="downloadcenter_require_rules_accept" value="0"<!-- IF not DOWNLOADCENTER_REQUIRE_RULES_ACCEPT --> checked="checked"<!-- ENDIF -->> {L_NO}</label>
+                <select name="downloadcenter_permission_mode" id="downloadcenter_permission_mode">
+                    <option value="global"<!-- IF S_PERMISSION_MODE_GLOBAL --> selected="selected"<!-- ENDIF -->>{L_ACP_DOWNLOADCENTER_PERMISSION_MODE_GLOBAL}</option>
+                    <option value="acl"<!-- IF S_PERMISSION_MODE_ACL --> selected="selected"<!-- ENDIF -->>{L_ACP_DOWNLOADCENTER_PERMISSION_MODE_ACL}</option>
+                </select>
+                <br><span>{DOWNLOADCENTER_PERMISSION_MODE_SUMMARY}</span>
             </dd>
         </dl>
 
-        <dl>
-            <dt><label for="downloadcenter_rules_url">{L_ACP_DOWNLOADCENTER_RULES_URL}{L_COLON}</label><br><span>{L_ACP_DOWNLOADCENTER_RULES_URL_EXPLAIN}</span></dt>
-            <dd><input type="url" name="downloadcenter_rules_url" id="downloadcenter_rules_url" value="{DOWNLOADCENTER_RULES_URL}" size="60"></dd>
-        </dl>
+        <div class="downloadcenter-permission-summary">
+            <h3>{L_ACP_DOWNLOADCENTER_PERMISSIONS_SUMMARY}</h3>
+            <div class="downloadcenter-permission-grid">
+                <div class="downloadcenter-permission-card"><strong>{L_ACP_DOWNLOADCENTER_VIEW_ACCESS}</strong><span>{DOWNLOADCENTER_PERMISSION_VIEW_SUMMARY}</span></div>
+                <div class="downloadcenter-permission-card"><strong>{L_ACP_DOWNLOADCENTER_DOWNLOAD_ACCESS}</strong><span>{DOWNLOADCENTER_PERMISSION_DOWNLOAD_SUMMARY}</span></div>
+                <div class="downloadcenter-permission-card"><strong>{L_ACP_DOWNLOADCENTER_SUBMIT_ACCESS}</strong><span>{DOWNLOADCENTER_PERMISSION_SUBMIT_SUMMARY}</span></div>
+            </div>
+            <p class="downloadcenter-permission-note">{DOWNLOADCENTER_PERMISSION_EFFECT_SUMMARY}</p>
+        </div>
+
+        <!-- IF S_PERMISSION_HAS_WARNING -->
+        <div class="downloadcenter-permission-warning">
+            <strong>{L_ACP_DOWNLOADCENTER_PERMISSIONS_ATTENTION}</strong><br>
+            {DOWNLOADCENTER_PERMISSION_WARNING}
+        </div>
+        <!-- ENDIF -->
+
+        <div class="downloadcenter-acl-checklist">
+            <h3>{L_ACP_DOWNLOADCENTER_ACL_DIAGNOSTIC}</h3>
+            <p class="downloadcenter-acl-help">{DOWNLOADCENTER_ACL_DIAGNOSTIC_SUMMARY}</p>
+            <table class="table1">
+                <thead>
+                    <tr>
+                        <th>{L_ACP_DOWNLOADCENTER_ACL_PERMISSION}</th>
+                        <th>{L_ACP_DOWNLOADCENTER_ACL_MEANING}</th>
+                        <th>{L_ACP_DOWNLOADCENTER_ACL_CURRENT_ADMIN}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <!-- BEGIN acl_permissions -->
+                    <tr class="<!-- IF acl_permissions.S_ROW_COUNT is even -->row1<!-- ELSE -->row2<!-- ENDIF -->">
+                        <td><code>{acl_permissions.PERMISSION}</code></td>
+                        <td>{acl_permissions.LABEL}</td>
+                        <td><span class="downloadcenter-acl-status {acl_permissions.STATUS_CLASS}">{acl_permissions.STATUS}</span></td>
+                    </tr>
+                <!-- END acl_permissions -->
+                </tbody>
+            </table>
+            <p class="downloadcenter-acl-help">{L_ACP_DOWNLOADCENTER_ACL_DIAGNOSTIC_EXPLAIN}</p>
+        </div>
+
+        <p class="downloadcenter-permissions-note">{L_ACP_DOWNLOADCENTER_PERMISSIONS_FLOW_EXPLAIN}</p>
+
+        <fieldset>
+            <legend>{L_ACP_DOWNLOADCENTER_PERMISSIONS_RULES}</legend>
 
         <dl>
             <dt><label for="downloadcenter_view_access">{L_ACP_DOWNLOADCENTER_VIEW_ACCESS}{L_COLON}</label><br><span>{L_ACP_DOWNLOADCENTER_VIEW_ACCESS_EXPLAIN}</span></dt>
@@ -377,6 +810,8 @@
                 </select>
             </dd>
         </dl>
+
+        </fieldset>
 
         <dl>
             <dt><label for="downloadcenter_min_posts">{L_ACP_DOWNLOADCENTER_MIN_POSTS}{L_COLON}</label><br><span>{L_ACP_DOWNLOADCENTER_MIN_POSTS_EXPLAIN}</span></dt>
@@ -414,8 +849,42 @@
         </dl>
 
         <dl>
+            <dt><label>{L_ACP_DOWNLOADCENTER_PUBLIC_STATS}{L_COLON}</label><br><span>{L_ACP_DOWNLOADCENTER_PUBLIC_STATS_EXPLAIN}</span></dt>
+            <dd>
+                <label><input type="radio" class="radio" name="downloadcenter_show_public_stats" value="1"<!-- IF DOWNLOADCENTER_SHOW_PUBLIC_STATS --> checked="checked"<!-- ENDIF -->> {L_YES}</label>
+                <label><input type="radio" class="radio" name="downloadcenter_show_public_stats" value="0"<!-- IF not DOWNLOADCENTER_SHOW_PUBLIC_STATS --> checked="checked"<!-- ENDIF -->> {L_NO}</label>
+            </dd>
+        </dl>
+
+        <dl>
+            <dt><label>{L_ACP_DOWNLOADCENTER_FEED_ENABLED}{L_COLON}</label><br><span>{L_ACP_DOWNLOADCENTER_FEED_ENABLED_EXPLAIN}</span></dt>
+            <dd>
+                <label><input type="radio" class="radio" name="downloadcenter_feed_enabled" value="1"<!-- IF DOWNLOADCENTER_FEED_ENABLED --> checked="checked"<!-- ENDIF -->> {L_YES}</label>
+                <label><input type="radio" class="radio" name="downloadcenter_feed_enabled" value="0"<!-- IF not DOWNLOADCENTER_FEED_ENABLED --> checked="checked"<!-- ENDIF -->> {L_NO}</label>
+            </dd>
+        </dl>
+
+        <dl>
+            <dt><label for="downloadcenter_rate_limit_count">{L_ACP_DOWNLOADCENTER_RATE_LIMIT_COUNT}{L_COLON}</label><br><span>{L_ACP_DOWNLOADCENTER_RATE_LIMIT_COUNT_EXPLAIN}</span></dt>
+            <dd><input type="number" name="downloadcenter_rate_limit_count" id="downloadcenter_rate_limit_count" value="{DOWNLOADCENTER_RATE_LIMIT_COUNT}" min="0"></dd>
+        </dl>
+
+        <dl>
+            <dt><label for="downloadcenter_rate_limit_window">{L_ACP_DOWNLOADCENTER_RATE_LIMIT_WINDOW}{L_COLON}</label><br><span>{L_ACP_DOWNLOADCENTER_RATE_LIMIT_WINDOW_EXPLAIN}</span></dt>
+            <dd><input type="number" name="downloadcenter_rate_limit_window" id="downloadcenter_rate_limit_window" value="{DOWNLOADCENTER_RATE_LIMIT_WINDOW}" min="10"></dd>
+        </dl>
+
+        <dl>
             <dt><label>{L_ACP_DOWNLOADCENTER_UPLOAD_RULES_CURRENT}{L_COLON}</label></dt>
             <dd><p class="downloadcenter-file-picker-help">{DOWNLOADCENTER_UPLOAD_RULES}</p></dd>
+        </dl>
+
+        <dl>
+            <dt><label for="downloadcenter_rules_topic_id">{L_ACP_DOWNLOADCENTER_RULES_TOPIC_ID}{L_COLON}</label><br><span>{L_ACP_DOWNLOADCENTER_RULES_TOPIC_ID_EXPLAIN}</span></dt>
+            <dd>
+                <input type="text" name="downloadcenter_rules_topic_id" id="downloadcenter_rules_topic_id" value="{DOWNLOADCENTER_RULES_TOPIC_ID}" size="60" maxlength="255" placeholder="https://example.com/viewtopic.php?t=123">
+                <p class="downloadcenter-file-picker-help">{L_ACP_DOWNLOADCENTER_RULES_TOPIC_ID_HELP}</p>
+            </dd>
         </dl>
 
         <dl>
@@ -599,6 +1068,28 @@
 
         <input type="hidden" name="item_id" value="{EDIT_ITEM_ID}">
 
+        <!-- IF S_EDIT_HAS_OPERATIONAL_STATUS -->
+        <div class="downloadcenter-operational-box {EDIT_OPERATIONAL_STATUS_CLASS}">
+            <strong>{L_ACP_DOWNLOADCENTER_OPERATIONAL_STATUS}{L_COLON} {EDIT_OPERATIONAL_STATUS}</strong>
+            <p>{EDIT_OPERATIONAL_STATUS_EXPLAIN}</p>
+            <!-- IF S_EDIT_STATUS_NO_VERSION -->
+                <p>{L_ACP_DOWNLOADCENTER_OPERATIONAL_HINT_ADD_VERSION}</p>
+            <!-- ELSEIF S_EDIT_STATUS_FILE_MISSING -->
+                <p>{L_ACP_DOWNLOADCENTER_OPERATIONAL_HINT_REUPLOAD_FILE}</p>
+            <!-- ELSEIF S_EDIT_STATUS_EMPTY_LOCAL_FILE -->
+                <p>{L_ACP_DOWNLOADCENTER_OPERATIONAL_HINT_SELECT_FILE}</p>
+            <!-- ELSEIF S_EDIT_STATUS_EXTERNAL_INVALID -->
+                <p>{L_ACP_DOWNLOADCENTER_OPERATIONAL_HINT_EXTERNAL_URL}</p>
+            <!-- ELSEIF S_EDIT_STATUS_PENDING -->
+                <p>{L_ACP_DOWNLOADCENTER_OPERATIONAL_HINT_APPROVE}</p>
+            <!-- ELSEIF S_EDIT_STATUS_DISABLED -->
+                <p>{L_ACP_DOWNLOADCENTER_OPERATIONAL_HINT_ENABLE}</p>
+            <!-- ELSEIF S_EDIT_STATUS_ADMIN_ONLY -->
+                <p>{L_ACP_DOWNLOADCENTER_OPERATIONAL_HINT_PERMISSIONS}</p>
+            <!-- ENDIF -->
+        </div>
+        <!-- ENDIF -->
+
         <dl>
             <dt><label for="item_name">{L_ACP_DOWNLOADCENTER_ITEM_NAME}{L_COLON}</label></dt>
             <dd><input type="text" id="item_name" name="item_name" value="{EDIT_ITEM_NAME}" maxlength="255" size="60"></dd>
@@ -617,8 +1108,8 @@
         </dl>
 
         <dl>
-            <dt><label for="item_short_desc">{L_ACP_DOWNLOADCENTER_ITEM_SHORT_DESC}{L_COLON}</label><br><span>{L_ACP_DOWNLOADCENTER_ITEM_SHORT_DESC_EXPLAIN}</span></dt>
-            <dd><input type="text" id="item_short_desc" name="item_short_desc" value="{EDIT_ITEM_SHORT_DESC}" maxlength="500" size="80"></dd>
+            <dt><label for="item_short_desc">{L_ACP_DOWNLOADCENTER_ITEM_SHORT_DESC}{L_COLON}</label></dt>
+            <dd><!-- INCLUDE downloadcenter_acp_bbcode_toolbar.html --><textarea id="item_short_desc" name="item_short_desc" rows="3" cols="80" maxlength="500">{EDIT_ITEM_SHORT_DESC}</textarea></dd>
         </dl>
 
         <dl>
@@ -732,17 +1223,19 @@
                 <label><input type="radio" class="radio" name="item_approved" value="0"<!-- IF not EDIT_ITEM_APPROVED --> checked="checked"<!-- ENDIF -->> {L_NO}</label>
             </dd>
         </dl>
+        <p class="submit-buttons downloadcenter-inline-submit">
+            <input class="button1" type="submit" name="submit_item" value="{L_ACP_DOWNLOADCENTER_SAVE_ITEM}">
+        </p>
     </fieldset>
 
-    <fieldset>
-        <legend>{L_ACP_DOWNLOADCENTER_VERSION_DATA}</legend>
+    <fieldset id="downloadcenter-version-data">
+        <legend><!-- IF S_EDITING_VERSION -->{L_ACP_DOWNLOADCENTER_EDIT_VERSION}<!-- ELSE -->{L_ACP_DOWNLOADCENTER_VERSION_DATA}<!-- ENDIF --></legend>
         <p>{L_ACP_DOWNLOADCENTER_VERSION_DATA_EXPLAIN}</p>
         <p><strong>{L_ACP_DOWNLOADCENTER_VERSION_RULE}</strong></p>
 
-        <dl>
-            <dt><label for="add_version">{L_ACP_DOWNLOADCENTER_ADD_VERSION}{L_COLON}</label><br><span>{L_ACP_DOWNLOADCENTER_ADD_VERSION_EXPLAIN}</span></dt>
-            <dd><label><input type="checkbox" id="add_version" name="add_version" value="1"> {L_ACP_DOWNLOADCENTER_ADD_VERSION}</label></dd>
-        </dl>
+        <!-- IF not EDIT_ITEM_ID -->
+            <p class="downloadcenter-empty-note">{L_ACP_DOWNLOADCENTER_VERSION_SAVE_ITEM_FIRST}</p>
+        <!-- ELSE -->
 
         <!-- IF S_HAS_LATEST_VERSION -->
         <dl>
@@ -759,32 +1252,34 @@
 
         <dl>
             <dt><label for="version_number">{L_ACP_DOWNLOADCENTER_VERSION_NUMBER}{L_COLON}</label><br><span>{L_ACP_DOWNLOADCENTER_VERSION_NUMBER_EXPLAIN}</span></dt>
-            <dd><input type="text" id="version_number" name="version_number" value="" maxlength="64" size="20"></dd>
+            <dd><input type="hidden" name="edit_version_id" value="{EDIT_VERSION_ID}">
+                <input type="text" id="version_number" name="version_number" value="{EDIT_VERSION_NUMBER_VALUE}" maxlength="64" size="20"></dd>
         </dl>
 
         <dl>
             <dt><label for="phpbb_version">{L_ACP_DOWNLOADCENTER_PHPBB_VERSION}{L_COLON}</label></dt>
-            <dd><input type="text" id="phpbb_version" name="phpbb_version" value="phpBB 3.3.x" maxlength="255" size="40"></dd>
+            <dd><input type="text" id="phpbb_version" name="phpbb_version" value="{EDIT_VERSION_PHPBB_VERSION}" maxlength="255" size="40"></dd>
         </dl>
 
         <dl>
             <dt><label for="php_version">{L_ACP_DOWNLOADCENTER_PHP_VERSION}{L_COLON}</label></dt>
-            <dd><input type="text" id="php_version" name="php_version" value="PHP >= 8.1" maxlength="255" size="40"></dd>
+            <dd><input type="text" id="php_version" name="php_version" value="{EDIT_VERSION_PHP_VERSION}" maxlength="255" size="40"></dd>
         </dl>
 
         <dl>
-            <dt><label for="download_type">{L_ACP_DOWNLOADCENTER_DOWNLOAD_TYPE}{L_COLON}</label></dt>
+            <dt><label for="download_type">{L_ACP_DOWNLOADCENTER_DOWNLOAD_TYPE}{L_COLON}</label><br><span>{L_ACP_DOWNLOADCENTER_DOWNLOAD_TYPE_EXPLAIN}</span></dt>
             <dd>
                 <select id="download_type" name="download_type">
-                    <option value="external">{L_ACP_DOWNLOADCENTER_DOWNLOAD_EXTERNAL}</option>
-                    <option value="local">{L_ACP_DOWNLOADCENTER_DOWNLOAD_LOCAL}</option>
+                    <option value="external"<!-- IF S_EDIT_VERSION_EXTERNAL --> selected="selected"<!-- ENDIF -->>{L_ACP_DOWNLOADCENTER_DOWNLOAD_EXTERNAL}</option>
+                    <option value="local"<!-- IF S_EDIT_VERSION_LOCAL --> selected="selected"<!-- ENDIF -->>{L_ACP_DOWNLOADCENTER_DOWNLOAD_LOCAL}</option>
                 </select>
+                <p class="downloadcenter-file-picker-help">{L_ACP_DOWNLOADCENTER_DOWNLOAD_TYPE_BEHAVIOR}</p>
             </dd>
         </dl>
 
         <dl>
-            <dt><label for="download_url">{L_ACP_DOWNLOADCENTER_DOWNLOAD_URL}{L_COLON}</label></dt>
-            <dd><input type="url" id="download_url" name="download_url" value="" size="80"></dd>
+            <dt><label for="download_url">{L_ACP_DOWNLOADCENTER_DOWNLOAD_URL}{L_COLON}</label><br><span>{L_ACP_DOWNLOADCENTER_DOWNLOAD_URL_EXPLAIN}</span></dt>
+            <dd><input type="url" id="download_url" name="download_url" value="{EDIT_VERSION_DOWNLOAD_URL}" size="80" placeholder="https://"></dd>
         </dl>
 
         <dl>
@@ -818,14 +1313,23 @@
                 <!-- INCLUDE downloadcenter_acp_bbcode_toolbar.html -->
                 <textarea id="latest_version_changelog" name="latest_version_changelog" rows="6" cols="80">{EDIT_LATEST_CHANGELOG}</textarea>
                 <p class="downloadcenter-file-picker-help">{L_ACP_DOWNLOADCENTER_CURRENT_CHANGELOG_EDIT_EXPLAIN}</p>
+                <p class="submit-buttons downloadcenter-inline-submit">
+                    <input class="button2" type="submit" name="submit_current_changelog" value="{L_ACP_DOWNLOADCENTER_SAVE_CURRENT_CHANGELOG}">
+                </p>
             </dd>
         </dl>
         <!-- ENDIF -->
 
         <dl>
             <dt><label for="version_changelog">{L_ACP_DOWNLOADCENTER_CHANGELOG}{L_COLON}</label><br><span>{L_ACP_DOWNLOADCENTER_NEW_CHANGELOG_EXPLAIN}</span></dt>
-            <dd><!-- INCLUDE downloadcenter_acp_bbcode_toolbar.html --><textarea id="version_changelog" name="version_changelog" rows="5" cols="80"></textarea></dd>
+            <dd><!-- INCLUDE downloadcenter_acp_bbcode_toolbar.html --><textarea id="version_changelog" name="version_changelog" rows="5" cols="80">{EDIT_VERSION_CHANGELOG}</textarea></dd>
         </dl>
+
+        <p class="submit-buttons downloadcenter-inline-submit">
+            <input class="button1" type="submit" name="submit_version" value="<!-- IF S_EDITING_VERSION -->{L_ACP_DOWNLOADCENTER_UPDATE_VERSION}<!-- ELSE -->{L_ACP_DOWNLOADCENTER_SAVE_VERSION}<!-- ENDIF -->">
+            <!-- IF S_EDITING_VERSION --><a class="button2" href="{U_CANCEL_VERSION_EDIT}">{L_CANCEL}</a><!-- ENDIF -->
+        </p>
+        <!-- ENDIF -->
     </fieldset>
 
     <!-- IF EDIT_ITEM_ID -->
@@ -838,6 +1342,7 @@
             <thead>
                 <tr>
                     <th>{L_ACP_DOWNLOADCENTER_VERSION_NUMBER}</th>
+                    <th>{L_ACP_DOWNLOADCENTER_CURRENT_VERSION_SHORT}</th>
                     <th>{L_ACP_DOWNLOADCENTER_CHANGELOG}</th>
                     <th>{L_ACP_DOWNLOADCENTER_PHPBB_VERSION}</th>
                     <th>{L_ACP_DOWNLOADCENTER_DOWNLOAD_TYPE}</th>
@@ -851,6 +1356,13 @@
             <!-- BEGIN version_history -->
                 <tr>
                     <td><strong class="downloadcenter-version-title">{version_history.VERSION_NUMBER}</strong></td>
+                    <td>
+                        <!-- IF version_history.S_CURRENT_VERSION -->
+                            <span class="downloadcenter-status-pill ok">{L_ACP_DOWNLOADCENTER_CURRENT_VERSION_SHORT}</span>
+                        <!-- ELSE -->
+                            <a href="{version_history.U_SET_CURRENT}">{L_ACP_DOWNLOADCENTER_SET_CURRENT_VERSION}</a>
+                        <!-- ENDIF -->
+                    </td>
                     <td class="downloadcenter-version-changelog">
                         <!-- IF version_history.CHANGELOG -->
                             <details>
@@ -865,12 +1377,9 @@
                     <td>
                         {version_history.DOWNLOAD_TYPE}<br>
                         <span>{version_history.DOWNLOAD_TARGET}</span>
-                        <!-- IF version_history.S_LOCAL_FILE -->
-                            <!-- IF version_history.S_FILE_EXISTS -->
-                                <br><span class="downloadcenter-file-ok">{L_ACP_DOWNLOADCENTER_FILE_PRESENT}</span>
-                            <!-- ELSE -->
-                                <br><strong class="downloadcenter-file-missing">{L_ACP_DOWNLOADCENTER_FILE_MISSING}</strong>
-                            <!-- ENDIF -->
+                        <br><span class="downloadcenter-status-pill {version_history.DOWNLOAD_TARGET_STATUS_CLASS}" title="{version_history.DOWNLOAD_TARGET_STATUS_EXPLAIN}">{version_history.DOWNLOAD_TARGET_STATUS}</span>
+                        <!-- IF version_history.S_EXTERNAL_LINK and version_history.S_EXTERNAL_LINK_VALID -->
+                            <br><a href="{version_history.U_EXTERNAL_LINK}" target="_blank" rel="noopener noreferrer">{L_ACP_DOWNLOADCENTER_OPEN_EXTERNAL_LINK}</a>
                         <!-- ENDIF -->
                     </td>
                     <td>{version_history.FILE_SIZE}</td>
@@ -880,11 +1389,12 @@
                         <!-- IF version_history.S_LOCAL_FILE and version_history.S_FILE_EXISTS -->
                             <a href="{version_history.U_DELETE_FILE}">{L_ACP_DOWNLOADCENTER_DELETE_PHYSICAL_FILE}</a><br>
                         <!-- ENDIF -->
+                        <a href="{version_history.U_EDIT}">{L_EDIT}</a><br>
                         <a href="{version_history.U_DELETE}">{L_DELETE}</a>
                     </td>
                 </tr>
             <!-- BEGINELSE -->
-                <tr><td colspan="8">{L_ACP_DOWNLOADCENTER_NO_VERSIONS}</td></tr>
+                <tr><td colspan="9">{L_ACP_DOWNLOADCENTER_NO_VERSIONS}</td></tr>
             <!-- END version_history -->
             </tbody>
         </table>
@@ -944,10 +1454,7 @@
     </fieldset>
 
 
-    <fieldset class="submit-buttons">
-        <input class="button1" type="submit" name="submit_item" value="{L_SUBMIT}">
-        {S_FORM_TOKEN}
-    </fieldset>
+    <div style="display:none">{S_FORM_TOKEN}</div>
 </form>
 
 <table class="table1 zebra-table">
@@ -955,7 +1462,9 @@
         <tr>
             <th>{L_ACP_DOWNLOADCENTER_ITEM_NAME}</th>
             <th>{L_ACP_DOWNLOADCENTER_CATEGORY}</th>
+            <th>{L_ACP_DOWNLOADCENTER_AUTHOR}</th>
             <th>{L_ACP_DOWNLOADCENTER_VERSION_NUMBER}</th>
+            <th>{L_ACP_DOWNLOADCENTER_OPERATIONAL_STATUS}</th>
             <th>{L_ACP_DOWNLOADCENTER_DOWNLOADS}</th>
             <th>{L_ACP_DOWNLOADCENTER_TOPIC_ID}</th>
             <th>{L_ENABLED}</th>
@@ -970,6 +1479,10 @@
             <td>{items.CATEGORY_NAME}</td>
             <td>{items.USERNAME}</td>
             <td>{items.LATEST_VERSION}</td>
+            <td>
+                <span class="downloadcenter-status-pill {items.OPERATIONAL_STATUS_CLASS}">{items.OPERATIONAL_STATUS}</span>
+                <span class="downloadcenter-status-explain">{items.OPERATIONAL_STATUS_EXPLAIN}</span>
+            </td>
             <td>{items.ITEM_DOWNLOADS}</td>
             <td><!-- IF items.TOPIC_ID -->{items.TOPIC_ID}<!-- ELSE -->-<!-- ENDIF --></td>
             <td><!-- IF items.ITEM_ENABLED -->{L_YES}<!-- ELSE -->{L_NO}<!-- ENDIF --></td>
@@ -981,7 +1494,7 @@
             </td>
         </tr>
     <!-- BEGINELSE -->
-        <tr><td colspan="9">{L_ACP_DOWNLOADCENTER_NO_ITEMS}</td></tr>
+        <tr><td colspan="10">{L_ACP_DOWNLOADCENTER_NO_ITEMS}</td></tr>
     <!-- END items -->
     </tbody>
 </table>
@@ -1002,8 +1515,21 @@
     <div class="downloadcenter-file-stat"><strong>{FILE_LIBRARY_TOTAL_SIZE}</strong><span>{L_ACP_DOWNLOADCENTER_FILES_TOTAL_SIZE}</span></div>
 </div>
 
+<!-- IF S_HAS_ORPHAN_FILES -->
+<div class="downloadcenter-acp-warning">
+    <strong>{L_ACP_DOWNLOADCENTER_FILES_ORPHAN_WARNING}</strong>
+    <p>{L_ACP_DOWNLOADCENTER_FILES_ORPHAN_WARNING_EXPLAIN}</p>
+    <p><a class="button2" href="{U_DELETE_ORPHAN_FILES}">{L_ACP_DOWNLOADCENTER_DELETE_ORPHAN_FILES}</a></p>
+</div>
+<!-- ENDIF -->
+
 <form class="downloadcenter-file-search" method="get" action="{U_FILES}">
     <input type="text" name="file_q" value="{FILE_LIBRARY_QUERY}" placeholder="{L_ACP_DOWNLOADCENTER_FILES_SEARCH_PLACEHOLDER}">
+    <select name="file_status">
+        <option value="all"<!-- IF S_FILE_STATUS_ALL --> selected="selected"<!-- ENDIF -->>{L_ACP_DOWNLOADCENTER_FILES_FILTER_ALL}</option>
+        <option value="used"<!-- IF S_FILE_STATUS_USED --> selected="selected"<!-- ENDIF -->>{L_ACP_DOWNLOADCENTER_FILES_FILTER_USED}</option>
+        <option value="orphan"<!-- IF S_FILE_STATUS_ORPHAN --> selected="selected"<!-- ENDIF -->>{L_ACP_DOWNLOADCENTER_FILES_FILTER_ORPHAN}</option>
+    </select>
     <input class="button2" type="submit" value="{L_SEARCH}">
     <a class="button2" href="{U_FILES_CLEAR}">{L_RESET}</a>
 </form>
@@ -1014,6 +1540,7 @@
             <th>{L_ACP_DOWNLOADCENTER_FILE_DISPLAY_NAME}</th>
             <th>{L_ACP_DOWNLOADCENTER_FILE_PHYSICAL_NAME}</th>
             <th>{L_ACP_DOWNLOADCENTER_FILE_SIZE}</th>
+            <th>{L_ACP_DOWNLOADCENTER_FILE_EXTENSION}</th>
             <th>{L_ACP_DOWNLOADCENTER_FILE_MODIFIED}</th>
             <th>{L_ACP_DOWNLOADCENTER_FILE_USAGE}</th>
             <th>{L_ACP_DOWNLOADCENTER_ACTIONS}</th>
@@ -1025,10 +1552,12 @@
             <td><strong>{file_library.DISPLAY_NAME}</strong></td>
             <td><code>{file_library.FILENAME}</code></td>
             <td>{file_library.SIZE}</td>
+            <td><code>{file_library.EXTENSION}</code></td>
             <td>{file_library.MODIFIED}</td>
             <td>
                 <!-- IF file_library.S_USED -->
                     <span class="downloadcenter-file-used">{L_ACP_DOWNLOADCENTER_FILE_IN_USE}</span><br>
+                    <span>{L_ACP_DOWNLOADCENTER_FILE_USAGE_COUNT}{L_COLON} {file_library.USAGE_COUNT}</span><br>
                     <span>{file_library.USAGE_LABEL}</span>
                 <!-- ELSE -->
                     <span class="downloadcenter-file-orphan">{L_ACP_DOWNLOADCENTER_FILE_AVAILABLE}</span>
@@ -1043,7 +1572,7 @@
             </td>
         </tr>
     <!-- BEGINELSE -->
-        <tr><td colspan="6">{L_ACP_DOWNLOADCENTER_FILES_EMPTY}</td></tr>
+        <tr><td colspan="7">{L_ACP_DOWNLOADCENTER_FILES_EMPTY}</td></tr>
     <!-- END file_library -->
     </tbody>
 </table>
@@ -1061,7 +1590,33 @@
 <h2>{L_ACP_DOWNLOADCENTER_LOGS}</h2>
 <p>{L_ACP_DOWNLOADCENTER_LOGS_EXPLAIN}</p>
 
-<form id="acp_downloadcenter_logs_filter" method="get" action="{U_ACTION}">
+<div class="downloadcenter-logs-kpis">
+    <div class="downloadcenter-logs-kpi">
+        <strong>{LOGS_TOTAL_MATCHING}</strong>
+        <span>{L_ACP_DOWNLOADCENTER_LOGS_TOTAL_MATCHING}</span>
+    </div>
+    <div class="downloadcenter-logs-kpi">
+        <strong>{LOGS_TODAY}</strong>
+        <span>{L_ACP_DOWNLOADCENTER_LOGS_TODAY}</span>
+    </div>
+    <div class="downloadcenter-logs-kpi">
+        <strong>{LOGS_INTEGRITY_TOTAL}</strong>
+        <span>{L_ACP_DOWNLOADCENTER_LOGS_INTEGRITY_TOTAL}</span>
+    </div>
+</div>
+
+<!-- IF .log_action_stats -->
+<div class="downloadcenter-logs-summary">
+    <strong>{L_ACP_DOWNLOADCENTER_LOGS_ACTION_SUMMARY}</strong>
+    <ul class="downloadcenter-logs-chips">
+    <!-- BEGIN log_action_stats -->
+        <li><a class="downloadcenter-logs-chip" href="{log_action_stats.U_FILTER}">{log_action_stats.LABEL}: {log_action_stats.TOTAL}</a></li>
+    <!-- END log_action_stats -->
+    </ul>
+</div>
+<!-- ENDIF -->
+
+<form id="acp_downloadcenter_logs_filter" class="downloadcenter-logs-filter" method="get" action="{U_ACTION}">
     <fieldset>
         <legend>{L_ACP_DOWNLOADCENTER_LOG_FILTERS}</legend>
         <dl>
@@ -1082,6 +1637,22 @@
         <dl>
             <dt><label for="log_item_id">{L_ACP_DOWNLOADCENTER_LOG_ITEM_ID}{L_COLON}</label></dt>
             <dd><input type="number" id="log_item_id" name="log_item_id" value="{LOG_ITEM_ID_FILTER}" min="0"></dd>
+        </dl>
+        <dl>
+            <dt><label for="log_version_id">{L_ACP_DOWNLOADCENTER_LOG_VERSION_ID}{L_COLON}</label></dt>
+            <dd><input type="number" id="log_version_id" name="log_version_id" value="{LOG_VERSION_ID_FILTER}" min="0"></dd>
+        </dl>
+        <dl>
+            <dt><label for="log_message">{L_ACP_DOWNLOADCENTER_LOG_MESSAGE_CONTAINS}{L_COLON}</label></dt>
+            <dd><input type="text" id="log_message" name="log_message" value="{LOG_MESSAGE_FILTER}" size="40"></dd>
+        </dl>
+        <dl>
+            <dt><label for="log_date_from">{L_ACP_DOWNLOADCENTER_LOG_DATE_FROM}{L_COLON}</label></dt>
+            <dd><input type="date" id="log_date_from" name="log_date_from" value="{LOG_DATE_FROM_FILTER}"></dd>
+        </dl>
+        <dl>
+            <dt><label for="log_date_to">{L_ACP_DOWNLOADCENTER_LOG_DATE_TO}{L_COLON}</label></dt>
+            <dd><input type="date" id="log_date_to" name="log_date_to" value="{LOG_DATE_TO_FILTER}"></dd>
         </dl>
     </fieldset>
     <fieldset class="submit-buttons">
@@ -1106,12 +1677,23 @@
     <!-- BEGIN logs -->
         <tr>
             <td>{logs.TIME}</td>
-            <td>{logs.USERNAME} <!-- IF logs.USER_ID --><br><span>ID: {logs.USER_ID}</span><!-- ENDIF --></td>
-            <td>{logs.ACTION}</td>
-            <td>{logs.MESSAGE}</td>
+            <td>{logs.USERNAME} <!-- IF logs.USER_ID --><span class="downloadcenter-log-user-id">ID: {logs.USER_ID}</span><!-- ENDIF --></td>
+            <td><strong>{logs.ACTION_LABEL}</strong><br><span class="downloadcenter-log-action-code">{logs.ACTION}</span></td>
+            <td><div class="downloadcenter-log-message">{logs.MESSAGE}</div></td>
             <td>
-                <!-- IF logs.ITEM_ID -->Item: {logs.ITEM_ID}<br><!-- ENDIF -->
-                <!-- IF logs.VERSION_ID -->Versão: {logs.VERSION_ID}<!-- ENDIF -->
+                <div class="downloadcenter-log-ref-list">
+                <!-- IF logs.ITEM_ID -->
+                    <!-- IF logs.U_ITEM --><a href="{logs.U_ITEM}">{L_ACP_DOWNLOADCENTER_ITEM}: {logs.ITEM_ID}</a><!-- ELSE --><span>{L_ACP_DOWNLOADCENTER_ITEM}: {logs.ITEM_ID}</span><!-- ENDIF -->
+                    <!-- IF logs.U_ITEM_LOGS --><a href="{logs.U_ITEM_LOGS}">{L_ACP_DOWNLOADCENTER_LOG_FILTER_THIS_ITEM}</a><!-- ENDIF -->
+                <!-- ENDIF -->
+                <!-- IF logs.VERSION_ID -->
+                    <span>{L_ACP_DOWNLOADCENTER_VERSION}: {logs.VERSION_ID}</span>
+                    <!-- IF logs.U_VERSION_LOGS --><a href="{logs.U_VERSION_LOGS}">{L_ACP_DOWNLOADCENTER_LOG_FILTER_THIS_VERSION}</a><!-- ENDIF -->
+                <!-- ENDIF -->
+                <!-- IF not logs.ITEM_ID and not logs.VERSION_ID -->
+                    <span>-</span>
+                <!-- ENDIF -->
+                </div>
             </td>
             <td>{logs.USER_IP}</td>
         </tr>
@@ -1122,7 +1704,6 @@
 </table>
 <!-- IF LOGS_PAGINATION --><div class="pagination">{LOGS_PAGE_NUMBER} &bull; {LOGS_PAGINATION}</div><!-- ENDIF -->
 <!-- ENDIF -->
-
 
 <script>
 (function () {
@@ -1166,6 +1747,13 @@
         insertAtCursor(textarea, '[size=' + select.value + ']', '[/size]');
         select.value = '';
     });
+    document.addEventListener('change', function (event) {
+        var color = event.target && event.target.matches && event.target.matches('[data-bbcode-color]') ? event.target : null;
+        if (!color || !color.value) { return; }
+        var toolbar = color.closest('[data-downloadcenter-bbcode-toolbar]');
+        var textarea = toolbar ? toolbar.parentNode.querySelector('textarea') : null;
+        insertAtCursor(textarea, '[color=' + color.value + ']', '[/color]');
+    });
     document.addEventListener('input', function (event) {
         var input = event.target && event.target.matches && event.target.matches('[data-downloadcenter-file-filter]') ? event.target : null;
         if (!input) { return; }
@@ -1182,4 +1770,5 @@
 }());
 </script>
 
+</div>
 <!-- INCLUDE overall_footer.html -->

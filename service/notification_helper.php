@@ -66,16 +66,28 @@ class notification_helper
     protected function add_board_notification($type_name, $user_id, $item_id, array $data)
     {
         $type_id = $this->ensure_type($type_name);
-        if ($type_id <= 0 || (int) $user_id <= 1)
+        $user_id = (int) $user_id;
+        $item_id = (int) $item_id;
+
+        if ($type_id <= 0 || $user_id <= 1 || $item_id <= 0)
         {
             return;
         }
 
+        // Avoid filling the notification dropdown with repeated unread notices for
+        // the same item/type/user when an author edits the same pending item several times.
+        $sql = 'DELETE FROM ' . $this->table_prefix . 'notifications
+            WHERE notification_type_id = ' . (int) $type_id . '
+                AND item_id = ' . $item_id . '
+                AND user_id = ' . $user_id . '
+                AND notification_read = 0';
+        $this->db->sql_query($sql);
+
         $sql_ary = [
             'notification_type_id' => (int) $type_id,
-            'item_id' => (int) $item_id,
+            'item_id' => $item_id,
             'item_parent_id' => 0,
-            'user_id' => (int) $user_id,
+            'user_id' => $user_id,
             'notification_read' => 0,
             'notification_time' => time(),
             'notification_data' => serialize($data),

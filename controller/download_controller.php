@@ -36,7 +36,7 @@ class download_controller
             trigger_error($this->user->lang('DOWNLOADCENTER_DISABLED'));
         }
 
-        if (!$this->access_allowed(isset($this->config['mundophpbb_downloadcenter_download_access']) ? $this->config['mundophpbb_downloadcenter_download_access'] : 'registered'))
+        if (!$this->can_download())
         {
             trigger_error($this->user->lang('DOWNLOADCENTER_NOT_AUTHORISED_DOWNLOAD'));
         }
@@ -63,15 +63,24 @@ class download_controller
             trigger_error($this->user->lang('DOWNLOADCENTER_VERSION_NOT_FOUND'));
         }
 
+        if ($this->is_rate_limited((int) $row['version_id']))
+        {
+            trigger_error($this->user->lang('DOWNLOADCENTER_RATE_LIMITED'));
+        }
+
         if ($row['download_type'] === 'external')
         {
-            if (empty($row['download_url']))
+            $external_url = trim((string) $row['download_url']);
+            if ($external_url === '' || !preg_match('#^https?://#i', $external_url) || !filter_var($external_url, FILTER_VALIDATE_URL))
             {
                 trigger_error($this->user->lang('DOWNLOADCENTER_FILE_NOT_AVAILABLE'));
             }
 
             $this->register_download((int) $row['item_id'], (int) $row['version_id']);
-            return new RedirectResponse($row['download_url']);
+            $response = new RedirectResponse($external_url);
+            $this->apply_no_store_headers($response);
+
+            return $response;
         }
 
         $file = $this->local_file_path($row['download_file']);
@@ -83,7 +92,14 @@ class download_controller
         $this->register_download((int) $row['item_id'], (int) $row['version_id']);
 
         $response = new BinaryFileResponse($file);
-        $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, basename($file));
+        $this->prepare_binary_response($response, $file);
+        $response->headers->set('Content-Type', 'application/octet-stream');
+        $response->setContentDisposition(
+            ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+            $this->download_filename($row, $file),
+            $this->ascii_filename_fallback($this->download_filename($row, $file))
+        );
+        $this->apply_private_download_headers($response);
 
         return $response;
     }
@@ -98,7 +114,7 @@ class download_controller
             trigger_error($this->user->lang('DOWNLOADCENTER_DISABLED'));
         }
 
-        if (!$this->access_allowed(isset($this->config['mundophpbb_downloadcenter_view_access']) ? $this->config['mundophpbb_downloadcenter_view_access'] : 'all'))
+        if (!$this->can_view())
         {
             trigger_error($this->user->lang('DOWNLOADCENTER_NOT_AUTHORISED_VIEW'));
         }
@@ -128,12 +144,15 @@ class download_controller
         }
 
         $response = new BinaryFileResponse($file);
-        $mime = function_exists('mime_content_type') ? mime_content_type($file) : '';
-        if ($mime)
-        {
-            $response->headers->set('Content-Type', $mime);
-        }
-        $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_INLINE, basename($file));
+        $this->prepare_binary_response($response, $file);
+        $mime = $this->safe_mime_type($file, 'image/jpeg');
+        $response->headers->set('Content-Type', $mime);
+        $response->setContentDisposition(
+            ResponseHeaderBag::DISPOSITION_INLINE,
+            basename($file),
+            $this->ascii_filename_fallback(basename($file))
+        );
+        $this->apply_private_asset_headers($response);
 
         return $response;
     }
@@ -149,7 +168,7 @@ class download_controller
             trigger_error($this->user->lang('DOWNLOADCENTER_DISABLED'));
         }
 
-        if (!$this->access_allowed(isset($this->config['mundophpbb_downloadcenter_view_access']) ? $this->config['mundophpbb_downloadcenter_view_access'] : 'all'))
+        if (!$this->can_view())
         {
             trigger_error($this->user->lang('DOWNLOADCENTER_NOT_AUTHORISED_VIEW'));
         }
@@ -167,14 +186,129 @@ class download_controller
         }
 
         $response = new BinaryFileResponse($file);
-        $mime = function_exists('mime_content_type') ? mime_content_type($file) : '';
-        if ($mime)
-        {
-            $response->headers->set('Content-Type', $mime);
-        }
-        $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_INLINE, basename($file));
+        $this->prepare_binary_response($response, $file);
+        $mime = $this->safe_mime_type($file, 'image/jpeg');
+        $response->headers->set('Content-Type', $mime);
+        $response->setContentDisposition(
+            ResponseHeaderBag::DISPOSITION_INLINE,
+            basename($file),
+            $this->ascii_filename_fallback(basename($file))
+        );
+        $this->apply_private_asset_headers($response);
 
         return $response;
+    }
+
+    protected function prepare_binary_response(BinaryFileResponse $response, $file)
+    {
+        if (method_exists($response, 'setAutoEtag'))
+        {
+            $response->setAutoEtag();
+        }
+
+        if (method_exists($response, 'setAutoLastModified'))
+        {
+            $response->setAutoLastModified();
+        }
+
+        if (is_file($file))
+        {
+            $response->headers->set('Content-Length', (string) filesize($file));
+        }
+
+        $response->headers->set('X-Content-Type-Options', 'nosniff');
+        $response->headers->set('Accept-Ranges', 'bytes');
+    }
+
+    protected function apply_private_download_headers($response)
+    {
+        $this->apply_no_store_headers($response);
+        $response->headers->set('X-Download-Options', 'noopen');
+    }
+
+    protected function apply_private_asset_headers($response)
+    {
+        $response->headers->set('Cache-Control', 'private, max-age=3600, must-revalidate');
+        $response->headers->set('Pragma', '');
+        $response->headers->set('X-Content-Type-Options', 'nosniff');
+    }
+
+    protected function apply_no_store_headers($response)
+    {
+        $response->headers->set('Cache-Control', 'private, no-store, no-cache, must-revalidate, max-age=0');
+        $response->headers->set('Pragma', 'no-cache');
+        $response->headers->set('Expires', '0');
+        $response->headers->set('X-Content-Type-Options', 'nosniff');
+    }
+
+    protected function download_filename(array $row, $file)
+    {
+        $extension = strtolower((string) pathinfo($file, PATHINFO_EXTENSION));
+        $name = isset($row['item_name']) ? (string) $row['item_name'] : 'download';
+        $version = isset($row['version_number']) ? (string) $row['version_number'] : '';
+
+        $base = trim($name . ($version !== '' ? '-' . $version : ''));
+        $base = $this->clean_filename_part($base);
+
+        if ($base === '')
+        {
+            $base = 'download';
+        }
+
+        return $extension !== '' ? $base . '.' . $extension : $base;
+    }
+
+    protected function clean_filename_part($value)
+    {
+        $value = html_entity_decode((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $value = preg_replace('#[\\/\?%\*:|"<>]+#u', '-', $value);
+        $value = preg_replace('#\s+#u', ' ', $value);
+        $value = trim($value, " .\t\n\r\0\x0B-_");
+
+        return $value;
+    }
+
+    protected function ascii_filename_fallback($filename)
+    {
+        $filename = $this->clean_filename_part($filename);
+        $extension = pathinfo($filename, PATHINFO_EXTENSION);
+        $base = $extension !== '' ? substr($filename, 0, -(strlen($extension) + 1)) : $filename;
+
+        if (function_exists('iconv'))
+        {
+            $converted = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $base);
+            if ($converted !== false)
+            {
+                $base = $converted;
+            }
+        }
+
+        $base = preg_replace('#[^A-Za-z0-9._-]+#', '-', $base);
+        $base = trim($base, '.-_');
+        if ($base === '')
+        {
+            $base = 'download';
+        }
+
+        $extension = preg_replace('#[^A-Za-z0-9]+#', '', (string) $extension);
+
+        return $extension !== '' ? $base . '.' . strtolower($extension) : $base;
+    }
+
+    protected function safe_mime_type($file, $fallback = 'application/octet-stream')
+    {
+        $mime = function_exists('mime_content_type') ? @mime_content_type($file) : '';
+        if (!is_string($mime) || $mime === '')
+        {
+            return $fallback;
+        }
+
+        if (strpos($mime, "\n") !== false || strpos($mime, "\r") !== false)
+        {
+            return $fallback;
+        }
+
+        return $mime;
     }
 
     protected function screenshot_file_path($file_name)
@@ -193,6 +327,35 @@ class download_controller
         return $this->root_path . 'files/mundophpbb/downloadcenter/' . basename((string) $file_name);
     }
 
+
+    protected function effective_access_mode($config_key, $default, $respect_view_access = true)
+    {
+        $mode = isset($this->config[$config_key]) ? (string) $this->config[$config_key] : $default;
+        $mode = $this->normalise_access_mode($mode, $default);
+
+        if ($respect_view_access)
+        {
+            $view_mode = isset($this->config['mundophpbb_downloadcenter_view_access']) ? (string) $this->config['mundophpbb_downloadcenter_view_access'] : 'all';
+            $mode = $this->most_restrictive_access_mode($view_mode, $mode);
+        }
+
+        return $mode;
+    }
+
+    protected function normalise_access_mode($mode, $default = 'registered')
+    {
+        return in_array($mode, ['all', 'registered', 'admin'], true) ? $mode : $default;
+    }
+
+    protected function most_restrictive_access_mode($first, $second)
+    {
+        $weights = ['all' => 0, 'registered' => 1, 'admin' => 2];
+        $first = $this->normalise_access_mode($first, 'all');
+        $second = $this->normalise_access_mode($second, 'registered');
+
+        return ($weights[$first] >= $weights[$second]) ? $first : $second;
+    }
+
     protected function access_allowed($mode)
     {
         switch ($mode)
@@ -209,9 +372,63 @@ class download_controller
         }
     }
 
+    protected function use_acl_permissions()
+    {
+        return isset($this->config['mundophpbb_downloadcenter_permission_mode']) && $this->config['mundophpbb_downloadcenter_permission_mode'] === 'acl';
+    }
+
+    protected function can_view()
+    {
+        if ($this->use_acl_permissions())
+        {
+            return $this->is_admin() || $this->auth->acl_get('u_downloadcenter_view');
+        }
+
+        return $this->access_allowed(isset($this->config['mundophpbb_downloadcenter_view_access']) ? $this->config['mundophpbb_downloadcenter_view_access'] : 'all');
+    }
+
+    protected function can_download()
+    {
+        $min_posts = (int) $this->config['mundophpbb_downloadcenter_min_posts'];
+
+        if ($this->use_acl_permissions())
+        {
+            return $this->can_view()
+                && ($this->is_admin() || $this->auth->acl_get('u_downloadcenter_download'))
+                && ($min_posts <= 0 || (int) $this->user->data['user_posts'] >= $min_posts);
+        }
+
+        return $this->access_allowed($this->effective_access_mode('mundophpbb_downloadcenter_download_access', 'registered', true))
+            && ($min_posts <= 0 || (int) $this->user->data['user_posts'] >= $min_posts);
+    }
+
     protected function is_admin()
     {
-        return ((int) $this->user->data['user_type'] === USER_FOUNDER) || $this->auth->acl_get('a_board');
+        return ((int) $this->user->data['user_type'] === USER_FOUNDER) || $this->auth->acl_get('a_board') || $this->auth->acl_get('a_downloadcenter_manage');
+    }
+
+    protected function is_rate_limited($version_id)
+    {
+        $limit = isset($this->config['mundophpbb_downloadcenter_rate_limit_count']) ? (int) $this->config['mundophpbb_downloadcenter_rate_limit_count'] : 0;
+        if ($limit <= 0 || $this->is_admin())
+        {
+            return false;
+        }
+
+        $window = isset($this->config['mundophpbb_downloadcenter_rate_limit_window']) ? max(10, (int) $this->config['mundophpbb_downloadcenter_rate_limit_window']) : 60;
+        $since = time() - $window;
+        $user_id = (int) $this->user->data['user_id'];
+        $user_ip = $this->db->sql_escape((string) $this->user->ip);
+
+        $sql = 'SELECT COUNT(*) AS total
+            FROM ' . $this->table('downloadcenter_downloads') . '
+            WHERE download_time >= ' . (int) $since . '
+                AND (user_id = ' . $user_id . " OR user_ip = '" . $user_ip . "')";
+        $result = $this->db->sql_query($sql);
+        $total = (int) $this->db->sql_fetchfield('total');
+        $this->db->sql_freeresult($result);
+
+        return $total >= $limit;
     }
 
     protected function register_download($item_id, $version_id)

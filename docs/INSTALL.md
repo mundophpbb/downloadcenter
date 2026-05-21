@@ -25,3 +25,20 @@
 - Criar pelo menos uma categoria.
 - Criar um item de teste com link externo.
 - Criar um item de teste com arquivo local.
+
+## Rotina pós-atualização recomendada
+
+Depois de substituir os arquivos da extensão:
+
+1. Limpe o cache do phpBB.
+2. Acesse **Personalizar > Gerenciar extensões** para aplicar migrations pendentes.
+3. Abra **Diagnóstico beta** e confirme a versão instalada.
+4. Execute **Manutenção segura > Reconstruir dados derivados**.
+5. Abra **Integridade dos dados** e corrija alertas seguros.
+6. Teste um download local e um download externo.
+
+Consulte também:
+
+- `docs/UPDATE_CHECKLIST.md`
+- `docs/TROUBLESHOOTING.md`
+- `docs/ADMIN_GUIDE.md`

@@ -6,7 +6,7 @@ if (!defined('IN_PHPBB'))
 }
 
 $lang = array_merge($lang, [
-    'DOWNLOADCENTER_TITLE' => 'Download Center',
+    'DOWNLOADCENTER_TITLE' => 'Download Database',
     'DOWNLOADCENTER_EXPLAIN' => 'Find extensions, styles, language packs, BBCodes, tools, and other files shared by the community.',
     'DOWNLOADCENTER_DISABLED' => 'The Download Center is currently disabled.',
     'DOWNLOADCENTER_NO_ITEMS' => 'No items have been published yet.',
