@@ -114,6 +114,7 @@ class main_controller
         $where = [
             'i.item_enabled = 1',
             'i.item_approved = 1',
+            'EXISTS (SELECT 1 FROM ' . $this->table('downloadcenter_categories') . ' ce WHERE ce.category_id = i.category_id AND ce.category_enabled = 1)',
         ];
 
         if ($category_id > 0)
@@ -314,7 +315,8 @@ class main_controller
             LEFT JOIN ' . USERS_TABLE . ' u ON u.user_id = i.user_id
             WHERE i.item_id = ' . (int) $item_id . '
                 AND i.item_enabled = 1
-                AND i.item_approved = 1';
+                AND i.item_approved = 1
+                AND c.category_enabled = 1';
         $result = $this->db->sql_query($sql);
         $item = $this->db->sql_fetchrow($result);
         $this->db->sql_freeresult($result);
@@ -455,7 +457,7 @@ class main_controller
         $sql = 'SELECT i.item_id, i.item_name, i.item_short_desc, i.item_updated, c.category_name
             FROM ' . $this->table('downloadcenter_items') . ' i
             LEFT JOIN ' . $this->table('downloadcenter_categories') . ' c ON c.category_id = i.category_id
-            WHERE i.item_enabled = 1 AND i.item_approved = 1
+            WHERE i.item_enabled = 1 AND i.item_approved = 1 AND c.category_enabled = 1
             ORDER BY i.item_updated DESC, i.item_created DESC';
         $result = $this->db->sql_query_limit($sql, 20);
         while ($row = $this->db->sql_fetchrow($result))
@@ -1117,6 +1119,19 @@ class main_controller
         $latest_download_url = '';
         $latest_download_file = '';
         $latest_file_size = '';
+        $latest_version = $this->get_latest_version($item_id);
+        if ($latest_version)
+        {
+            $latest_version_id = (int) $latest_version['version_id'];
+            $latest_version_changelog = (string) $latest_version['version_changelog'];
+            $latest_version_number = (string) $latest_version['version_number'];
+            $latest_phpbb_version = (string) $latest_version['phpbb_version'];
+            $latest_php_version = (string) $latest_version['php_version'];
+            $latest_download_type = (string) $latest_version['download_type'];
+            $latest_download_url = (string) $latest_version['download_url'];
+            $latest_download_file = (string) $latest_version['download_file'];
+            $latest_file_size = (string) $latest_version['file_size'];
+        }
         $sql = 'SELECT *
             FROM ' . $versions_table . '
             WHERE item_id = ' . $item_id . '
@@ -1421,9 +1436,12 @@ class main_controller
     protected function get_public_overall_stats()
     {
         $stats = ['items' => 0, 'categories' => 0, 'downloads' => 0, 'updated' => 0];
-        $sql = 'SELECT COUNT(*) AS items, COALESCE(SUM(item_downloads), 0) AS downloads, MAX(item_updated) AS updated
-            FROM ' . $this->table('downloadcenter_items') . '
-            WHERE item_enabled = 1 AND item_approved = 1';
+        $sql = 'SELECT COUNT(i.item_id) AS items, COALESCE(SUM(i.item_downloads), 0) AS downloads, MAX(i.item_updated) AS updated
+            FROM ' . $this->table('downloadcenter_items') . ' i
+            INNER JOIN ' . $this->table('downloadcenter_categories') . ' c ON c.category_id = i.category_id
+            WHERE i.item_enabled = 1
+                AND i.item_approved = 1
+                AND c.category_enabled = 1';
         $result = $this->db->sql_query($sql);
         $row = $this->db->sql_fetchrow($result);
         $this->db->sql_freeresult($result);
@@ -1445,11 +1463,13 @@ class main_controller
     protected function get_public_category_stats()
     {
         $stats = [];
-        $sql = 'SELECT category_id, COUNT(item_id) AS item_count, SUM(item_downloads) AS download_count, MAX(item_updated) AS latest_update
-            FROM ' . $this->table('downloadcenter_items') . '
-            WHERE item_enabled = 1
-                AND item_approved = 1
-            GROUP BY category_id';
+        $sql = 'SELECT i.category_id, COUNT(i.item_id) AS item_count, SUM(i.item_downloads) AS download_count, MAX(i.item_updated) AS latest_update
+            FROM ' . $this->table('downloadcenter_items') . ' i
+            INNER JOIN ' . $this->table('downloadcenter_categories') . ' c ON c.category_id = i.category_id
+            WHERE i.item_enabled = 1
+                AND i.item_approved = 1
+                AND c.category_enabled = 1
+            GROUP BY i.category_id';
         $result = $this->db->sql_query($sql);
         while ($row = $this->db->sql_fetchrow($result))
         {
@@ -1476,8 +1496,10 @@ class main_controller
         $sql = 'SELECT DISTINCT v.' . $field . ' AS filter_value
             FROM ' . $this->table('downloadcenter_versions') . ' v
             INNER JOIN ' . $this->table('downloadcenter_items') . ' i ON i.item_id = v.item_id
+            INNER JOIN ' . $this->table('downloadcenter_categories') . ' c ON c.category_id = i.category_id
             WHERE i.item_enabled = 1
                 AND i.item_approved = 1
+                AND c.category_enabled = 1
                 AND v.version_enabled = 1
                 AND v.' . $field . " <> ''
             ORDER BY v." . $field . ' ASC';

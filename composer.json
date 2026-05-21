@@ -3,8 +3,8 @@
     "type": "phpbb-extension",
     "description": "Central de Downloads estruturada para phpBB.",
     "homepage": "https://mundophpbb.com.br",
-    "version": "1.0.99",
-    "time": "2026-05-19",
+    "version": "1.0.100",
+    "time": "2026-05-21",
     "license": "GPL-2.0-only",
     "authors": [
         {

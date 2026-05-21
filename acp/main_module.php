@@ -311,7 +311,7 @@ class main_module
         $total_published = $this->count_table_rows($db, $items_table, 'item_enabled = 1 AND item_approved = 1');
         $total_pending = $this->count_table_rows($db, $items_table, 'item_approved = 0');
 
-        $package_version = '1.0.99';
+        $package_version = '1.0.100';
         $installed_version = isset($config['mundophpbb_downloadcenter_version']) ? (string) $config['mundophpbb_downloadcenter_version'] : '';
         $permission_mode = isset($config['mundophpbb_downloadcenter_permission_mode']) && $config['mundophpbb_downloadcenter_permission_mode'] === 'acl' ? 'acl' : 'global';
         $support_forum_id = isset($config['mundophpbb_downloadcenter_support_forum_id']) ? (int) $config['mundophpbb_downloadcenter_support_forum_id'] : 0;
@@ -328,6 +328,7 @@ class main_module
             'mundophpbb_downloadcenter_submit_access',
             'mundophpbb_downloadcenter_allowed_extensions',
             'mundophpbb_downloadcenter_max_upload_mb',
+            'mundophpbb_downloadcenter_rules_topic_id',
             'mundophpbb_downloadcenter_public_per_page',
             'mundophpbb_downloadcenter_show_public_stats',
             'mundophpbb_downloadcenter_feed_enabled',
@@ -1991,7 +1992,6 @@ class main_module
 
             $data = [
                 'category_id' => max(0, $request->variable('category_id', 0)),
-                'user_id' => (int) $user->data['user_id'],
                 'topic_id' => max(0, $request->variable('topic_id', 0)),
                 'item_name' => $name,
                 'item_slug' => $this->slugify($name),
@@ -2011,6 +2011,7 @@ class main_module
             }
             else
             {
+                $data['user_id'] = (int) $user->data['user_id'];
                 $data['item_created'] = $time;
                 $sql = 'INSERT INTO ' . $items_table . ' ' . $db->sql_build_array('INSERT', $data);
                 $db->sql_query($sql);
@@ -2889,7 +2890,11 @@ class main_module
     protected function delete_local_files_for_item($db, $versions_table, $item_id)
     {
         $deleted_files = [];
-        $sql = 'SELECT * FROM ' . $versions_table . ' WHERE item_id = ' . (int) $item_id;
+        $sql = 'SELECT download_file
+            FROM ' . $versions_table . "
+            WHERE item_id = " . (int) $item_id . "
+                AND download_type = 'local'
+                AND download_file <> ''";
         $result = $db->sql_query($sql);
         while ($version_row = $db->sql_fetchrow($result))
         {
@@ -2899,7 +2904,24 @@ class main_module
                 continue;
             }
 
-            $this->delete_local_file_for_version($version_row);
+            $sql_count = 'SELECT COUNT(version_id) AS total
+                FROM ' . $versions_table . "
+                WHERE download_type = 'local'
+                    AND download_file = '" . $db->sql_escape($file_name) . "'
+                    AND item_id <> " . (int) $item_id;
+            $count_result = $db->sql_query($sql_count);
+            $external_references = (int) $db->sql_fetchfield('total');
+            $db->sql_freeresult($count_result);
+
+            if ($external_references === 0)
+            {
+                $path = $this->local_file_path($file_name);
+                if (is_file($path))
+                {
+                    @unlink($path);
+                }
+            }
+
             $deleted_files[$file_name] = true;
         }
         $db->sql_freeresult($result);

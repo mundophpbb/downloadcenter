@@ -50,10 +50,12 @@ class download_controller
         $sql = 'SELECT v.*, i.item_id, i.item_name, i.item_enabled, i.item_approved
             FROM ' . $this->table('downloadcenter_versions') . ' v
             INNER JOIN ' . $this->table('downloadcenter_items') . ' i ON i.item_id = v.item_id
+            INNER JOIN ' . $this->table('downloadcenter_categories') . ' c ON c.category_id = i.category_id
             WHERE v.version_id = ' . (int) $version_id . '
                 AND v.version_enabled = 1
                 AND i.item_enabled = 1
-                AND i.item_approved = 1';
+                AND i.item_approved = 1
+                AND c.category_enabled = 1';
         $result = $this->db->sql_query($sql);
         $row = $this->db->sql_fetchrow($result);
         $this->db->sql_freeresult($result);
@@ -119,9 +121,10 @@ class download_controller
             trigger_error($this->user->lang('DOWNLOADCENTER_NOT_AUTHORISED_VIEW'));
         }
 
-        $sql = 'SELECT s.*, i.item_enabled, i.item_approved
+        $sql = 'SELECT s.*, i.item_enabled, i.item_approved, c.category_enabled
             FROM ' . $this->table('downloadcenter_screenshots') . ' s
             INNER JOIN ' . $this->table('downloadcenter_items') . ' i ON i.item_id = s.item_id
+            INNER JOIN ' . $this->table('downloadcenter_categories') . ' c ON c.category_id = i.category_id
             WHERE s.screenshot_id = ' . (int) $screenshot_id;
         $result = $this->db->sql_query($sql);
         $row = $this->db->sql_fetchrow($result);
@@ -132,7 +135,7 @@ class download_controller
             trigger_error($this->user->lang('DOWNLOADCENTER_SCREENSHOT_NOT_FOUND'));
         }
 
-        if ((!$row['item_enabled'] || !$row['item_approved']) && !$this->is_admin())
+        if ((!$row['item_enabled'] || !$row['item_approved'] || !$row['category_enabled']) && !$this->is_admin())
         {
             trigger_error($this->user->lang('DOWNLOADCENTER_SCREENSHOT_NOT_FOUND'));
         }
