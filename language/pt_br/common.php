@@ -133,6 +133,7 @@ $lang = array_merge($lang, [
 
     'DOWNLOADCENTER_UPLOAD_RULES' => 'Extensões permitidas: %1$s. Tamanho máximo: %2$s.',
     'DOWNLOADCENTER_UPLOAD_TOO_LARGE' => 'O arquivo excede o limite máximo permitido: %s.',
+    'DOWNLOADCENTER_SUPPORT_FORUM_REQUIRED_FOR_LOCAL_UPLOAD' => 'Uploads locais são armazenados como anexos do phpBB. Peça a um administrador para selecionar um fórum de suporte antes de enviar arquivos locais.',
 
     'DOWNLOADCENTER_RULES_TITLE' => 'Regras de envio',
     'DOWNLOADCENTER_RULES_EXPLAIN' => 'Consulte as orientações antes de enviar uma contribuição ou nova versão para análise.',

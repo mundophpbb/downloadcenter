@@ -205,7 +205,7 @@ class main_controller
                 'ITEM_UPDATED'     => !empty($row['item_updated']) ? $this->user->format_date((int) $row['item_updated']) : '',
                 'DOWNLOADS'        => (int) $row['item_downloads'],
                 'U_ITEM'           => $this->helper->route('mundophpbb_downloadcenter_item', ['item_id' => $item_id]),
-                'U_DOWNLOAD'       => ($version && $file_available) ? $this->helper->route('mundophpbb_downloadcenter_download', ['version_id' => (int) $version['version_id']]) : '',
+                'U_DOWNLOAD'       => ($version && $file_available) ? $this->download_url_for_version($version) : '',
                 'S_HAS_VERSION'    => (bool) $version,
                 'S_CAN_DOWNLOAD'   => $can_download,
                 'S_FILE_AVAILABLE' => $file_available,
@@ -353,7 +353,7 @@ class main_controller
                 'FILE_SIZE'         => $version['file_size'],
                 'DOWNLOADS'         => (int) $version['version_downloads'],
                 'CREATED'           => !empty($version['version_created']) ? $this->user->format_date((int) $version['version_created']) : '',
-                'U_DOWNLOAD'        => $file_available ? $this->helper->route('mundophpbb_downloadcenter_download', ['version_id' => (int) $version['version_id']]) : '',
+                'U_DOWNLOAD'        => $file_available ? $this->download_url_for_version($version) : '',
                 'S_CAN_DOWNLOAD'    => $can_download && $file_available,
                 'S_FILE_AVAILABLE'  => $file_available,
                 'S_FILE_MISSING'    => !$file_available,
@@ -1805,6 +1805,18 @@ class main_controller
         return $file_name !== '' && is_file($this->local_file_path($file_name));
     }
 
+    protected function download_url_for_version(array $version)
+    {
+        $file_name = isset($version['download_file']) ? (string) $version['download_file'] : '';
+
+        if ((string) $version['download_type'] === 'local' && preg_match('/^attach:(\d+)$/', $file_name, $matches))
+        {
+            return append_sid($this->root_path . 'download/file.' . $this->php_ext, 'id=' . (int) $matches[1]);
+        }
+
+        return $this->helper->route('mundophpbb_downloadcenter_download', ['version_id' => (int) $version['version_id']]);
+    }
+
     protected function local_file_path($file_name)
     {
         return $this->root_path . 'files/mundophpbb/downloadcenter/' . basename((string) $file_name);
@@ -1886,7 +1898,7 @@ class main_controller
 
     protected function use_phpbb_attachment_uploads()
     {
-        return !empty($this->config['mundophpbb_downloadcenter_use_phpbb_attachments']);
+        return true;
     }
 
     protected function handle_phpbb_attachment_upload($field)
@@ -1899,6 +1911,11 @@ class main_controller
         }
 
         $forum_id = isset($this->config['mundophpbb_downloadcenter_support_forum_id']) ? (int) $this->config['mundophpbb_downloadcenter_support_forum_id'] : 0;
+        if ($forum_id <= 0)
+        {
+            trigger_error($this->user->lang('DOWNLOADCENTER_SUPPORT_FORUM_REQUIRED_FOR_LOCAL_UPLOAD'));
+        }
+
         $filedata = $phpbb_container->get('attachment.manager')->upload($field, $forum_id, false, '', false);
         $errors = isset($filedata['error']) ? array_filter((array) $filedata['error']) : [];
 

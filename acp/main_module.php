@@ -311,7 +311,7 @@ class main_module
         $total_published = $this->count_table_rows($db, $items_table, 'item_enabled = 1 AND item_approved = 1');
         $total_pending = $this->count_table_rows($db, $items_table, 'item_approved = 0');
 
-        $package_version = '1.0.101';
+        $package_version = '1.0.103';
         $installed_version = isset($config['mundophpbb_downloadcenter_version']) ? (string) $config['mundophpbb_downloadcenter_version'] : '';
         $permission_mode = isset($config['mundophpbb_downloadcenter_permission_mode']) && $config['mundophpbb_downloadcenter_permission_mode'] === 'acl' ? 'acl' : 'global';
         $support_forum_id = isset($config['mundophpbb_downloadcenter_support_forum_id']) ? (int) $config['mundophpbb_downloadcenter_support_forum_id'] : 0;
@@ -403,13 +403,16 @@ class main_module
 
         $version_ok = $installed_version !== '' && version_compare($installed_version, $package_version, '>=');
         $config_ok = count($missing_config_keys) === 0;
-        $support_forum_ok = $support_forum_id === 0 || $this->is_valid_support_forum($support_forum_id);
+        $support_forum_ok = $support_forum_id > 0 && $this->is_valid_support_forum($support_forum_id);
         $public_per_page_ok = $public_per_page > 0;
 
         $this->assign_diagnostic_row($template, $version_ok, $user->lang('ACP_DOWNLOADCENTER_DIAG_VERSION'), $version_ok ? $user->lang('ACP_DOWNLOADCENTER_DIAG_VERSION_OK', $installed_version) : $user->lang('ACP_DOWNLOADCENTER_DIAG_VERSION_WARN', $installed_version !== '' ? $installed_version : $user->lang('ACP_DOWNLOADCENTER_DIAG_VERSION_UNKNOWN'), $package_version));
         $this->assign_diagnostic_row($template, $config_ok, $user->lang('ACP_DOWNLOADCENTER_DIAG_CONFIG_KEYS'), $config_ok ? $user->lang('ACP_DOWNLOADCENTER_DIAG_CONFIG_KEYS_OK') : $user->lang('ACP_DOWNLOADCENTER_DIAG_CONFIG_KEYS_WARN', implode(', ', $missing_config_keys)));
         $this->assign_diagnostic_row($template, true, $user->lang('ACP_DOWNLOADCENTER_DIAG_PERMISSION_MODE'), $permission_mode === 'acl' ? $user->lang('ACP_DOWNLOADCENTER_DIAG_PERMISSION_MODE_ACL') : $user->lang('ACP_DOWNLOADCENTER_DIAG_PERMISSION_MODE_GLOBAL'));
-        $this->assign_diagnostic_row($template, $support_forum_ok, $user->lang('ACP_DOWNLOADCENTER_DIAG_SUPPORT_FORUM'), $support_forum_ok ? ($support_forum_id > 0 ? $user->lang('ACP_DOWNLOADCENTER_DIAG_SUPPORT_FORUM_OK', $support_forum_id) : $user->lang('ACP_DOWNLOADCENTER_DIAG_SUPPORT_FORUM_DISABLED')) : $user->lang('ACP_DOWNLOADCENTER_DIAG_SUPPORT_FORUM_WARN', $support_forum_id));
+        $support_forum_message = $support_forum_ok
+            ? $user->lang('ACP_DOWNLOADCENTER_DIAG_SUPPORT_FORUM_OK', $support_forum_id)
+            : ($support_forum_id > 0 ? $user->lang('ACP_DOWNLOADCENTER_DIAG_SUPPORT_FORUM_WARN', $support_forum_id) : $user->lang('ACP_DOWNLOADCENTER_DIAG_SUPPORT_FORUM_REQUIRED'));
+        $this->assign_diagnostic_row($template, $support_forum_ok, $user->lang('ACP_DOWNLOADCENTER_DIAG_SUPPORT_FORUM'), $support_forum_message);
         $this->assign_diagnostic_row($template, true, $user->lang('ACP_DOWNLOADCENTER_DIAG_SUBMISSIONS'), $allow_submissions ? ($notifications_enabled ? $user->lang('ACP_DOWNLOADCENTER_DIAG_SUBMISSIONS_ENABLED_NOTIFY') : $user->lang('ACP_DOWNLOADCENTER_DIAG_SUBMISSIONS_ENABLED_NO_NOTIFY')) : $user->lang('ACP_DOWNLOADCENTER_DIAG_SUBMISSIONS_DISABLED'));
         $this->assign_diagnostic_row($template, $public_per_page_ok, $user->lang('ACP_DOWNLOADCENTER_DIAG_PUBLIC_PAGINATION'), $public_per_page_ok ? $user->lang('ACP_DOWNLOADCENTER_DIAG_PUBLIC_PAGINATION_OK', $public_per_page) : $user->lang('ACP_DOWNLOADCENTER_DIAG_PUBLIC_PAGINATION_WARN'));
         $this->assign_diagnostic_row($template, $storage_exists && $storage_writable, $user->lang('ACP_DOWNLOADCENTER_DIAG_STORAGE'), $storage_exists ? ($storage_writable ? $user->lang('ACP_DOWNLOADCENTER_DIAG_STORAGE_OK', $storage_dir) : $user->lang('ACP_DOWNLOADCENTER_DIAG_STORAGE_NOT_WRITABLE', $storage_dir)) : $user->lang('ACP_DOWNLOADCENTER_DIAG_STORAGE_MISSING', $storage_dir));
@@ -1172,9 +1175,15 @@ class main_module
             $config->set('mundophpbb_downloadcenter_public_per_page', max(1, $request->variable('downloadcenter_public_per_page', 12)));
             $config->set('mundophpbb_downloadcenter_acp_per_page', max(1, $request->variable('downloadcenter_acp_per_page', 20)));
             $config->set('mundophpbb_downloadcenter_logs_per_page', max(1, $request->variable('downloadcenter_logs_per_page', 50)));
-            $config->set('mundophpbb_downloadcenter_allowed_extensions', $this->normalise_allowed_extensions($request->variable('downloadcenter_allowed_extensions', '', true)));
-            $config->set('mundophpbb_downloadcenter_max_upload_mb', max(1, $request->variable('downloadcenter_max_upload_mb', 20)));
-            $config->set('mundophpbb_downloadcenter_use_phpbb_attachments', $request->variable('downloadcenter_use_phpbb_attachments', 0));
+            if ($request->is_set_post('downloadcenter_allowed_extensions'))
+            {
+                $config->set('mundophpbb_downloadcenter_allowed_extensions', $this->normalise_allowed_extensions($request->variable('downloadcenter_allowed_extensions', '', true)));
+            }
+            if ($request->is_set_post('downloadcenter_max_upload_mb'))
+            {
+                $config->set('mundophpbb_downloadcenter_max_upload_mb', max(1, $request->variable('downloadcenter_max_upload_mb', 20)));
+            }
+            $config->set('mundophpbb_downloadcenter_use_phpbb_attachments', 1);
             $config->set('mundophpbb_downloadcenter_show_public_stats', $request->variable('downloadcenter_show_public_stats', 1));
             $config->set('mundophpbb_downloadcenter_feed_enabled', $request->variable('downloadcenter_feed_enabled', 1));
             $config->set('mundophpbb_downloadcenter_rate_limit_count', max(0, $request->variable('downloadcenter_rate_limit_count', 0)));
@@ -1225,7 +1234,7 @@ class main_module
             'DOWNLOADCENTER_LOGS_PER_PAGE' => isset($config['mundophpbb_downloadcenter_logs_per_page']) ? (int) $config['mundophpbb_downloadcenter_logs_per_page'] : 50,
             'DOWNLOADCENTER_ALLOWED_EXTENSIONS' => $this->get_allowed_extensions_string(),
             'DOWNLOADCENTER_MAX_UPLOAD_MB' => $this->get_max_upload_mb(),
-            'DOWNLOADCENTER_USE_PHPBB_ATTACHMENTS' => !empty($config['mundophpbb_downloadcenter_use_phpbb_attachments']),
+            'DOWNLOADCENTER_USE_PHPBB_ATTACHMENTS' => true,
             'DOWNLOADCENTER_UPLOAD_RULES' => $this->upload_rules_text($user),
             'DOWNLOADCENTER_SHOW_PUBLIC_STATS' => !isset($config['mundophpbb_downloadcenter_show_public_stats']) || (bool) $config['mundophpbb_downloadcenter_show_public_stats'],
             'DOWNLOADCENTER_FEED_ENABLED' => !isset($config['mundophpbb_downloadcenter_feed_enabled']) || (bool) $config['mundophpbb_downloadcenter_feed_enabled'],
@@ -1704,6 +1713,10 @@ class main_module
                 $this->add_log($db, $user, $approved ? 'item_approved' : 'item_unapproved', $user->lang($approved ? 'ACP_DOWNLOADCENTER_LOG_ITEM_APPROVED' : 'ACP_DOWNLOADCENTER_LOG_ITEM_UNAPPROVED', (string) $item_id), $item_id);
 
                 $this->notify_author_status($item_for_notification, (bool) $approved);
+                if ($approved)
+                {
+                    $this->sync_support_topic_for_item($db, $config, $user, $items_table, $versions_table, $item_id, $phpbb_root_path, $phpEx);
+                }
 
                 trigger_error($user->lang($success_key) . adm_back_link($this->u_action));
             }
@@ -1836,16 +1849,28 @@ class main_module
             }
             else if ($download_type === 'local' && $download_file !== '')
             {
-                $existing_path = $this->local_file_path($download_file);
-                if (!is_file($existing_path))
+                if ($this->is_phpbb_attachment_reference($download_file))
                 {
-                    trigger_error($user->lang('ACP_DOWNLOADCENTER_EXISTING_FILE_NOT_FOUND') . adm_back_link($this->u_action . '&amp;action=edit&amp;item_id=' . (int) $item_id));
+                    $existing_attachment = $this->get_phpbb_attachment_file($download_file);
+                    if (!$existing_attachment)
+                    {
+                        trigger_error($user->lang('ACP_DOWNLOADCENTER_EXISTING_FILE_NOT_FOUND') . adm_back_link($this->u_action . '&amp;action=edit&amp;item_id=' . (int) $item_id));
+                    }
+                    $file_size = $this->format_file_size((int) $existing_attachment['filesize']);
                 }
-                if (!$this->is_allowed_existing_file($download_file))
+                else
                 {
-                    trigger_error($user->lang('ACP_DOWNLOADCENTER_UPLOAD_EXTENSION_NOT_ALLOWED', $this->get_allowed_extensions_string()) . adm_back_link($this->u_action . '&amp;action=edit&amp;item_id=' . (int) $item_id));
+                    $existing_path = $this->local_file_path($download_file);
+                    if (!is_file($existing_path))
+                    {
+                        trigger_error($user->lang('ACP_DOWNLOADCENTER_EXISTING_FILE_NOT_FOUND') . adm_back_link($this->u_action . '&amp;action=edit&amp;item_id=' . (int) $item_id));
+                    }
+                    if (!$this->is_allowed_existing_file($download_file))
+                    {
+                        trigger_error($user->lang('ACP_DOWNLOADCENTER_UPLOAD_EXTENSION_NOT_ALLOWED', $this->get_allowed_extensions_string()) . adm_back_link($this->u_action . '&amp;action=edit&amp;item_id=' . (int) $item_id));
+                    }
+                    $file_size = $this->format_file_size(filesize($existing_path));
                 }
-                $file_size = $this->format_file_size(filesize($existing_path));
             }
             else if ($editing_existing_version && $download_type === 'local' && !empty($previous_version_row['download_file']))
             {
@@ -3758,8 +3783,7 @@ class main_module
 
     protected function use_phpbb_attachment_uploads()
     {
-        global $config;
-        return !empty($config['mundophpbb_downloadcenter_use_phpbb_attachments']);
+        return true;
     }
 
     protected function handle_phpbb_attachment_upload($request, $user)
@@ -3772,6 +3796,11 @@ class main_module
         }
 
         $forum_id = isset($config['mundophpbb_downloadcenter_support_forum_id']) ? (int) $config['mundophpbb_downloadcenter_support_forum_id'] : 0;
+        if ($forum_id <= 0 || !$this->is_valid_support_forum($forum_id))
+        {
+            trigger_error($user->lang('ACP_DOWNLOADCENTER_SUPPORT_FORUM_REQUIRED_FOR_LOCAL_UPLOAD'));
+        }
+
         $filedata = $phpbb_container->get('attachment.manager')->upload('download_upload', $forum_id, false, '', false);
         $errors = isset($filedata['error']) ? array_filter((array) $filedata['error']) : [];
 
@@ -4144,6 +4173,7 @@ class main_module
             {
                 if ($this->update_support_topic($db, $topic_id, $first_post_id, $item, $latest_version, $phpbb_root_path, $phpEx, $user))
                 {
+                    $this->link_item_attachments_to_support_topic($db, $versions_table, $item_id, $topic_id, $first_post_id);
                     $this->add_log($db, $user, 'support_topic_updated', $user->lang('ACP_DOWNLOADCENTER_LOG_SUPPORT_TOPIC_UPDATED', (string) $topic_id), $item_id);
                     return $topic_id;
                 }
@@ -4167,6 +4197,11 @@ class main_module
             {
                 $sql = 'UPDATE ' . $items_table . ' SET topic_id = ' . (int) $created_topic_id . ' WHERE item_id = ' . $item_id;
                 $db->sql_query($sql);
+                $created_first_post_id = $this->get_topic_first_post_id($db, $created_topic_id);
+                if ($created_first_post_id > 0)
+                {
+                    $this->link_item_attachments_to_support_topic($db, $versions_table, $item_id, $created_topic_id, $created_first_post_id);
+                }
                 $this->add_log($db, $user, 'support_topic_created', $user->lang('ACP_DOWNLOADCENTER_LOG_SUPPORT_TOPIC_CREATED', (string) $created_topic_id), $item_id);
                 return $created_topic_id;
             }
@@ -4226,6 +4261,58 @@ class main_module
         $db->sql_freeresult($result);
 
         return $first_post_id;
+    }
+
+    protected function link_item_attachments_to_support_topic($db, $versions_table, $item_id, $topic_id, $post_id)
+    {
+        if (!defined('ATTACHMENTS_TABLE') || (int) $item_id <= 0 || (int) $topic_id <= 0 || (int) $post_id <= 0)
+        {
+            return;
+        }
+
+        $sql = 'SELECT download_file
+            FROM ' . $versions_table . "
+            WHERE item_id = " . (int) $item_id . "
+                AND download_type = 'local'
+                AND download_file <> ''";
+        $result = $db->sql_query($sql);
+
+        $attach_ids = [];
+        while ($row = $db->sql_fetchrow($result))
+        {
+            if (preg_match('/^attach:(\d+)$/', (string) $row['download_file'], $matches))
+            {
+                $attach_ids[(int) $matches[1]] = (int) $matches[1];
+            }
+        }
+        $db->sql_freeresult($result);
+
+        if (empty($attach_ids))
+        {
+            return;
+        }
+
+        $attachment_data = [
+            'is_orphan' => 0,
+            'in_message' => 0,
+            'post_msg_id' => (int) $post_id,
+            'topic_id' => (int) $topic_id,
+        ];
+
+        $sql = 'UPDATE ' . ATTACHMENTS_TABLE . '
+            SET ' . $db->sql_build_array('UPDATE', $attachment_data) . '
+            WHERE ' . $db->sql_in_set('attach_id', array_values($attach_ids));
+        $db->sql_query($sql);
+
+        $sql = 'UPDATE ' . POSTS_TABLE . '
+            SET post_attachment = 1
+            WHERE post_id = ' . (int) $post_id;
+        $db->sql_query($sql);
+
+        $sql = 'UPDATE ' . TOPICS_TABLE . '
+            SET topic_attachment = 1
+            WHERE topic_id = ' . (int) $topic_id;
+        $db->sql_query($sql);
     }
 
     protected function update_support_topic($db, $topic_id, $first_post_id, array $item, array $latest_version, $phpbb_root_path, $phpEx, $user)
@@ -4348,6 +4435,12 @@ class main_module
             if (!empty($latest_version['version_changelog']))
             {
                 $message .= "\n[b]" . $user->lang('ACP_DOWNLOADCENTER_CHANGELOG') . "[/b]\n" . $latest_version['version_changelog'] . "\n";
+            }
+
+            if ((string) $latest_version['download_type'] === 'local' && preg_match('/^attach:(\d+)$/', (string) $latest_version['download_file'], $matches))
+            {
+                $attachment_url = generate_board_url() . '/download/file.php?id=' . (int) $matches[1];
+                $message .= "\n" . $user->lang('ACP_DOWNLOADCENTER_SUPPORT_TOPIC_NATIVE_DOWNLOAD') . ': [url=' . $attachment_url . ']' . $attachment_url . "[/url]\n";
             }
 
             $message .= "\n";

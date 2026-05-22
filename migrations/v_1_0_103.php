@@ -1,0 +1,29 @@
+<?php
+/**
+ * MundophpBB Download Center - v1.0.103
+ * Make phpBB attachment-backed local uploads the primary storage path.
+ */
+
+namespace mundophpbb\downloadcenter\migrations;
+
+class v_1_0_103 extends \phpbb\db\migration\migration
+{
+    public function effectively_installed()
+    {
+        return isset($this->config['mundophpbb_downloadcenter_version'])
+            && version_compare($this->config['mundophpbb_downloadcenter_version'], '1.0.103', '>=');
+    }
+
+    public static function depends_on()
+    {
+        return ['\mundophpbb\downloadcenter\migrations\v_1_0_102'];
+    }
+
+    public function update_data()
+    {
+        return [
+            ['config.update', ['mundophpbb_downloadcenter_use_phpbb_attachments', 1]],
+            ['config.update', ['mundophpbb_downloadcenter_version', '1.0.103']],
+        ];
+    }
+}

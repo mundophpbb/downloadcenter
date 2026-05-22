@@ -839,20 +839,10 @@
         </dl>
 
         <dl>
-            <dt><label for="downloadcenter_allowed_extensions">{L_ACP_DOWNLOADCENTER_ALLOWED_EXTENSIONS}{L_COLON}</label><br><span>{L_ACP_DOWNLOADCENTER_ALLOWED_EXTENSIONS_EXPLAIN}</span></dt>
-            <dd><input type="text" name="downloadcenter_allowed_extensions" id="downloadcenter_allowed_extensions" value="{DOWNLOADCENTER_ALLOWED_EXTENSIONS}" size="70"></dd>
-        </dl>
-
-        <dl>
-            <dt><label for="downloadcenter_max_upload_mb">{L_ACP_DOWNLOADCENTER_MAX_UPLOAD_MB}{L_COLON}</label><br><span>{L_ACP_DOWNLOADCENTER_MAX_UPLOAD_MB_EXPLAIN}</span></dt>
-            <dd><input type="number" name="downloadcenter_max_upload_mb" id="downloadcenter_max_upload_mb" value="{DOWNLOADCENTER_MAX_UPLOAD_MB}" min="1"></dd>
-        </dl>
-
-        <dl>
             <dt><label>{L_ACP_DOWNLOADCENTER_USE_PHPBB_ATTACHMENTS}{L_COLON}</label><br><span>{L_ACP_DOWNLOADCENTER_USE_PHPBB_ATTACHMENTS_EXPLAIN}</span></dt>
             <dd>
-                <label><input type="radio" class="radio" name="downloadcenter_use_phpbb_attachments" value="1"<!-- IF DOWNLOADCENTER_USE_PHPBB_ATTACHMENTS --> checked="checked"<!-- ENDIF -->> {L_YES}</label>
-                <label><input type="radio" class="radio" name="downloadcenter_use_phpbb_attachments" value="0"<!-- IF not DOWNLOADCENTER_USE_PHPBB_ATTACHMENTS --> checked="checked"<!-- ENDIF -->> {L_NO}</label>
+                <strong>{L_YES}</strong>
+                <input type="hidden" name="downloadcenter_use_phpbb_attachments" value="1">
             </dd>
         </dl>
 
