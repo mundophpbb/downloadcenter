@@ -1409,8 +1409,8 @@ class main_module
                 trigger_error('FORM_INVALID');
             }
 
-            $name = trim($request->variable('category_name', '', true));
-            $desc = trim($request->variable('category_desc', '', true));
+            $name = $this->clean_utf8_for_storage(trim($request->variable('category_name', '', true)));
+            $desc = $this->clean_utf8_for_storage(trim($request->variable('category_desc', '', true)));
             $order = max(0, $request->variable('category_order', 0));
             $enabled = $request->variable('category_enabled', 0);
 
@@ -1786,7 +1786,7 @@ class main_module
             $screenshot_data = [
                 'item_id' => $item_id,
                 'image_file' => $uploaded_screenshot['file_name'],
-                'image_caption' => trim($request->variable('screenshot_caption', '', true)),
+                'image_caption' => $this->clean_utf8_for_storage(trim($request->variable('screenshot_caption', '', true))),
                 'image_order' => max(0, $request->variable('screenshot_order', 0)),
                 'image_created' => $time,
             ];
@@ -1915,7 +1915,7 @@ class main_module
                 'version_number' => $version_number,
                 'phpbb_version' => trim($request->variable('phpbb_version', '', true)),
                 'php_version' => trim($request->variable('php_version', '', true)),
-                'version_changelog' => trim($request->variable('version_changelog', '', true)),
+                'version_changelog' => $this->clean_utf8_for_storage(trim($request->variable('version_changelog', '', true))),
                 'download_type' => $download_type,
                 'download_url' => $download_url,
                 'download_file' => $download_file,
@@ -1973,7 +1973,7 @@ class main_module
             }
 
             $latest_version_id = $request->variable('latest_version_id', 0);
-            $latest_changelog = trim($request->variable('latest_version_changelog', '', true));
+            $latest_changelog = $this->clean_utf8_for_storage(trim($request->variable('latest_version_changelog', '', true)));
 
             if ($latest_version_id <= 0)
             {
@@ -2010,7 +2010,7 @@ class main_module
                 trigger_error('FORM_INVALID');
             }
 
-            $name = trim($request->variable('item_name', '', true));
+            $name = $this->clean_utf8_for_storage(trim($request->variable('item_name', '', true)));
             if ($name === '')
             {
                 trigger_error($user->lang('ACP_DOWNLOADCENTER_ITEM_NAME_REQUIRED') . adm_back_link($this->u_action));
@@ -2023,8 +2023,8 @@ class main_module
                 'topic_id' => max(0, $request->variable('topic_id', 0)),
                 'item_name' => $name,
                 'item_slug' => $this->slugify($name),
-                'item_short_desc' => trim($request->variable('item_short_desc', '', true)),
-                'item_desc' => trim($request->variable('item_desc', '', true)),
+                'item_short_desc' => $this->clean_utf8_for_storage(trim($request->variable('item_short_desc', '', true))),
+                'item_desc' => $this->clean_utf8_for_storage(trim($request->variable('item_desc', '', true))),
                 'item_icon' => $item_icon,
                 'item_enabled' => $request->variable('item_enabled', 0),
                 'item_approved' => $request->variable('item_approved', 0),
@@ -4611,6 +4611,26 @@ class main_module
         $url = preg_replace('/(&amp;|&)start=\d+/', '', $url);
         $separator = (strpos($url, '?') === false && strpos($url, '&amp;') === false && strpos($url, '&') === false) ? '?' : '&amp;';
         return $url . $separator . 'start=' . max(0, (int) $start);
+    }
+
+
+    /**
+     * Remove Unicode code points that need MySQL utf8mb4.
+     *
+     * Some phpBB installations still use MySQL/MariaDB utf8/utf8mb3 tables.
+     * Those tables reject emojis and other 4-byte Unicode characters with SQL error 1366.
+     */
+    protected function clean_utf8_for_storage($value)
+    {
+        $value = (string) $value;
+        $clean = preg_replace('/[\x{10000}-\x{10FFFF}]/u', '', $value);
+
+        if ($clean === null)
+        {
+            $clean = preg_replace('/[\xF0-\xF7][\x80-\xBF]{3}/', '', $value);
+        }
+
+        return ($clean === null) ? $value : $clean;
     }
 
     protected function u_action_for_mode($mode)

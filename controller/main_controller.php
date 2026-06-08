@@ -783,7 +783,7 @@ class main_controller
                 trigger_error($this->user->lang('DOWNLOADCENTER_SCREENSHOT_UPLOAD_REQUIRED'));
             }
 
-            $this->insert_screenshot($item_id, $uploaded_screenshot['file_name'], trim($request->variable('new_screenshot_caption', '', true)), max(0, $request->variable('new_screenshot_order', 0)));
+            $this->insert_screenshot($item_id, $uploaded_screenshot['file_name'], $this->clean_utf8_for_storage(trim($request->variable('new_screenshot_caption', '', true))), max(0, $request->variable('new_screenshot_order', 0)));
             $this->mark_author_item_pending($item_id);
             $this->add_log('screenshot_created', $this->user->lang('DOWNLOADCENTER_LOG_SCREENSHOT_CREATED', (string) $item_id), $item_id, 0);
             $this->notify_pending($item_id, $item['item_name']);
@@ -862,10 +862,10 @@ class main_controller
                 trigger_error('FORM_INVALID');
             }
 
-            $item_name = trim($request->variable('item_name', '', true));
+            $item_name = $this->clean_utf8_for_storage(trim($request->variable('item_name', '', true)));
             $category_id = max(0, $request->variable('category_id', 0));
-            $item_short_desc = trim($request->variable('item_short_desc', '', true));
-            $item_desc = trim($request->variable('item_desc', '', true));
+            $item_short_desc = $this->clean_utf8_for_storage(trim($request->variable('item_short_desc', '', true)));
+            $item_desc = $this->clean_utf8_for_storage(trim($request->variable('item_desc', '', true)));
             $item_icon = trim($request->variable('item_icon', '', true));
             $add_new_version = (bool) $request->variable('add_new_version', 0);
 
@@ -899,7 +899,7 @@ class main_controller
             if ($request->is_set_post('latest_version_changelog'))
             {
                 $latest_version_id = $request->variable('latest_version_id', 0);
-                $latest_changelog = trim($request->variable('latest_version_changelog', '', true));
+                $latest_changelog = $this->clean_utf8_for_storage(trim($request->variable('latest_version_changelog', '', true)));
 
                 if ($latest_version_id > 0)
                 {
@@ -944,7 +944,7 @@ class main_controller
                 $version_number = trim($request->variable('latest_version_number', '', true));
                 $phpbb_version = trim($request->variable('latest_phpbb_version', '', true));
                 $php_version = trim($request->variable('latest_php_version', '', true));
-                $version_changelog = trim($request->variable('latest_version_changelog', '', true));
+                $version_changelog = $this->clean_utf8_for_storage(trim($request->variable('latest_version_changelog', '', true)));
                 $download_type = $request->variable('latest_download_type', (string) $latest_version['download_type']);
                 $download_url = trim($request->variable('latest_download_url', '', true));
                 $download_file = (string) $latest_version['download_file'];
@@ -1023,7 +1023,7 @@ class main_controller
                 $version_number = trim($request->variable('version_number', '', true));
                 $phpbb_version = trim($request->variable('phpbb_version', '', true));
                 $php_version = trim($request->variable('php_version', '', true));
-                $version_changelog = trim($request->variable('version_changelog', '', true));
+                $version_changelog = $this->clean_utf8_for_storage(trim($request->variable('version_changelog', '', true)));
                 $download_type = $request->variable('download_type', 'external');
                 $download_url = trim($request->variable('download_url', '', true));
                 $download_file = '';
@@ -1222,15 +1222,15 @@ class main_controller
                 trigger_error('FORM_INVALID');
             }
 
-            $item_name = trim($request->variable('item_name', '', true));
+            $item_name = $this->clean_utf8_for_storage(trim($request->variable('item_name', '', true)));
             $version_number = trim($request->variable('version_number', '', true));
             $category_id = max(0, $request->variable('category_id', 0));
-            $item_short_desc = trim($request->variable('item_short_desc', '', true));
-            $item_desc = trim($request->variable('item_desc', '', true));
+            $item_short_desc = $this->clean_utf8_for_storage(trim($request->variable('item_short_desc', '', true)));
+            $item_desc = $this->clean_utf8_for_storage(trim($request->variable('item_desc', '', true)));
             $item_icon = trim($request->variable('item_icon', '', true));
             $phpbb_version = trim($request->variable('phpbb_version', '', true));
             $php_version = trim($request->variable('php_version', '', true));
-            $version_changelog = trim($request->variable('version_changelog', '', true));
+            $version_changelog = $this->clean_utf8_for_storage(trim($request->variable('version_changelog', '', true)));
             $download_type = $request->variable('download_type', 'external');
             $download_url = trim($request->variable('download_url', '', true));
             $download_file = '';
@@ -1323,7 +1323,7 @@ class main_controller
             $uploaded_screenshot = $this->handle_screenshot_upload($request);
             if ($uploaded_screenshot)
             {
-                $this->insert_screenshot($item_id, $uploaded_screenshot['file_name'], trim($request->variable('screenshot_caption', '', true)), max(0, $request->variable('screenshot_order', 0)));
+                $this->insert_screenshot($item_id, $uploaded_screenshot['file_name'], $this->clean_utf8_for_storage(trim($request->variable('screenshot_caption', '', true))), max(0, $request->variable('screenshot_order', 0)));
                 $this->add_log('screenshot_created', $this->user->lang('DOWNLOADCENTER_LOG_SCREENSHOT_CREATED', (string) $item_id), $item_id, $version_id);
             }
 
@@ -2487,6 +2487,26 @@ class main_controller
         }
 
         return $icon;
+    }
+
+
+    /**
+     * Remove Unicode code points that need MySQL utf8mb4.
+     *
+     * Some phpBB installations still use MySQL/MariaDB utf8/utf8mb3 tables.
+     * Those tables reject emojis and other 4-byte Unicode characters with SQL error 1366.
+     */
+    protected function clean_utf8_for_storage($value)
+    {
+        $value = (string) $value;
+        $clean = preg_replace('/[\x{10000}-\x{10FFFF}]/u', '', $value);
+
+        if ($clean === null)
+        {
+            $clean = preg_replace('/[\xF0-\xF7][\x80-\xBF]{3}/', '', $value);
+        }
+
+        return ($clean === null) ? $value : $clean;
     }
 
     protected function table($name)
