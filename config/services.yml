@@ -1,0 +1,64 @@
+services:
+    mundophpbb.downloadcenter.controller.main:
+        class: mundophpbb\downloadcenter\controller\main_controller
+        arguments:
+            - '@config'
+            - '@controller.helper'
+            - '@template'
+            - '@user'
+            - '@auth'
+            - '@dbal.conn'
+            - '%core.root_path%'
+            - '%core.php_ext%'
+            - '@mundophpbb.downloadcenter.notification_helper'
+
+    mundophpbb.downloadcenter.controller.download:
+        class: mundophpbb\downloadcenter\controller\download_controller
+        arguments:
+            - '@config'
+            - '@controller.helper'
+            - '@user'
+            - '@auth'
+            - '@dbal.conn'
+            - '%core.root_path%'
+            - '%core.php_ext%'
+
+
+    mundophpbb.downloadcenter.listener:
+        class: mundophpbb\downloadcenter\event\listener
+        arguments:
+            - '@config'
+            - '@controller.helper'
+            - '@template'
+            - '@user'
+            - '@auth'
+        tags:
+            - { name: event.listener }
+
+    mundophpbb.downloadcenter.notification_helper:
+        class: mundophpbb\downloadcenter\service\notification_helper
+        arguments:
+            - '@dbal.conn'
+            - '@user'
+            - '%core.table_prefix%'
+
+    mundophpbb.downloadcenter.notification.type.item_approved:
+        class: mundophpbb\downloadcenter\notification\type\item_approved
+        shared: false
+        parent: notification.type.base
+        tags:
+            - { name: notification.type }
+
+    mundophpbb.downloadcenter.notification.type.item_unapproved:
+        class: mundophpbb\downloadcenter\notification\type\item_unapproved
+        shared: false
+        parent: notification.type.base
+        tags:
+            - { name: notification.type }
+
+    mundophpbb.downloadcenter.notification.type.item_pending:
+        class: mundophpbb\downloadcenter\notification\type\item_pending
+        shared: false
+        parent: notification.type.base
+        tags:
+            - { name: notification.type }

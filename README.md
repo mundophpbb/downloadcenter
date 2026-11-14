@@ -1,80 +1,48 @@
-# Central de Downloads para phpBB
+# Download Center (mundophpbb/downloadcenter)
 
-Extensão `mundophpbb/downloadcenter` para criar uma central de downloads, ferramentas e recursos dentro do phpBB.
+A download center for phpBB 3.3: categories, items with several versions and changelog, local uploads or external links, user submissions with moderation, notifications, support topics, screenshots, statistics and secure delivery.
 
-## Estado
+## Features
 
-Versão: 1.0.93  
-Estado: beta técnico avançado / em validação
+* Categories, items, versions (phpBB / PHP compatibility, changelog, size).
+* Local upload, external link or an existing phpBB attachment.
+* Secure download through a controller route, with duplicate-click protection and an optional rate limit.
+* Public submissions by members, approval or rejection in the ACP, "My submissions" area, limited author editing.
+* phpBB notifications for pending, approved and rejected items.
+* Automatic support topic for each item (optional).
+* Screenshots and item images, BBCode descriptions and changelogs.
+* Search and filters, responsive cards, optional public statistics and RSS feed.
+* ACP (Extensions tab): dashboard, settings, categories, items, pending, files library, data integrity, diagnostics and logs.
+* Access control either by the extension's global modes or by phpBB permissions (ACL).
+* English and Brazilian Portuguese.
 
-## Requisitos
+## Requirements
 
-- phpBB 3.3.x
-- PHP 8.1 ou superior
-- Permissão de escrita em `files/mundophpbb/downloadcenter/`
-- ACP com acesso administrativo padrão (`a_board`)
+phpBB 3.3.0 or later, PHP 7.4 or later. The folder `files/mundophpbb/downloadcenter/` must be writable.
 
-## Recursos principais
+## Installation
 
-- Categorias de downloads
-- Itens com descrição, BBCode e changelog
-- Histórico de versões
-- Upload local e link externo
-- Biblioteca de arquivos locais no ACP
-- Download seguro via rota intermediária
-- Contador de downloads com proteção contra contagem duplicada
-- Envio público por usuários
-- Aprovação/reprovação no ACP
-- Meus envios para autores
-- Edição limitada pelo autor
-- Tópico de suporte automático
-- Logs administrativos
-- Painel estatístico
-- Diagnóstico beta com manutenção segura
-- Integridade dos dados com correções automáticas
-- Regras públicas de submissão
-- Modo de permissões global ou ACL do phpBB
-- Busca, filtros e categorias públicas aprimoradas
-- Cards públicos responsivos
+1. Copy the extension to `ext/mundophpbb/downloadcenter/`.
+2. ACP > Customise > Manage extensions > enable **Download Center**.
+3. ACP > Extensions > Download Center > Settings: review allowed extensions, maximum upload size, public access and submissions.
+4. Open *Diagnostics* to check the files folder, `.htaccess` and the PHP upload limits.
 
-## Documentação
+## Upgrading from 1.0.x
 
-- `docs/INSTALL.md`: instalação e atualização.
-- `docs/ADMIN_GUIDE.md`: fluxo administrativo recomendado.
-- `docs/UPDATE_CHECKLIST.md`: checklist de atualização.
-- `docs/TROUBLESHOOTING.md`: solução de problemas comuns.
-- `docs/BETA_CHECKLIST.md`: validações antes de produção.
+Replace the files and purge the cache. The old migrations were merged; your data and settings are kept.
 
-## Instalação
+## Security note
 
-1. Envie a pasta `ext/mundophpbb/downloadcenter/` para seu phpBB.
-2. No ACP, vá em **Personalizar > Gerenciar extensões**.
-3. Ative **Central de Downloads**.
-4. Limpe o cache do phpBB.
-5. Acesse **ACP > Extensões > Central de Downloads > Configurações**.
-6. Revise extensões permitidas, tamanho máximo de upload, acesso público e envio público.
-7. Acesse **Diagnóstico beta** para verificar pasta de arquivos, `.htaccess` e limites de upload.
+Uploaded files are stored under `files/`. The `.htaccess` blocks direct access on Apache; on Nginx add a rule that denies `files/mundophpbb/downloadcenter/`, otherwise files can be fetched without the permission checks.
 
-## Pasta de arquivos
+## Code layout
 
-Arquivos enviados são armazenados em:
+* `acp/main_module.php` - ACP entry point and dispatcher; each screen lives in `acp/section/` (dashboard, items, pending, files, logs, settings, diagnostics, integrity...).
+* `controller/main_controller.php` - public pages; the code is in `controller/section/` (browse, author, uploads, screenshots, access, paging).
+* `controller/download_controller.php` - download, screenshot and image delivery.
+* `concern/` - helpers shared by the ACP and the controllers (access modes, upload rules, text tools).
+* `service/notification_helper.php` and `notification/` - phpBB notifications.
 
-```text
-files/mundophpbb/downloadcenter/
-```
+## License
 
-O acesso direto deve ser bloqueado pelo `.htaccess`; os downloads devem ocorrer pela rota da extensão.
-
-## Observações de beta
-
-Antes de usar em produção, teste upload, download, aprovação, exclusão de versões, biblioteca de arquivos e submissão pública em ambiente controlado.
-
-
-## Recursos adicionados na versão 1.0.99
-
-- Verificação pré-lançamento no ACP.
-- Exportação de relatório de diagnóstico.
-- Estatísticas públicas opcionais.
-- Feed RSS opcional.
-- Rate limit básico de downloads.
-- Auditoria documentada das migrations.
+GPL-2.0-only. See `license.txt`.
