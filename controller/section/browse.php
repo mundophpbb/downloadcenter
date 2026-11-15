@@ -774,14 +774,11 @@ trait browse
 
 	protected function download_url_for_version(array $version)
 	{
-		$file_name = isset($version['download_file']) ? (string) $version['download_file'] : '';
-
-		if ((string) $version['download_type'] === 'local' && preg_match('/^attach:(\d+)$/', $file_name, $matches))
-		{
-			return append_sid($this->root_path . 'download/file.' . $this->php_ext, 'id=' . (int) $matches[1]);
-		}
-
-		return $this->helper->route('mundophpbb_downloadcenter_download', ['version_id' => (int) $version['version_id']]);
+		// Always route through the extension controller so downloads are counted
+		// (including phpBB attachments stored as attach:ID).
+		return $this->helper->route('mundophpbb_downloadcenter_download', [
+			'version_id' => (int) $version['version_id']
+		]);
 	}
 
 	protected function rules_url()
