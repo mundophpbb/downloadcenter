@@ -3587,10 +3587,12 @@ ul.downloadcenter-bbcode-list li, ol.downloadcenter-bbcode-list li {
 }
 
 .downloadcenter-preview-strip img {
-	aspect-ratio: 16 / 10;
-	display: block;
-	object-fit: cover;
-	width: 100%;
+    aspect-ratio: 16 / 10;
+    display: block;
+    object-fit: contain;
+    object-position: center;
+    width: 100%;
+    background: #f3f6f9;
 }
 
 @media (max-width: 700px) {
