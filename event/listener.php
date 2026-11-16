@@ -16,14 +16,16 @@ class listener implements EventSubscriberInterface
 	protected $template;
 	protected $user;
 	protected $auth;
+	protected $download_controller;
 
-	public function __construct(config $config, helper $helper, template $template, user $user, auth $auth)
+	public function __construct(config $config, helper $helper, template $template, user $user, auth $auth, \mundophpbb\downloadcenter\controller\download_controller $download_controller)
 	{
 		$this->config = $config;
 		$this->helper = $helper;
 		$this->template = $template;
 		$this->user = $user;
 		$this->auth = $auth;
+		$this->download_controller = $download_controller;
 	}
 
 	public static function getSubscribedEvents()
@@ -31,6 +33,7 @@ class listener implements EventSubscriberInterface
 		return [
 			'core.page_header' => 'add_page_header_vars',
 			'core.permissions' => 'add_permissions',
+			'core.download_file_send_to_browser_before' => 'track_topic_attachment_download',
 		];
 	}
 
@@ -66,6 +69,36 @@ class listener implements EventSubscriberInterface
 		]);
 	}
 
+
+
+	/**
+	 * Tracks phpBB attachment downloads linked to Download Center versions.
+	 * Thumbnail and inline image requests are excluded from file download statistics.
+	 *
+	 * @param \phpbb\event\data $event
+	 */
+	public function track_topic_attachment_download($event)
+	{
+		if (empty($this->config['mundophpbb_downloadcenter_enabled']))
+		{
+			return;
+		}
+
+		$attachment = $event['attachment'];
+		$attach_id = isset($event['attach_id']) ? (int) $event['attach_id'] : (isset($attachment['attach_id']) ? (int) $attachment['attach_id'] : 0);
+		if ($attach_id <= 0 || !empty($event['thumbnail']))
+		{
+			return;
+		}
+
+		// Inline image views must not be treated as explicit downloads.
+		if (isset($attachment['mimetype']) && strpos((string) $attachment['mimetype'], 'image/') === 0)
+		{
+			return;
+		}
+
+		$this->download_controller->track_phpbb_attachment_download($attach_id);
+	}
 
 	protected function can_view()
 	{

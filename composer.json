@@ -3,7 +3,7 @@
 	"type": "phpbb-extension",
 	"description": "A download center for phpBB: categories, versions with changelog, user submissions with moderation, notifications, support topics, screenshots, statistics and secure delivery.",
 	"homepage": "https://mundophpbb.com.br",
-	"version": "1.3.4",
+	"version": "1.3.5",
 	"time": "2026-11-11",
 	"license": "GPL-2.0-only",
 	"authors": [

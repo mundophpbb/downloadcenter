@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.5
+
+* Downloads of phpBB topic attachments that are linked to Download Center versions now update the corresponding Download Center counters and logs.
+* The existing duplicate-download window applies to both download entry points. Thumbnail and inline image requests are excluded.
+* No schema changes are required.
+
 ## 1.3.4
 
 * The permissions are now registered with the `core.permissions` event, so the ACP shows them in their own "Download Center" category with proper labels (they were created by the migration but not categorised).

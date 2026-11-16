@@ -402,6 +402,39 @@ class download_controller
 			WHERE attach_id = ' . (int) $attach_id);
 	}
 
+
+	/**
+	 * Mirrors a native phpBB attachment download into Download Center statistics.
+	 * Only enabled, approved items with a matching local version are considered.
+	 * The regular duplicate-download window also applies to topic downloads.
+	 *
+	 * @param int $attach_id
+	 */
+	public function track_phpbb_attachment_download($attach_id)
+	{
+		if ($attach_id <= 0)
+		{
+			return;
+		}
+
+		$sql = 'SELECT v.version_id, i.item_id
+			FROM ' . $this->table('downloadcenter_versions') . ' v
+			INNER JOIN ' . $this->table('downloadcenter_items') . ' i ON i.item_id = v.item_id
+			INNER JOIN ' . $this->table('downloadcenter_categories') . ' c ON c.category_id = i.category_id
+			WHERE v.download_type = \'local\'
+				AND v.download_file = \'attach:' . (int) $attach_id . '\'
+				AND v.version_enabled = 1
+				AND i.item_enabled = 1
+				AND i.item_approved = 1
+				AND c.category_enabled = 1';
+		$result = $this->db->sql_query($sql);
+		while ($row = $this->db->sql_fetchrow($result))
+		{
+			$this->register_download((int) $row['item_id'], (int) $row['version_id']);
+		}
+		$this->db->sql_freeresult($result);
+	}
+
 	protected function access_allowed($mode)
 	{
 		switch ($mode)
