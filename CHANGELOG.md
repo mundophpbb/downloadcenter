@@ -1,0 +1,99 @@
+# Changelog
+
+## 1.3.10
+
+* Fixed: deleting an old version after uploading a new one no longer lowers the item's download total. Download records are kept as part of the item history.
+* The item page shows both the downloads of the current version and the item total, so a new version no longer looks like it starts from zero.
+* Data integrity compares the item counter with all recorded downloads, including those of deleted versions, and no longer flags them as orphans.
+* ACP redesigned in the same visual style as the mundophpBB Changelog ACP: header with icon, tab bar for all sections, card fieldsets, stat tiles, pills, flat buttons and blue-header tables. The inline stylesheet moved to adm/style/acp_downloadcenter.css.
+* The quick guide and release card now appear only on the dashboard.
+* Public pages redesigned in the same visual style as the mundophpBB Changelog public pages: page headers with icon, stat tiles, tinted category cards, status pills, flat buttons, tab bar on the item page and card-style form sections. The stylesheet was rewritten from about 3,700 to about 1,000 lines; class names, JavaScript hooks and the dark-style support are kept.
+* Fixed: ACP and public forms whose first field follows a hidden input (such as Categories) no longer squeeze that field out of view.
+* BBCode toolbar button tooltips (bold, italic, underline, strikethrough) moved to the language files, so they follow the board language.
+* ACP output escaping uses phpBB's utf8_htmlspecialchars() instead of native htmlspecialchars() (files, items and logs sections).
+
+## 1.3.9
+
+* Redesigned pagination for the public catalog and My Submissions, with larger controls, a highlighted current page and a responsive layout.
+* Pagination links preserve the active filters and sort order.
+
+## 1.3.8
+
+* Added ACP filters for the exact IPv4 or IPv6 address and user ID. Both values can be selected directly from a log entry.
+* Registered downloads include the item name, version number and source: catalog file, phpBB attachment or external redirect.
+* Moderation and version maintenance entries include the item name or version number alongside the ID. Existing log entries remain available.
+* The migration updates the extension version without changing the audit log table.
+
+## 1.3.7
+
+* Reuploading an attachment with the same original name, size and SHA-256 content within one item now reuses the existing attachment instead of keeping another physical copy.
+* Applies to ACP uploads and authorised author version updates. phpBB upload validation still runs before reuse.
+* Reuse is scoped to the authorised item to preserve attachment ownership and support-topic links. Existing duplicates and legacy files are left untouched; different names or contents remain separate.
+
+## 1.3.6
+
+* The ACP existing-file picker and file inventory now include Download Center phpBB attachments, using their preserved original names. Legacy local files remain available.
+* Choosing an existing file automatically selects the local download type; fixed the ACP script syntax so file filtering works.
+* Missing, unsafe and unrelated forum files cannot be selected for reuse.
+* Removing a version file preserves files referenced by other versions.
+* Original download names and phpBB internal storage identifiers remain unchanged.
+
+## 1.3.5
+
+* Downloads of phpBB topic attachments that are linked to Download Center versions now update the corresponding Download Center counters and logs.
+* The existing duplicate-download window applies to both download entry points. Thumbnail and inline image requests are excluded.
+* No schema changes are required.
+
+## 1.3.4
+
+* The permissions are now registered with the `core.permissions` event, so the ACP shows them in their own "Download Center" category with proper labels (they were created by the migration but not categorised).
+
+## 1.3.3
+
+* Database portability: the ACP item list no longer uses a hand-written `LIMIT` inside a sub-query (not portable across database engines). The value it selected was not used, so it was removed.
+
+## 1.3.2
+
+* Coding style: PHP, JavaScript, CSS and composer.json now use tabs for indentation, as required by the phpBB coding guidelines (they used spaces). Whitespace only: the code itself is unchanged.
+
+## 1.3.1
+
+* ACP item page: fixed data being silently dropped. The page had four separate save buttons (item, icon, version, screenshot) and each one saved only its own part, so for example choosing an icon and a download file together lost the file. There is now one **Save** button that stores everything on the page: item data, icon, a new or edited version with its file or link, the current changelog and a screenshot.
+* A new item can now be created together with its first version and screenshot in a single step (previously the item had to be saved first).
+* If a file is chosen but required data is missing (for example the version number), an explicit error is shown instead of ignoring the file.
+
+## 1.3.0
+
+* Catalog: lighter header, one compact statistics strip, search and sorting first with the extra filters (category, phpBB, PHP) in a collapsible block, category shortcuts shown only inside a category (the home page shows the category cards).
+* Catalog cards: three key facts (version, downloads, updated), a quiet compatibility line and a single clear download button.
+* Item page: product-style header with the facts next to the title instead of repeated three times, a preview strip with the first screenshots above the tabs.
+* Template and CSS only; no database changes.
+
+## 1.2.0
+
+* Visual update: all colours now come from CSS design tokens, so the extension follows the board style. It detects dark styles automatically (from the real background colour of the style) and switches to a matching dark palette; light styles look the same as before.
+* Accessibility: visible keyboard focus (`:focus-visible`), respects "reduce motion", 44 px touch targets on small screens, the screenshot viewer close button is now translated.
+* Performance: images are lazy-loaded and decoded asynchronously, and never overflow their container.
+* New language key `DOWNLOADCENTER_CLOSE` (EN and PT-BR).
+
+## 1.1.0
+
+* Release cleanup for the phpBB.com validation: passes the official EPV with no errors, warnings or notices.
+* The 17 incremental migrations were merged into one installer (boards upgraded from 1.0.x are detected and keep their data).
+* Added `license.txt`; removed internal release notes from the package; README rewritten.
+* Report export in the ACP now uses a Symfony response; RSS and BBCode escaping use `utf8_htmlspecialchars`.
+* SQL statements with identifiers or ids built by hand were rewritten with `sprintf` and integer casts.
+* Random file name suffixes now use `random_bytes()` instead of `md5()`.
+* Minimum PHP lowered to 7.4.
+* Code organisation: `acp/main_module.php` (4,600 lines) and `controller/main_controller.php` (2,500 lines) were split by responsibility into small traits (`acp/section/`, `controller/section/`) and code that was duplicated between the ACP and the public controllers is now shared (`concern/`). Behaviour is unchanged: every method keeps exactly the same code.
+* Security hardening:
+  * The extension's allowed extensions and maximum size are now enforced before a file reaches phpBB's attachment manager (front end and ACP).
+  * Removed the unreachable legacy upload code that wrote directly to `files/mundophpbb/downloadcenter/` (existing files are still served).
+  * External links are decoded (`&amp;` in query strings broke redirects) and only plain http(s) URLs with a host and no credentials are followed.
+  * Routes now declare their HTTP methods.
+  * BBCode text is no longer escaped twice (apostrophes and ampersands were shown as entities).
+  * Fixed a missing language key for invalid external URLs.
+
+## 1.0.x
+
+Development releases (see the project history).

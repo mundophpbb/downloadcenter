@@ -1,0 +1,22 @@
+<!-- IF S_HAS_PAGINATION -->
+	<nav class="downloadcenter-pagination" aria-label="{L_DOWNLOADCENTER_PAGINATION}">
+		<span class="downloadcenter-pagination-summary">{PAGE_NUMBER}</span>
+		<ul class="downloadcenter-pagination-links" role="list">
+			<!-- IF U_DC_PREVIOUS_PAGE -->
+				<li><a href="{U_DC_PREVIOUS_PAGE}" rel="prev">{L_DOWNLOADCENTER_PREVIOUS}</a></li>
+			<!-- ENDIF -->
+			<!-- BEGIN dc_pages -->
+				<!-- IF dc_pages.S_GAP -->
+					<li aria-hidden="true" class="downloadcenter-pagination-gap">&hellip;</li>
+				<!-- ELSEIF dc_pages.S_CURRENT -->
+					<li><span class="downloadcenter-pagination-current" aria-current="page">{dc_pages.NUMBER}</span></li>
+				<!-- ELSE -->
+					<li><a href="{dc_pages.U_PAGE}" aria-label="{dc_pages.LABEL}">{dc_pages.NUMBER}</a></li>
+				<!-- ENDIF -->
+			<!-- END dc_pages -->
+			<!-- IF U_DC_NEXT_PAGE -->
+				<li><a href="{U_DC_NEXT_PAGE}" rel="next">{L_DOWNLOADCENTER_NEXT}</a></li>
+			<!-- ENDIF -->
+		</ul>
+	</nav>
+<!-- ENDIF -->
