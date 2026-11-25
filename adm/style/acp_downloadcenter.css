@@ -1,0 +1,682 @@
+/*
+ * Download Center ACP module.
+ * Same visual language as the mundophpBB Changelog ACP: prosilver colours, cards with a tinted
+ * header strip, tab bar, pills and flat buttons that keep the same look on hover, focus and click.
+ */
+.mphpbb-dc-admin {
+	--dc-ink: #333333;
+	--dc-heading: #28313F;
+	--dc-accent: #115098;
+	--dc-link: #105289;
+	--dc-brand: #0076B1;
+	--dc-muted: #536482;
+	--dc-line: #CCCCCC;
+	--dc-line-soft: #DCE3E8;
+	--dc-control-line: #B4BAC0;
+	--dc-panel: #ECF1F3;
+	--dc-tint: #ECF3F7;
+	--dc-tint-alt: #E1EBF2;
+	--dc-tint-strong: #CADCEB;
+	--dc-surface: #FFFFFF;
+	--dc-success: #228822;
+	--dc-success-bg: #E6F2E6;
+	--dc-success-line: #BEDDBE;
+	--dc-warning: #8A5A00;
+	--dc-warning-bg: #FFF6E0;
+	--dc-warning-line: #E8CF92;
+	--dc-error: #BC2A4D;
+	--dc-error-bg: #F7ECEF;
+	--dc-error-line: #E3B5C1;
+	--dc-radius: 7px;
+	box-sizing: border-box;
+	width: 100%;
+	margin: 0;
+	color: var(--dc-ink);
+	line-height: 1.45;
+}
+
+.mphpbb-dc-admin *,
+.mphpbb-dc-admin *::before,
+.mphpbb-dc-admin *::after { box-sizing: border-box; }
+
+.mphpbb-dc-admin a { color: var(--dc-link); }
+.mphpbb-dc-admin .fa { line-height: inherit; }
+.mphpbb-dc-admin [hidden] { display: none !important; }
+.mphpbb-dc-admin :is(a, button, input, select, textarea, summary):focus-visible { outline: 2px solid #11A3EA; outline-offset: 1px; }
+
+/* ---------------------------------------------------------------- page header */
+.mphpbb-dc-admin .dc-admin-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 12px;
+	margin: 0 0 18px;
+	padding: 4px 0 16px;
+	border-bottom: 1px solid var(--dc-line);
+}
+
+.mphpbb-dc-admin .dc-admin-title { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.mphpbb-dc-admin .dc-admin-icon {
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	justify-content: center;
+	width: 46px;
+	height: 46px;
+	border-radius: var(--dc-radius);
+	background: var(--dc-brand);
+	color: #FFFFFF;
+	font-size: 22px;
+}
+
+#content .mphpbb-dc-admin h1 {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	color: var(--dc-accent);
+	font-family: inherit;
+	font-size: 1.9em;
+	font-weight: 400;
+	line-height: 1.2;
+	text-transform: none;
+}
+
+.mphpbb-dc-admin .dc-admin-intro { margin: 3px 0 0; color: var(--dc-muted); }
+.mphpbb-dc-admin .dc-admin-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+
+/* ---------------------------------------------------------------- tabs */
+.mphpbb-dc-admin .dc-tabs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	margin: 0 0 16px;
+	padding: 0 6px;
+	border-bottom: 1px solid var(--dc-line);
+}
+
+.mphpbb-dc-admin .dc-tabs a {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	margin-bottom: -1px;
+	padding: 10px 14px;
+	border: 1px solid transparent;
+	border-bottom: 0;
+	border-radius: var(--dc-radius) var(--dc-radius) 0 0;
+	color: var(--dc-link);
+	font-weight: 700;
+	text-decoration: none;
+}
+
+.mphpbb-dc-admin .dc-tabs a[aria-current] {
+	border-color: var(--dc-line);
+	border-top: 3px solid var(--dc-brand);
+	background: var(--dc-surface);
+	color: var(--dc-heading);
+}
+
+.mphpbb-dc-admin .dc-tabs a[aria-current] .fa { color: var(--dc-brand); }
+
+/* ---------------------------------------------------------------- headings */
+#content .mphpbb-dc-admin h2 {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 22px 0 12px;
+	padding: 0 0 8px;
+	border: 0;
+	border-bottom: 2px solid var(--dc-tint-strong);
+	color: var(--dc-heading);
+	font-family: inherit;
+	font-size: 1.35em;
+	font-weight: 700;
+	text-transform: none;
+	letter-spacing: normal;
+}
+
+#content .mphpbb-dc-admin h3 {
+	margin: 0 0 8px;
+	padding: 0;
+	border: 0;
+	color: var(--dc-heading);
+	font-family: inherit;
+	font-size: 1.1em;
+	font-weight: 700;
+	text-transform: none;
+}
+
+/* ---------------------------------------------------------------- fieldsets as cards */
+.mphpbb-dc-admin fieldset {
+	margin: 0 0 16px;
+	padding: 0 20px 14px;
+	border: 1px solid var(--dc-line);
+	border-radius: var(--dc-radius);
+	background: var(--dc-surface);
+}
+
+.mphpbb-dc-admin fieldset > legend {
+	float: left;
+	width: calc(100% + 40px);
+	margin: 0 -20px 14px;
+	padding: 12px 20px;
+	border-bottom: 1px solid var(--dc-line-soft);
+	border-radius: var(--dc-radius) var(--dc-radius) 0 0;
+	background: var(--dc-panel);
+	color: var(--dc-heading);
+	font-family: inherit;
+	font-size: 1.2em;
+	font-weight: 700;
+	line-height: 1.3;
+	top: 0;
+}
+
+.mphpbb-dc-admin fieldset > legend ~ * { clear: both; }
+.mphpbb-dc-admin fieldset fieldset { margin-top: 12px; }
+
+.mphpbb-dc-admin fieldset dl {
+	margin: 0;
+	padding: 10px 0;
+	border: 0;
+	border-top: 1px solid var(--dc-line-soft);
+	background: none;
+}
+
+.mphpbb-dc-admin fieldset > legend + dl,
+.mphpbb-dc-admin fieldset dl:first-of-type { border-top: 0; }
+.mphpbb-dc-admin fieldset dl:hover dt label,
+.mphpbb-dc-admin fieldset dt label { color: var(--dc-heading); font-weight: 700; }
+.mphpbb-dc-admin fieldset dt span { color: var(--dc-muted); }
+
+#content .mphpbb-dc-admin fieldset.submit-buttons,
+#content .mphpbb-dc-admin fieldset.quick {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 8px;
+	padding: 14px 20px;
+	border: 1px solid var(--dc-line-soft);
+	background: var(--dc-panel);
+	text-align: left;
+}
+
+.mphpbb-dc-admin fieldset.submit-buttons > legend { display: none; }
+
+/* ---------------------------------------------------------------- form controls */
+.mphpbb-dc-admin :is(input[type=text], input[type=search], input[type=url], input[type=number], input[type=date], input[type=file], select, textarea) {
+	max-width: 100%;
+	min-height: 34px;
+	padding: 6px 9px;
+	border: 1px solid var(--dc-control-line);
+	border-radius: 4px;
+	background: var(--dc-surface);
+	color: var(--dc-ink);
+	font: inherit;
+	box-shadow: none;
+}
+
+.mphpbb-dc-admin textarea { width: 100%; line-height: 1.55; resize: vertical; }
+.mphpbb-dc-admin select[multiple] { min-height: 120px; }
+.mphpbb-dc-admin input[type=file] { padding: 4px; background: var(--dc-tint); }
+.mphpbb-dc-admin input::file-selector-button {
+	margin-inline-end: 10px;
+	padding: 4px 10px;
+	border: 1px solid var(--dc-control-line);
+	border-radius: 4px;
+	background: var(--dc-surface);
+	color: var(--dc-link);
+	font: inherit;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.mphpbb-dc-admin label > input.radio,
+.mphpbb-dc-admin label > input[type=radio],
+.mphpbb-dc-admin label > input[type=checkbox] { margin-right: 4px; }
+
+/* ---------------------------------------------------------------- buttons */
+#content .mphpbb-dc-admin :is(.button1, .button2),
+#content .mphpbb-dc-admin :is(.button1, .button2):is(:hover, :focus, :active, :link, :visited) {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 7px;
+	width: auto;
+	max-width: 100%;
+	min-height: 34px;
+	margin: 0 4px 4px 0;
+	padding: 6px 14px;
+	border: 1px solid var(--dc-control-line);
+	border-radius: 4px;
+	background: var(--dc-surface);
+	background-image: none;
+	color: var(--dc-link);
+	font: inherit;
+	font-weight: 700;
+	line-height: 1.35;
+	text-align: center;
+	text-decoration: none;
+	text-shadow: none;
+	white-space: normal;
+	box-shadow: none;
+	transition: none;
+	cursor: pointer;
+}
+
+#content .mphpbb-dc-admin .button1,
+#content .mphpbb-dc-admin .button1:is(:hover, :focus, :active, :link, :visited) {
+	border-color: var(--dc-link);
+	background: var(--dc-link);
+	color: #FFFFFF;
+}
+
+#content .mphpbb-dc-admin :is(.button1, .button2):focus-visible { outline: 2px solid #11A3EA; outline-offset: 2px; }
+
+/* ---------------------------------------------------------------- tables */
+.mphpbb-dc-admin .downloadcenter-acp-table-scroll { max-width: 100%; overflow-x: auto; }
+
+#content .mphpbb-dc-admin table.table1 {
+	width: 100%;
+	margin: 0 0 16px;
+	border: 1px solid var(--dc-line);
+	border-collapse: separate;
+	border-spacing: 0;
+	border-radius: var(--dc-radius);
+	overflow: hidden;
+	background: var(--dc-surface);
+}
+
+#content .mphpbb-dc-admin table.table1 :is(th, td) {
+	padding: 9px 12px;
+	border: 0;
+	border-top: 1px solid var(--dc-line-soft);
+	background: none;
+	color: var(--dc-ink);
+	font-size: 1em;
+	text-align: left;
+	vertical-align: middle;
+}
+
+#content .mphpbb-dc-admin table.table1 thead th {
+	border-top: 0;
+	background: var(--dc-brand);
+	color: #FFFFFF;
+	font-size: 0.85em;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	white-space: nowrap;
+}
+
+#content .mphpbb-dc-admin table.table1 tbody tr:nth-child(odd) :is(th, td) { background: var(--dc-tint); }
+#content .mphpbb-dc-admin table.table1 tbody tr:nth-child(even) :is(th, td) { background: var(--dc-tint-alt); }
+#content .mphpbb-dc-admin table.table1 tbody tr:first-child :is(th, td) { border-top: 0; }
+#content .mphpbb-dc-admin table.table1 td strong { color: var(--dc-heading); }
+#content .mphpbb-dc-admin fieldset table.table1 { margin-top: 6px; }
+
+.mphpbb-dc-admin .pagination { margin: 0 0 16px; color: var(--dc-muted); }
+
+/* ---------------------------------------------------------------- pills and badges */
+.mphpbb-dc-admin :is(.downloadcenter-status-pill, .downloadcenter-review-chip, .downloadcenter-acl-status, .downloadcenter-diag-status, .downloadcenter-integrity-severity, .downloadcenter-logs-chip) {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	padding: 2px 9px;
+	border: 1px solid var(--dc-tint-strong);
+	border-radius: 999px;
+	background: var(--dc-tint-alt);
+	color: var(--dc-muted);
+	font-size: 0.9em;
+	font-weight: 700;
+	line-height: 1.5;
+	text-decoration: none;
+	text-transform: none;
+	white-space: nowrap;
+}
+
+.mphpbb-dc-admin :is(.downloadcenter-status-pill, .downloadcenter-review-chip, .downloadcenter-acl-status, .downloadcenter-diag-status).ok,
+.mphpbb-dc-admin .downloadcenter-diag-row.ok .downloadcenter-diag-status { background: var(--dc-success-bg); border-color: var(--dc-success-line); color: var(--dc-success); }
+.mphpbb-dc-admin :is(.downloadcenter-status-pill, .downloadcenter-review-chip, .downloadcenter-acl-status).warning,
+.mphpbb-dc-admin :is(.downloadcenter-review-chip, .downloadcenter-acl-status).warn,
+.mphpbb-dc-admin .downloadcenter-diag-row.warn .downloadcenter-diag-status,
+.mphpbb-dc-admin .warning > .downloadcenter-integrity-severity { background: var(--dc-warning-bg); border-color: var(--dc-warning-line); color: var(--dc-warning); }
+.mphpbb-dc-admin .downloadcenter-status-pill.critical,
+.mphpbb-dc-admin .critical > .downloadcenter-integrity-severity { background: var(--dc-error-bg); border-color: var(--dc-error-line); color: var(--dc-error); }
+.mphpbb-dc-admin .downloadcenter-logs-chip { background: var(--dc-surface); color: var(--dc-link); }
+.mphpbb-dc-admin .downloadcenter-logs-chip:hover { background: var(--dc-tint); }
+
+.mphpbb-dc-admin :is(.downloadcenter-acp-badge, .dc-count) {
+	display: inline-block;
+	min-width: 24px;
+	margin-left: 4px;
+	padding: 2px 8px;
+	border-radius: 999px;
+	background: var(--dc-error);
+	color: #FFFFFF;
+	font-size: 0.85em;
+	font-weight: 700;
+	line-height: 1.4;
+	text-align: center;
+}
+
+.mphpbb-dc-admin .dc-tabs .dc-count { margin-left: 0; }
+
+.mphpbb-dc-admin :is(.downloadcenter-acp-version-pill, .dc-tag, .downloadcenter-log-action-code) {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	padding: 2px 9px;
+	border: 1px solid var(--dc-control-line);
+	border-radius: 999px;
+	background: var(--dc-surface);
+	color: var(--dc-heading);
+	font-family: Consolas, Monaco, monospace;
+	font-size: 0.9em;
+	font-weight: 400;
+	line-height: 1.5;
+	white-space: nowrap;
+}
+
+.mphpbb-dc-admin .downloadcenter-log-action-code { margin-top: 3px; border-radius: 4px; font-size: 0.85em; }
+.mphpbb-dc-admin .downloadcenter-status-explain { display: block; margin-top: 4px; color: var(--dc-muted); font-size: 0.9em; line-height: 1.35; }
+
+/* ---------------------------------------------------------------- stat tiles */
+.mphpbb-dc-admin :is(.downloadcenter-acp-stats-grid, .downloadcenter-file-stats, .downloadcenter-logs-kpis, .downloadcenter-integrity-summary, .downloadcenter-diag-summary) {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
+	gap: 10px;
+	margin: 0 0 16px;
+}
+
+.mphpbb-dc-admin :is(.downloadcenter-acp-stat, .downloadcenter-file-stat, .downloadcenter-logs-kpi) {
+	display: flex;
+	flex-direction: column-reverse;
+	justify-content: flex-end;
+	min-width: 0;
+	padding: 10px 14px;
+	border: 1px solid var(--dc-line-soft);
+	border-radius: var(--dc-radius);
+	background: var(--dc-surface);
+}
+
+.mphpbb-dc-admin :is(.downloadcenter-acp-stat, .downloadcenter-file-stat, .downloadcenter-logs-kpi) span {
+	display: block;
+	color: var(--dc-muted);
+	font-size: 0.85em;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+}
+
+.mphpbb-dc-admin :is(.downloadcenter-acp-stat, .downloadcenter-file-stat, .downloadcenter-logs-kpi) strong {
+	display: block;
+	margin-top: 4px;
+	color: var(--dc-accent);
+	font-size: 1.6em;
+	font-weight: 700;
+	line-height: 1.2;
+	overflow-wrap: anywhere;
+}
+
+.mphpbb-dc-admin :is(.downloadcenter-integrity-summary, .downloadcenter-diag-summary) span {
+	min-width: 0;
+	padding: 10px 14px;
+	border: 1px solid var(--dc-line-soft);
+	border-radius: var(--dc-radius);
+	background: var(--dc-surface);
+	color: var(--dc-muted);
+	font-weight: 700;
+}
+
+.mphpbb-dc-admin :is(.downloadcenter-integrity-summary, .downloadcenter-diag-summary) strong { color: var(--dc-accent); font-size: 1.2em; overflow-wrap: anywhere; }
+
+/* ---------------------------------------------------------------- callouts (notes, alerts, status boxes) */
+.mphpbb-dc-admin :is(
+	.downloadcenter-acp-guide, .downloadcenter-acp-note, .downloadcenter-acp-release-card, .downloadcenter-acp-pending-alert,
+	.downloadcenter-acp-warning, .downloadcenter-dashboard-alert, .downloadcenter-operational-box, .downloadcenter-diag-row,
+	.downloadcenter-integrity-issue, .downloadcenter-integrity-empty, .downloadcenter-permission-summary, .downloadcenter-permission-warning,
+	.downloadcenter-acl-checklist, .downloadcenter-logs-summary, .downloadcenter-inline-note, .downloadcenter-success-note,
+	.downloadcenter-empty-note, .downloadcenter-current-changelog-box
+) {
+	margin: 0 0 14px;
+	padding: 11px 14px;
+	border: 1px solid var(--dc-line-soft);
+	border-left: 4px solid var(--dc-brand);
+	border-radius: var(--dc-radius);
+	background: var(--dc-tint);
+	color: var(--dc-ink);
+	line-height: 1.45;
+	box-shadow: none;
+}
+
+.mphpbb-dc-admin :is(
+	.downloadcenter-acp-guide, .downloadcenter-acp-note, .downloadcenter-acp-release-card, .downloadcenter-acp-pending-alert,
+	.downloadcenter-acp-warning, .downloadcenter-dashboard-alert, .downloadcenter-operational-box, .downloadcenter-diag-row,
+	.downloadcenter-integrity-issue, .downloadcenter-integrity-empty, .downloadcenter-permission-summary, .downloadcenter-logs-summary,
+	.downloadcenter-current-changelog-box
+) > strong { display: block; margin-bottom: 3px; color: var(--dc-heading); }
+
+#content .mphpbb-dc-admin .downloadcenter-acp-guide h2 { margin: 0 0 4px; padding: 0; border: 0; font-size: 1.1em; }
+.mphpbb-dc-admin :is(.downloadcenter-acp-guide, .downloadcenter-acp-note, .downloadcenter-acp-release-card, .downloadcenter-acp-pending-alert, .downloadcenter-acp-warning, .downloadcenter-dashboard-alert, .downloadcenter-operational-box) p { margin: 4px 0 0; }
+
+/* success */
+.mphpbb-dc-admin :is(.downloadcenter-dashboard-alert, .downloadcenter-operational-box, .downloadcenter-diag-row).ok,
+.mphpbb-dc-admin :is(.downloadcenter-integrity-empty, .downloadcenter-success-note) { border-color: var(--dc-success-line); border-left-color: var(--dc-success); background: var(--dc-success-bg); }
+/* warning */
+.mphpbb-dc-admin :is(.downloadcenter-dashboard-alert, .downloadcenter-operational-box, .downloadcenter-integrity-issue).warning,
+.mphpbb-dc-admin .downloadcenter-diag-row.warn,
+.mphpbb-dc-admin :is(.downloadcenter-acp-pending-alert, .downloadcenter-acp-warning, .downloadcenter-permission-warning, .downloadcenter-empty-note) { border-color: var(--dc-warning-line); border-left-color: #D49A28; background: var(--dc-warning-bg); }
+.mphpbb-dc-admin :is(.downloadcenter-acp-pending-alert, .downloadcenter-acp-warning) > strong { color: var(--dc-warning); }
+/* critical */
+.mphpbb-dc-admin :is(.downloadcenter-dashboard-alert, .downloadcenter-operational-box, .downloadcenter-integrity-issue).critical { border-color: var(--dc-error-line); border-left-color: var(--dc-error); background: var(--dc-error-bg); }
+.mphpbb-dc-admin :is(.downloadcenter-dashboard-alert, .downloadcenter-operational-box, .downloadcenter-integrity-issue).critical > strong { color: var(--dc-error); }
+/* neutral */
+.mphpbb-dc-admin .downloadcenter-operational-box.neutral { border-left-color: var(--dc-muted); background: var(--dc-panel); }
+.mphpbb-dc-admin .downloadcenter-integrity-issue.info { border-left-color: var(--dc-link); }
+
+.mphpbb-dc-admin .downloadcenter-integrity-suggestion { margin-top: 5px; color: var(--dc-muted); }
+.mphpbb-dc-admin .downloadcenter-current-changelog-box { max-height: 170px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* ---------------------------------------------------------------- grids and action rows */
+.mphpbb-dc-admin :is(.downloadcenter-dashboard-alert-grid, .downloadcenter-prelaunch-grid) {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+	gap: 10px;
+	margin: 0 0 16px;
+}
+
+.mphpbb-dc-admin :is(.downloadcenter-dashboard-alert-grid, .downloadcenter-prelaunch-grid) > * { margin: 0; }
+.mphpbb-dc-admin .downloadcenter-diagnostics { margin: 0 0 16px; }
+.mphpbb-dc-admin .downloadcenter-diag-row { margin: 0 0 8px; }
+
+.mphpbb-dc-admin :is(.downloadcenter-dashboard-actions, .downloadcenter-report-actions, .downloadcenter-review-actions, .downloadcenter-screenshot-actions, .downloadcenter-acp-status-key) {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 0 0 16px;
+}
+
+#content .mphpbb-dc-admin :is(.downloadcenter-dashboard-actions, .downloadcenter-report-actions, .downloadcenter-review-actions, .downloadcenter-screenshot-actions) :is(.button1, .button2) { margin: 0; }
+.mphpbb-dc-admin .downloadcenter-inline-submit { margin: 8px 0 16px; text-align: left; }
+.mphpbb-dc-admin .downloadcenter-logs-toolbar { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin: 0 0 14px; }
+
+/* ---------------------------------------------------------------- review cards (pending items) */
+.mphpbb-dc-admin .downloadcenter-review-list { display: grid; gap: 14px; margin: 0 0 18px; }
+.mphpbb-dc-admin .downloadcenter-review-card {
+	overflow: hidden;
+	border: 1px solid var(--dc-line);
+	border-left: 4px solid var(--dc-brand);
+	border-radius: var(--dc-radius);
+	background: var(--dc-surface);
+}
+
+.mphpbb-dc-admin .downloadcenter-review-head {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 10px;
+	padding: 12px 16px;
+	border-bottom: 1px solid var(--dc-line-soft);
+	background: var(--dc-panel);
+}
+
+.mphpbb-dc-admin .downloadcenter-review-title strong { display: block; color: var(--dc-link); font-size: 1.15em; line-height: 1.25; }
+.mphpbb-dc-admin .downloadcenter-review-title span { display: block; margin-top: 3px; color: var(--dc-muted); }
+.mphpbb-dc-admin .downloadcenter-review-actions { margin: 0; }
+.mphpbb-dc-admin .downloadcenter-review-body { display: grid; grid-template-columns: minmax(240px, 1.35fr) minmax(260px, 1fr); gap: 14px; padding: 14px 16px; }
+.mphpbb-dc-admin .downloadcenter-review-section { padding: 10px 14px; border: 1px solid var(--dc-line-soft); border-radius: var(--dc-radius); background: var(--dc-tint); }
+#content .mphpbb-dc-admin .downloadcenter-review-section h3 { margin: 0 0 8px; padding: 0 0 6px; border-bottom: 1px solid var(--dc-line-soft); font-size: 1em; }
+.mphpbb-dc-admin .downloadcenter-review-meta { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.mphpbb-dc-admin :is(.downloadcenter-review-desc, .downloadcenter-review-changelog) { max-height: 170px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+.mphpbb-dc-admin :is(.downloadcenter-review-empty, .downloadcenter-version-empty) { color: var(--dc-muted); font-style: italic; }
+.mphpbb-dc-admin .downloadcenter-review-footer { display: flex; flex-wrap: wrap; gap: 12px; padding: 10px 16px; border-top: 1px solid var(--dc-line-soft); background: var(--dc-panel); color: var(--dc-muted); }
+
+/* ---------------------------------------------------------------- permissions and ACL */
+.mphpbb-dc-admin .downloadcenter-permission-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: 8px; margin: 8px 0; }
+.mphpbb-dc-admin .downloadcenter-permission-card { padding: 8px 12px; border: 1px solid var(--dc-line-soft); border-radius: var(--dc-radius); background: var(--dc-surface); }
+.mphpbb-dc-admin .downloadcenter-permission-card strong { display: block; margin-bottom: 3px; color: var(--dc-link); }
+.mphpbb-dc-admin :is(.downloadcenter-permission-note, .downloadcenter-acl-help, .downloadcenter-permissions-note) { margin: 6px 0 0; color: var(--dc-muted); }
+.mphpbb-dc-admin .downloadcenter-acl-checklist table { margin-top: 8px; }
+
+/* ---------------------------------------------------------------- versions, files and screenshots */
+.mphpbb-dc-admin .downloadcenter-version-title { color: var(--dc-link); font-family: Consolas, Monaco, monospace; white-space: nowrap; }
+.mphpbb-dc-admin .downloadcenter-version-changelog details { max-width: 420px; }
+.mphpbb-dc-admin .downloadcenter-version-changelog summary { color: var(--dc-link); font-weight: 700; cursor: pointer; }
+.mphpbb-dc-admin .downloadcenter-version-changelog-box {
+	max-width: 100%;
+	max-height: 180px;
+	margin-top: 6px;
+	padding: 8px 10px;
+	overflow: auto;
+	border: 1px solid var(--dc-line-soft);
+	border-left: 4px solid var(--dc-tint-strong);
+	border-radius: 4px;
+	background: var(--dc-surface);
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+
+.mphpbb-dc-admin .downloadcenter-file-picker { min-width: min(100%, 520px); }
+.mphpbb-dc-admin .downloadcenter-file-filter { width: 100%; max-width: 520px; margin: 0 0 6px; }
+.mphpbb-dc-admin .downloadcenter-file-picker-help { margin: 6px 0 0; color: var(--dc-muted); }
+.mphpbb-dc-admin .downloadcenter-file-used { color: var(--dc-success); font-weight: 700; }
+.mphpbb-dc-admin .downloadcenter-file-orphan { color: var(--dc-error); font-weight: 700; }
+.mphpbb-dc-admin .downloadcenter-file-search {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 0 0 14px;
+	padding: 12px 14px;
+	border: 1px solid var(--dc-line-soft);
+	border-radius: var(--dc-radius);
+	background: var(--dc-tint);
+}
+
+.mphpbb-dc-admin .downloadcenter-file-search input[type=text] { min-width: min(100%, 280px); }
+
+.mphpbb-dc-admin .downloadcenter-screenshots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr)); gap: 12px; margin-top: 12px; }
+.mphpbb-dc-admin .downloadcenter-screenshot-card { overflow: hidden; border: 1px solid var(--dc-line); border-radius: var(--dc-radius); background: var(--dc-tint); }
+.mphpbb-dc-admin .downloadcenter-screenshot-card img { display: block; width: 100%; height: 130px; object-fit: cover; background: var(--dc-surface); }
+.mphpbb-dc-admin .downloadcenter-screenshot-card-body { padding: 10px 12px; }
+.mphpbb-dc-admin .downloadcenter-screenshot-card strong { display: block; margin-bottom: 4px; color: var(--dc-link); overflow-wrap: anywhere; }
+.mphpbb-dc-admin .downloadcenter-screenshot-meta { margin-top: 4px; color: var(--dc-muted); font-size: 0.9em; line-height: 1.35; }
+.mphpbb-dc-admin .downloadcenter-screenshot-actions { margin: 8px 0 0; padding-top: 8px; border-top: 1px solid var(--dc-line-soft); }
+
+.mphpbb-dc-admin .downloadcenter-item-image-box { margin: 0 0 12px; padding: 12px; border: 1px dashed var(--dc-control-line); border-radius: var(--dc-radius); background: var(--dc-tint); }
+.mphpbb-dc-admin .downloadcenter-item-image-preview { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 10px; }
+.mphpbb-dc-admin .downloadcenter-item-image-preview img { width: 86px; height: 86px; object-fit: cover; border: 1px solid var(--dc-line); border-radius: var(--dc-radius); background: var(--dc-surface); }
+.mphpbb-dc-admin .downloadcenter-item-image-placeholder { display: flex; align-items: center; justify-content: center; width: 86px; height: 86px; border: 1px dashed var(--dc-control-line); border-radius: var(--dc-radius); background: var(--dc-surface); color: var(--dc-muted); font-weight: 700; text-align: center; }
+.mphpbb-dc-admin .downloadcenter-item-image-tools { display: grid; gap: 10px; }
+.mphpbb-dc-admin .downloadcenter-item-image-tools label { font-weight: 700; }
+.mphpbb-dc-admin .downloadcenter-item-image-options { display: grid; gap: 8px; margin-top: 8px; }
+.mphpbb-dc-admin .downloadcenter-item-image-option { display: flex; align-items: center; gap: 8px; }
+.mphpbb-dc-admin .downloadcenter-item-image-option img { width: 48px; height: 38px; object-fit: cover; border: 1px solid var(--dc-line); border-radius: 4px; }
+
+/* ---------------------------------------------------------------- BBCode toolbar */
+.mphpbb-dc-admin .downloadcenter-bbcode-toolbar {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin: 0;
+	padding: 7px 8px;
+	border: 1px solid var(--dc-control-line);
+	border-bottom: 0;
+	border-radius: 4px 4px 0 0;
+	background: var(--dc-panel);
+}
+
+.mphpbb-dc-admin .downloadcenter-bbcode-toolbar + .downloadcenter-bbcode-help + textarea,
+.mphpbb-dc-admin .downloadcenter-bbcode-toolbar ~ textarea { border-radius: 0 0 4px 4px; }
+.mphpbb-dc-admin .downloadcenter-bbcode-group { display: inline-flex; align-items: center; gap: 3px; }
+.mphpbb-dc-admin .downloadcenter-bbcode-group + .downloadcenter-bbcode-group { padding-left: 6px; border-left: 1px solid var(--dc-line); }
+.mphpbb-dc-admin .downloadcenter-bbcode-toolbar button.downloadcenter-bbcode-btn {
+	min-width: 28px;
+	height: 28px;
+	padding: 1px 8px;
+	border: 1px solid var(--dc-control-line);
+	border-radius: 4px;
+	background: var(--dc-surface);
+	color: var(--dc-link);
+	font-size: 12px;
+	font-weight: 700;
+	line-height: 24px;
+	text-align: center;
+	cursor: pointer;
+}
+
+.mphpbb-dc-admin .downloadcenter-bbcode-toolbar button.downloadcenter-bbcode-btn:hover { background: var(--dc-tint); }
+.mphpbb-dc-admin .downloadcenter-bbcode-wide { min-width: 44px; }
+.mphpbb-dc-admin .downloadcenter-bbcode-underline { text-decoration: underline; }
+.mphpbb-dc-admin .downloadcenter-bbcode-strike { text-decoration: line-through; }
+.mphpbb-dc-admin :is(.downloadcenter-bbcode-size-label, .downloadcenter-bbcode-color-label) { display: inline-flex; align-items: center; gap: 5px; color: var(--dc-muted); font-size: 12px; font-weight: 700; white-space: nowrap; }
+.mphpbb-dc-admin .downloadcenter-bbcode-size-label { margin-left: auto; }
+.mphpbb-dc-admin .downloadcenter-bbcode-size-label select { min-height: 28px; height: 28px; padding: 2px 4px; font-size: 12px; }
+.mphpbb-dc-admin .downloadcenter-bbcode-color-label input[type=color] { width: 34px; height: 28px; padding: 1px; border: 1px solid var(--dc-control-line); border-radius: 4px; background: var(--dc-surface); }
+.mphpbb-dc-admin .downloadcenter-bbcode-help { margin: 5px 0 8px; color: var(--dc-muted); font-size: 0.9em; }
+
+/* ---------------------------------------------------------------- logs */
+.mphpbb-dc-admin .downloadcenter-logs-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.mphpbb-dc-admin .downloadcenter-logs-chips li { margin: 0; padding: 0; list-style: none; }
+.mphpbb-dc-admin .downloadcenter-logs-filter dl { display: inline-block; width: calc(50% - 20px); min-width: 0; margin-right: 16px; vertical-align: top; border-top: 0; }
+.mphpbb-dc-admin .downloadcenter-logs-filter dd :is(input, select) { width: 100%; }
+.mphpbb-dc-admin .downloadcenter-log-ref-list { display: flex; flex-direction: column; gap: 3px; }
+.mphpbb-dc-admin .downloadcenter-log-ref-list span { color: var(--dc-muted); }
+.mphpbb-dc-admin .downloadcenter-log-message { max-width: 520px; line-height: 1.4; overflow-wrap: anywhere; }
+.mphpbb-dc-admin .downloadcenter-log-ip { overflow-wrap: anywhere; }
+.mphpbb-dc-admin .downloadcenter-log-user-id { display: block; margin-top: 2px; color: var(--dc-muted); font-size: 0.9em; }
+
+/* ---------------------------------------------------------------- helpers */
+.mphpbb-dc-admin .downloadcenter-acp-screen-reader {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	overflow: hidden;
+	clip: rect(1px, 1px, 1px, 1px);
+	border: 0;
+	white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------- small screens */
+@media (max-width: 900px) {
+	.mphpbb-dc-admin .downloadcenter-review-body { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 700px) {
+	.mphpbb-dc-admin fieldset { padding: 0 12px 12px; }
+	.mphpbb-dc-admin fieldset > legend { width: calc(100% + 24px); margin: 0 -12px 12px; padding: 10px 12px; }
+	.mphpbb-dc-admin .downloadcenter-logs-filter dl { display: block; width: 100%; margin-right: 0; }
+	.mphpbb-dc-admin :is(.downloadcenter-dashboard-actions, .downloadcenter-review-actions, .downloadcenter-screenshot-actions) { flex-direction: column; align-items: stretch; }
+	#content .mphpbb-dc-admin :is(.downloadcenter-dashboard-actions, .downloadcenter-review-actions, .downloadcenter-screenshot-actions) :is(.button1, .button2) { width: 100%; }
+	.mphpbb-dc-admin .downloadcenter-version-title { white-space: normal; }
+	.mphpbb-dc-admin .downloadcenter-bbcode-size-label { margin-left: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.mphpbb-dc-admin * { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
+}
