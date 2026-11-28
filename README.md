@@ -13,8 +13,13 @@ A download center for phpBB 3.3: categories, items with several versions and cha
 * Screenshots and item images, BBCode descriptions and changelogs.
 * Search and filters, responsive cards, optional public statistics and RSS feed.
 * ACP (Extensions tab): dashboard, settings, categories, items, pending, files library, data integrity, diagnostics and logs.
+* Downloads by people and by bots shown separately in the ACP, while the totals keep counting everything.
 * Access control either by the extension's global modes or by phpBB permissions (ACL).
 * English and Brazilian Portuguese.
+
+## Style colours
+
+The public pages follow the colours of the active board style. They read the colours the style gives to the category bar, forum rows, panels, text, headings and links, and use them for the Download Center icons, buttons, pills, cards and tables. Child styles and appearance extensions such as prosilver SE Appearance are followed automatically. Colours that would not be readable keep the Download Center defaults. To keep the built-in palette in a style, set `data-dc-palette="off"` on its `<html>` element.
 
 ## Requirements
 
@@ -32,6 +37,18 @@ phpBB 3.3.0 or later, PHP 7.4 or later. The folder `files/mundophpbb/downloadcen
 Open **Extensions > Download Center > Logs** to filter by exact IPv4 or IPv6 address, user ID, action, item, version, message or date. Selecting an IP address or user ID in the list applies the corresponding filter. The address comes from the phpBB session.
 
 New download entries name the item and version and identify catalog files, phpBB attachments and external redirects. A redirect entry records the handoff to the external site. The existing duplicate window applies to registered downloads.
+
+## People and bots
+
+Every download counts in the totals, as before. Since 1.3.13 each download is also marked as made by a **person** or by a **bot**, and the browser name (user agent) is stored with it. The dashboard shows both figures, the most downloaded items and versions show the split, and the logs can be filtered by *Downloaded by*.
+
+A guest download is marked as bot when phpBB recognises a bot (ACP > General > Spiders/Robots), when the browser name contains a known search engine, AI crawler, link preview, monitor or script (curl, wget, Python and others), or when it is not a browser at all. Registered members always count as people. More identifiers can be added in *Settings > Extra bot identifiers*.
+
+When upgrading, existing downloads are sorted as far as the stored data allows: downloads by phpBB bot accounts become bots and downloads by registered members become people. Older guest downloads stay *Not classified*, because their browser was never recorded.
+
+## Changelog from the ZIP file
+
+Leave the changelog field empty when adding a version with a ZIP file, and the notes of that version are read from the CHANGELOG.md (or CHANGELOG, CHANGES.md, HISTORY.md) inside the ZIP and converted to BBCode. Typical headings such as `## 1.3.14`, `## [1.3.14] - 2026-11-26` and `Version 1.3.14` are recognised. When the file has no section for that version, the changelog stays empty. A changelog typed in the form is always kept.
 
 ## Reusing uploaded files in the ACP
 

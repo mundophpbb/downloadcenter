@@ -27,6 +27,9 @@ trait logs
 		$message_filter = htmlspecialchars_decode(trim($request->variable('log_message', '', true)), ENT_QUOTES);
 		$date_from_filter = htmlspecialchars_decode(trim($request->variable('log_date_from', '', true)), ENT_QUOTES);
 		$date_to_filter = htmlspecialchars_decode(trim($request->variable('log_date_to', '', true)), ENT_QUOTES);
+		$source_values = ['human' => \mundophpbb\downloadcenter\service\bot_detector::SOURCE_HUMAN, 'bot' => \mundophpbb\downloadcenter\service\bot_detector::SOURCE_BOT, 'unknown' => \mundophpbb\downloadcenter\service\bot_detector::SOURCE_UNKNOWN];
+		$source_filter = $request->variable('log_source', '');
+		$source_filter = isset($source_values[$source_filter]) ? $source_filter : '';
 		$filters = [
 			'log_action' => $action_filter,
 			'log_user' => $user_filter,
@@ -37,6 +40,7 @@ trait logs
 			'log_message' => $message_filter,
 			'log_date_from' => $date_from_filter,
 			'log_date_to' => $date_to_filter,
+			'log_source' => $source_filter,
 		];
 		$clear = $request->variable('clear', 0);
 
@@ -87,6 +91,12 @@ trait logs
 		{
 			$where[] = "log_message " . $db->sql_like_expression($db->get_any_char() . $message_filter . $db->get_any_char());
 		}
+		if ($source_filter !== '')
+		{
+			// The source only means something for downloads.
+			$where[] = "log_action = 'download'";
+			$where[] = 'log_source = ' . (int) $source_values[$source_filter];
+		}
 		if ($date_from_filter !== '' && preg_match('/^\\d{4}-\\d{2}-\\d{2}$/', $date_from_filter))
 		{
 			$from_time = strtotime($date_from_filter . ' 00:00:00');
@@ -126,6 +136,42 @@ trait logs
 		$integrity_logs = (int) $db->sql_fetchfield('total');
 		$db->sql_freeresult($result);
 
+		// People / bots / not classified among the downloads that match the other filters.
+		$source_where = array_values(array_filter($where, function ($condition) {
+			return strpos($condition, 'log_source = ') !== 0 && $condition !== "log_action = 'download'";
+		}));
+		$source_where[] = "log_action = 'download'";
+		$source_counts = ['human' => 0, 'bot' => 0, 'unknown' => 0];
+		$sql = 'SELECT log_source, COUNT(*) AS total
+			FROM ' . $logs_table . '
+			WHERE ' . implode(' AND ', $source_where) . '
+			GROUP BY log_source';
+		$result = $db->sql_query($sql);
+		while ($row = $db->sql_fetchrow($result))
+		{
+			$key = array_search((int) $row['log_source'], $source_values, true);
+			$source_counts[$key === false ? 'human' : $key] += (int) $row['total'];
+		}
+		$db->sql_freeresult($result);
+		$source_download_total = array_sum($source_counts);
+		$show_source_summary = $source_download_total > 0 && ($action_filter === '' || $action_filter === 'download');
+
+		foreach ($source_counts as $key => $total)
+		{
+			if ($key === 'unknown' && $total === 0)
+			{
+				continue;
+			}
+			$template->assign_block_vars('log_source_stats', [
+				'KEY' => $key,
+				'LABEL' => $user->lang('ACP_DOWNLOADCENTER_SOURCE_' . strtoupper($key) . '_PLURAL'),
+				'TOTAL' => $total,
+				'PERCENT' => $source_download_total > 0 ? round($total * 100 / $source_download_total) : 0,
+				'S_ACTIVE' => $source_filter === $key,
+				'U_FILTER' => $this->pagination_url($this->u_action, ['log_source' => $key, 'log_action' => 'download'] + $filters),
+			]);
+		}
+
 		$sql = 'SELECT log_action, COUNT(*) AS total
 			FROM ' . $logs_table . $sql_where . '
 			GROUP BY log_action
@@ -152,6 +198,8 @@ trait logs
 			$version_id = (int) $row['version_id'];
 			$user_id = (int) $row['user_id'];
 			$ip = filter_var($row['user_ip'], FILTER_VALIDATE_IP) ?: '';
+			$is_download = $row['log_action'] === 'download';
+			$source_key = array_search((int) $row['log_source'], $source_values, true) ?: 'human';
 
 			$template->assign_block_vars('logs', [
 				'LOG_ID' => (int) $row['log_id'],
@@ -164,6 +212,11 @@ trait logs
 				'ITEM_ID' => $item_id,
 				'VERSION_ID' => $version_id,
 				'USER_IP' => $ip,
+				'S_SHOW_SOURCE' => $is_download,
+				'SOURCE' => $source_key,
+				'SOURCE_LABEL' => $user->lang('ACP_DOWNLOADCENTER_SOURCE_' . strtoupper($source_key)),
+				'USER_AGENT' => utf8_htmlspecialchars(htmlspecialchars_decode((string) $row['user_agent'], ENT_QUOTES)),
+				'U_SOURCE_LOGS' => $is_download ? $this->pagination_url($this->u_action, ['log_source' => $source_key, 'log_action' => 'download'] + $filters) : '',
 				'U_IP_LOGS' => $ip !== '' ? $this->pagination_url($this->u_action, ['log_ip' => $ip] + $filters) : '',
 				'U_USER_LOGS' => $user_id > 0 ? $this->pagination_url($this->u_action, ['log_user_id' => $user_id, 'log_user' => ''] + $filters) : '',
 				'U_ITEM' => $item_id > 0 ? $this->u_action_for_mode('items') . '&amp;action=edit&amp;item_id=' . $item_id : '',
@@ -209,6 +262,9 @@ trait logs
 			'LOG_MESSAGE_FILTER' => utf8_htmlspecialchars($message_filter),
 			'LOG_DATE_FROM_FILTER' => utf8_htmlspecialchars($date_from_filter),
 			'LOG_DATE_TO_FILTER' => utf8_htmlspecialchars($date_to_filter),
+			'LOG_SOURCE_FILTER' => $source_filter,
+			'S_LOG_SOURCE_SUMMARY' => $show_source_summary,
+			'LOG_SOURCE_DOWNLOAD_TOTAL' => $source_download_total,
 			'LOGS_TOTAL_MATCHING' => $total_logs,
 			'LOGS_TODAY' => $logs_today,
 			'LOGS_INTEGRITY_TOTAL' => $integrity_logs,

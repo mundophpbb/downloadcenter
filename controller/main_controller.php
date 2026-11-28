@@ -7,6 +7,8 @@ class main_controller
 	use \mundophpbb\downloadcenter\concern\access_rules;
 	use \mundophpbb\downloadcenter\concern\table_name;
 	use \mundophpbb\downloadcenter\concern\text_tools;
+	use \mundophpbb\downloadcenter\concern\archive_changelog_fill;
+	use \mundophpbb\downloadcenter\concern\number_format;
 	use \mundophpbb\downloadcenter\concern\upload_rules;
 	use \mundophpbb\downloadcenter\concern\upload_deduplication;
 	use \mundophpbb\downloadcenter\controller\section\access;

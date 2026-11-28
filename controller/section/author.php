@@ -164,7 +164,7 @@ trait author
 				'STATUS' => $this->user->lang($status_key),
 				'STATUS_CLASS' => $status_class,
 				'STATUS_EXPLAIN' => $this->user->lang($status_explain_key),
-				'ITEM_DOWNLOADS' => (int) $row['item_downloads'],
+				'ITEM_DOWNLOADS' => $this->format_compact_number($row['item_downloads'], $this->user),
 				'ITEM_CREATED' => !empty($row['item_created']) ? $this->user->format_date((int) $row['item_created']) : '',
 				'ITEM_UPDATED' => !empty($row['item_updated']) ? $this->user->format_date((int) $row['item_updated']) : '',
 				'U_ITEM' => ((int) $row['item_approved'] === 1 && (int) $row['item_enabled'] === 1) ? $this->helper->route('mundophpbb_downloadcenter_item', ['item_id' => (int) $row['item_id']]) : '',
@@ -452,6 +452,7 @@ trait author
 					{
 						$download_file = $upload['file_name'];
 						$file_size = $upload['file_size'];
+						$version_changelog = $this->changelog_from_archive($version_changelog, $download_type, $download_file, $version_number)['changelog'];
 					}
 					if ($download_file === '')
 					{
@@ -535,6 +536,7 @@ trait author
 					$download_file = $upload['file_name'];
 					$file_size = $upload['file_size'];
 					$download_url = '';
+					$version_changelog = $this->changelog_from_archive($version_changelog, $download_type, $download_file, $version_number)['changelog'];
 				}
 				else if ($download_url === '')
 				{
@@ -636,7 +638,7 @@ trait author
 				'PHPBB_VERSION' => $version['phpbb_version'],
 				'PHP_VERSION' => $version['php_version'],
 				'FILE_SIZE' => $version['file_size'],
-				'DOWNLOADS' => (int) $version['version_downloads'],
+				'DOWNLOADS' => $this->format_compact_number($version['version_downloads'], $this->user),
 				'CREATED' => !empty($version['version_created']) ? $this->user->format_date((int) $version['version_created']) : '',
 			]);
 		}
@@ -747,6 +749,7 @@ trait author
 				$download_file = $upload['file_name'];
 				$file_size = $upload['file_size'];
 				$download_url = '';
+				$version_changelog = $this->changelog_from_archive($version_changelog, $download_type, $download_file, $version_number)['changelog'];
 			}
 			else if ($download_url === '')
 			{

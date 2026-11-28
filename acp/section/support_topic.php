@@ -146,6 +146,7 @@ trait support_topic
 			return;
 		}
 
+		// All phpBB attachments that belong to any version of this item.
 		$sql = 'SELECT download_file
 			FROM ' . $versions_table . "
 			WHERE item_id = " . (int) $item_id . "
@@ -153,40 +154,95 @@ trait support_topic
 				AND download_file <> ''";
 		$result = $db->sql_query($sql);
 
-		$attach_ids = [];
+		$item_attach_ids = [];
 		while ($row = $db->sql_fetchrow($result))
 		{
 			if (preg_match('/^attach:(\d+)$/', (string) $row['download_file'], $matches))
 			{
-				$attach_ids[(int) $matches[1]] = (int) $matches[1];
+				$item_attach_ids[(int) $matches[1]] = (int) $matches[1];
 			}
 		}
 		$db->sql_freeresult($result);
 
-		if (empty($attach_ids))
+		// Only the current version's file is shown in the support topic.
+		$current_attach_id = 0;
+		$latest_version = $this->get_latest_version_for_item($db, $versions_table, $item_id);
+		if (!empty($latest_version) && (string) $latest_version['download_type'] === 'local'
+			&& preg_match('/^attach:(\d+)$/', (string) $latest_version['download_file'], $matches))
 		{
-			return;
+			$current_attach_id = (int) $matches[1];
 		}
 
-		$attachment_data = [
-			'is_orphan' => 0,
-			'in_message' => 0,
-			'post_msg_id' => (int) $post_id,
-			'topic_id' => (int) $topic_id,
-		];
+		// Older files leave the topic but stay available on the Download Center page,
+		// which serves them directly. They return to their original unlinked state
+		// (not orphaned), so phpBB's orphan cleanup never removes them.
+		$old_attach_ids = $item_attach_ids;
+		unset($old_attach_ids[$current_attach_id]);
+		if (!empty($old_attach_ids))
+		{
+			$detach_data = [
+				'is_orphan' => 0,
+				'in_message' => 0,
+				'post_msg_id' => 0,
+				'topic_id' => 0,
+			];
 
-		$sql = 'UPDATE ' . ATTACHMENTS_TABLE . '
-			SET ' . $db->sql_build_array('UPDATE', $attachment_data) . '
-			WHERE ' . $db->sql_in_set('attach_id', array_values($attach_ids));
-		$db->sql_query($sql);
+			$sql = 'UPDATE ' . ATTACHMENTS_TABLE . '
+				SET ' . $db->sql_build_array('UPDATE', $detach_data) . '
+				WHERE ' . $db->sql_in_set('attach_id', array_values($old_attach_ids)) . '
+					AND post_msg_id = ' . (int) $post_id . '
+					AND in_message = 0';
+			$db->sql_query($sql);
+		}
+
+		if ($current_attach_id > 0)
+		{
+			$attachment_data = [
+				'is_orphan' => 0,
+				'in_message' => 0,
+				'post_msg_id' => (int) $post_id,
+				'topic_id' => (int) $topic_id,
+			];
+
+			$sql = 'UPDATE ' . ATTACHMENTS_TABLE . '
+				SET ' . $db->sql_build_array('UPDATE', $attachment_data) . '
+				WHERE attach_id = ' . (int) $current_attach_id;
+			$db->sql_query($sql);
+		}
+
+		$this->refresh_support_topic_attachment_flags($db, $topic_id, $post_id);
+	}
+
+	/**
+	 * Keeps post_attachment / topic_attachment in line with what is still linked,
+	 * including any attachment added to the topic by hand.
+	 */
+	protected function refresh_support_topic_attachment_flags($db, $topic_id, $post_id)
+	{
+		$sql = 'SELECT COUNT(attach_id) AS total
+			FROM ' . ATTACHMENTS_TABLE . '
+			WHERE post_msg_id = ' . (int) $post_id . '
+				AND in_message = 0';
+		$result = $db->sql_query($sql);
+		$post_has_attachments = ((int) $db->sql_fetchfield('total') > 0) ? 1 : 0;
+		$db->sql_freeresult($result);
 
 		$sql = 'UPDATE ' . POSTS_TABLE . '
-			SET post_attachment = 1
+			SET post_attachment = ' . $post_has_attachments . '
 			WHERE post_id = ' . (int) $post_id;
 		$db->sql_query($sql);
 
+		$sql = 'SELECT COUNT(attach_id) AS total
+			FROM ' . ATTACHMENTS_TABLE . '
+			WHERE topic_id = ' . (int) $topic_id . '
+				AND in_message = 0
+				AND is_orphan = 0';
+		$result = $db->sql_query($sql);
+		$topic_has_attachments = ((int) $db->sql_fetchfield('total') > 0) ? 1 : 0;
+		$db->sql_freeresult($result);
+
 		$sql = 'UPDATE ' . TOPICS_TABLE . '
-			SET topic_attachment = 1
+			SET topic_attachment = ' . $topic_has_attachments . '
 			WHERE topic_id = ' . (int) $topic_id;
 		$db->sql_query($sql);
 	}

@@ -11,6 +11,8 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class listener implements EventSubscriberInterface
 {
+	use \mundophpbb\downloadcenter\concern\number_format;
+
 	protected $config;
 	protected $helper;
 	protected $template;
@@ -34,6 +36,7 @@ class listener implements EventSubscriberInterface
 			'core.page_header' => 'add_page_header_vars',
 			'core.permissions' => 'add_permissions',
 			'core.download_file_send_to_browser_before' => 'track_topic_attachment_download',
+			'core.parse_attachments_modify_template_data' => 'compact_topic_attachment_download_count',
 		];
 	}
 
@@ -98,6 +101,40 @@ class listener implements EventSubscriberInterface
 		}
 
 		$this->download_controller->track_phpbb_attachment_download($attach_id);
+	}
+
+	/**
+	 * Shows the "Downloaded N times" line of Download Center files in topics
+	 * with a compact number once it reaches 1,000 (1.2K / 1,2 mil).
+	 *
+	 * @param \phpbb\event\data $event
+	 */
+	public function compact_topic_attachment_download_count($event)
+	{
+		$attachment = $event['attachment'];
+		$block_array = $event['block_array'];
+		$count = isset($attachment['download_count']) ? (int) $attachment['download_count'] : 0;
+
+		if ($count < 1000 || empty($block_array['L_DOWNLOAD_COUNT']) || empty($attachment['attach_id']))
+		{
+			return;
+		}
+
+		if (!$this->download_controller->is_downloadcenter_attachment((int) $attachment['attach_id']))
+		{
+			return;
+		}
+
+		$this->user->add_lang_ext('mundophpbb/downloadcenter', 'common');
+		$text = (string) $block_array['L_DOWNLOAD_COUNT'];
+		$position = strpos($text, (string) $count);
+		if ($position === false)
+		{
+			return;
+		}
+
+		$block_array['L_DOWNLOAD_COUNT'] = substr_replace($text, $this->format_compact_number($count, $this->user), $position, strlen((string) $count));
+		$event['block_array'] = $block_array;
 	}
 
 	protected function can_view()

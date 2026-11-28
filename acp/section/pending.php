@@ -28,7 +28,7 @@ trait pending
 
 	protected function handle_pending($db, $request, $template, $user)
 	{
-		global $config, $phpEx;
+		global $config, $phpEx, $phpbb_root_path;
 
 		$items_table = $this->table_prefix . 'downloadcenter_items';
 		$versions_table = $this->table_prefix . 'downloadcenter_versions';
@@ -56,6 +56,12 @@ trait pending
 				$this->add_log($db, $user, $approved ? 'item_approved' : 'item_unapproved', $user->lang($approved ? 'ACP_DOWNLOADCENTER_LOG_ITEM_APPROVED' : 'ACP_DOWNLOADCENTER_LOG_ITEM_UNAPPROVED', $item_for_notification['item_name'] ?? '-', $item_id), $item_id);
 
 				$this->notify_author_status($item_for_notification, (bool) $approved);
+				if ($approved)
+				{
+					// Author changes always go through moderation, so approval is the moment the
+					// support topic gets the new version (or is created for a new submission).
+					$this->sync_support_topic_for_item($db, $config, $user, $items_table, $versions_table, $item_id, $phpbb_root_path, $phpEx);
+				}
 
 				trigger_error($user->lang($success_key) . adm_back_link($this->u_action));
 			}

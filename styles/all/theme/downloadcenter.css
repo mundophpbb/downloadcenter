@@ -4,6 +4,9 @@
  * stat tiles, pills and flat buttons that keep the same look on hover, focus and click.
  * Light values are the default; when the board style is dark, downloadcenter.js sets
  * html[data-dc-scheme="dark"] and the dark tokens below take over.
+ * downloadcenter.js then reads the board style's own colours (category bar, forum rows,
+ * panels, text and links) and, when they are readable, overrides these tokens through
+ * html[data-dc-palette="style"], so the pages follow the active style and its customisations.
  * Every rule is scoped to .downloadcenter-wrap (or the lightbox) because this file loads on every board page.
  */
 .downloadcenter-wrap,
@@ -23,6 +26,7 @@
 	--dc-tint-strong: #CADCEB;
 	--dc-surface: #FFFFFF;
 	--dc-on-brand: #FFFFFF;
+	--dc-on-link: #FFFFFF;
 	--dc-success: #228822;
 	--dc-success-bg: #E6F2E6;
 	--dc-success-line: #BEDDBE;
@@ -205,10 +209,10 @@ html[data-dc-scheme="dark"] .downloadcenter-lightbox {
 .downloadcenter-wrap :is(.button.button1, a.button1, input.button1, .downloadcenter-primary-button):is(:hover, :focus, :active, :link, :visited) {
 	border-color: var(--dc-link);
 	background: var(--dc-link);
-	color: var(--dc-on-brand);
+	color: var(--dc-on-link);
 }
 
-html[data-dc-scheme="dark"] .downloadcenter-wrap :is(.button.button1, a.button1, input.button1, .downloadcenter-primary-button, .downloadcenter-pagination-current, .downloadcenter-category-pill.active) { border-color: var(--dc-brand); background: var(--dc-brand); color: #FFFFFF; }
+html[data-dc-scheme="dark"]:not([data-dc-palette="style"]) .downloadcenter-wrap :is(.button.button1, a.button1, input.button1, .downloadcenter-primary-button, .downloadcenter-pagination-current, .downloadcenter-category-pill.active) { border-color: var(--dc-brand); background: var(--dc-brand); color: var(--dc-on-brand); }
 
 .downloadcenter-wrap .button.downloadcenter-disabled-button,
 .downloadcenter-wrap .button.downloadcenter-disabled-button:is(:hover, :focus, :active) {
@@ -394,8 +398,14 @@ html[data-dc-scheme="dark"] .downloadcenter-wrap :is(.button.button1, a.button1,
 }
 
 .downloadcenter-wrap .downloadcenter-category-pill span { padding: 0 7px; border-radius: 999px; background: var(--dc-tint-alt); color: var(--dc-muted); font-size: 0.85em; }
-.downloadcenter-wrap .downloadcenter-category-pill.active { border-color: var(--dc-link); background: var(--dc-link); color: var(--dc-on-brand); }
-.downloadcenter-wrap .downloadcenter-category-pill.active span { background: rgba(255, 255, 255, 0.25); color: var(--dc-on-brand); }
+.downloadcenter-wrap .downloadcenter-category-pill.active { border-color: var(--dc-link); background: var(--dc-link); color: var(--dc-on-link); }
+.downloadcenter-wrap .downloadcenter-category-pill.active span { background: color-mix(in srgb, var(--dc-on-link) 25%, transparent); color: var(--dc-on-link); }
+/* Filled links: board styles and appearance extensions often colour every link inside #wrap with ID selectors
+   (prosilver SE Appearance does), which would paint the text in the same colour as the fill. */
+.downloadcenter-wrap a.downloadcenter-category-pill.active,
+.downloadcenter-wrap a.downloadcenter-category-pill.active span { color: var(--dc-on-link) !important; }
+.downloadcenter-wrap a:is(.downloadcenter-result-icon, .downloadcenter-detail-icon, .downloadcenter-head-icon),
+.downloadcenter-wrap a.state-new { color: var(--dc-on-brand) !important; }
 
 .downloadcenter-wrap .downloadcenter-selected-category {
 	display: flex;
@@ -764,7 +774,7 @@ html[data-dc-scheme="dark"] .downloadcenter-wrap :is(.button.button1, a.button1,
 	text-decoration: none;
 }
 
-.downloadcenter-wrap .downloadcenter-pagination-links .downloadcenter-pagination-current { border-color: var(--dc-link); background: var(--dc-link); color: var(--dc-on-brand); }
+.downloadcenter-wrap .downloadcenter-pagination-links .downloadcenter-pagination-current { border-color: var(--dc-link); background: var(--dc-link); color: var(--dc-on-link); }
 .downloadcenter-wrap .downloadcenter-pagination-gap { align-self: center; padding: 0 4px; }
 
 /* ---------------------------------------------------------------- rules */

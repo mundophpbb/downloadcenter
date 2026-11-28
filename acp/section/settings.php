@@ -35,6 +35,9 @@ trait settings
 			$config->set('mundophpbb_downloadcenter_submit_access', $submit_access);
 			$config->set('mundophpbb_downloadcenter_permission_mode', $request->variable('downloadcenter_permission_mode', 'global') === 'acl' ? 'acl' : 'global');
 			$config->set('mundophpbb_downloadcenter_duplicate_window', max(0, $request->variable('downloadcenter_duplicate_window', 3600)));
+			$bot_patterns = \mundophpbb\downloadcenter\service\bot_detector::parse_patterns(htmlspecialchars_decode($request->variable('downloadcenter_bot_patterns', '', true), ENT_QUOTES));
+			$this->get_config_text()->set(\mundophpbb\downloadcenter\service\bot_detector::CONFIG_TEXT_KEY, implode("\n", $bot_patterns));
+			\mundophpbb\downloadcenter\service\bot_detector::reset();
 			$rules_topic_input = trim($request->variable('downloadcenter_rules_topic_id', '', true));
 			$rules_topic_id = 0;
 
@@ -111,6 +114,7 @@ trait settings
 			'S_DOWNLOAD_ACCESS_ADMIN' => (isset($config['mundophpbb_downloadcenter_download_access']) && $config['mundophpbb_downloadcenter_download_access'] === 'admin'),
 			'S_SUBMIT_ACCESS_REGISTERED' => (!isset($config['mundophpbb_downloadcenter_submit_access']) || $config['mundophpbb_downloadcenter_submit_access'] === 'registered'),
 			'S_SUBMIT_ACCESS_ADMIN' => (isset($config['mundophpbb_downloadcenter_submit_access']) && $config['mundophpbb_downloadcenter_submit_access'] === 'admin'),
+			'DOWNLOADCENTER_BOT_PATTERNS' => utf8_htmlspecialchars((string) $this->get_config_text()->get(\mundophpbb\downloadcenter\service\bot_detector::CONFIG_TEXT_KEY)),
 			'DOWNLOADCENTER_DUPLICATE_WINDOW' => isset($config['mundophpbb_downloadcenter_duplicate_window']) ? (int) $config['mundophpbb_downloadcenter_duplicate_window'] : 3600,
 			'DOWNLOADCENTER_RULES_TOPIC_ID' => isset($config['mundophpbb_downloadcenter_rules_topic_id']) ? (int) $config['mundophpbb_downloadcenter_rules_topic_id'] : 0,
 			'DOWNLOADCENTER_SUPPORT_FORUM_ID' => isset($config['mundophpbb_downloadcenter_support_forum_id']) ? (int) $config['mundophpbb_downloadcenter_support_forum_id'] : 0,
@@ -127,6 +131,16 @@ trait settings
 			'DOWNLOADCENTER_RATE_LIMIT_COUNT' => isset($config['mundophpbb_downloadcenter_rate_limit_count']) ? (int) $config['mundophpbb_downloadcenter_rate_limit_count'] : 0,
 			'DOWNLOADCENTER_RATE_LIMIT_WINDOW' => isset($config['mundophpbb_downloadcenter_rate_limit_window']) ? (int) $config['mundophpbb_downloadcenter_rate_limit_window'] : 60,
 		]);
+	}
+
+	/**
+	 * @return \phpbb\config\db_text
+	 */
+	protected function get_config_text()
+	{
+		global $phpbb_container;
+
+		return $phpbb_container->get('config_text');
 	}
 
 	protected function assign_acl_permission_diagnostics($template, $user)

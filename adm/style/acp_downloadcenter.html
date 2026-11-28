@@ -65,6 +65,19 @@
     <div class="downloadcenter-acp-stat"><strong>{DASHBOARD_TOTAL_DOWNLOADS}</strong><span>{L_ACP_DOWNLOADCENTER_DASHBOARD_TOTAL_DOWNLOADS}</span></div>
 </div>
 
+<div class="downloadcenter-source-panel">
+    <h3>{L_ACP_DOWNLOADCENTER_SOURCE_TITLE}</h3>
+    <p>{L_ACP_DOWNLOADCENTER_SOURCE_EXPLAIN}</p>
+    <div class="downloadcenter-acp-stats-grid downloadcenter-source-grid">
+        <a class="downloadcenter-acp-stat downloadcenter-source-stat human" href="{U_DASHBOARD_HUMAN_LOGS}"><strong>{DASHBOARD_HUMAN_DOWNLOADS}</strong><span>{L_ACP_DOWNLOADCENTER_SOURCE_HUMAN_PLURAL}<!-- IF DASHBOARD_HUMAN_PERCENT --> &middot; {DASHBOARD_HUMAN_PERCENT}<!-- ENDIF --></span></a>
+        <a class="downloadcenter-acp-stat downloadcenter-source-stat bot" href="{U_DASHBOARD_BOT_LOGS}"><strong>{DASHBOARD_BOT_DOWNLOADS}</strong><span>{L_ACP_DOWNLOADCENTER_SOURCE_BOT_PLURAL}<!-- IF DASHBOARD_BOT_PERCENT --> &middot; {DASHBOARD_BOT_PERCENT}<!-- ENDIF --></span></a>
+        <!-- IF S_DASHBOARD_HAS_UNKNOWN_DOWNLOADS -->
+        <div class="downloadcenter-acp-stat downloadcenter-source-stat unknown"><strong>{DASHBOARD_UNKNOWN_DOWNLOADS}</strong><span>{L_ACP_DOWNLOADCENTER_SOURCE_UNKNOWN_PLURAL}</span></div>
+        <!-- ENDIF -->
+    </div>
+    <!-- IF S_DASHBOARD_HAS_UNKNOWN_DOWNLOADS --><p class="downloadcenter-source-note">{L_ACP_DOWNLOADCENTER_SOURCE_UNKNOWN_EXPLAIN}</p><!-- ENDIF -->
+</div>
+
 <div class="downloadcenter-dashboard-alert-grid">
     <!-- IF S_DASHBOARD_HAS_ATTENTION -->
     <div class="downloadcenter-dashboard-alert warning" role="status">
@@ -148,7 +161,7 @@
             <td><strong>{dashboard_top_items.ITEM_NAME}</strong><br><span>ID: {dashboard_top_items.ITEM_ID}</span></td>
             <td>{dashboard_top_items.CATEGORY_NAME}</td>
             <td>{dashboard_top_items.USERNAME}</td>
-            <td>{dashboard_top_items.DOWNLOADS}</td>
+            <td><strong>{dashboard_top_items.DOWNLOADS}</strong><br><span class="downloadcenter-source-split"><span class="human">{L_ACP_DOWNLOADCENTER_SOURCE_HUMAN_PLURAL}{L_COLON} {dashboard_top_items.HUMAN_DOWNLOADS}</span> &middot; <span class="bot">{L_ACP_DOWNLOADCENTER_SOURCE_BOT_PLURAL}{L_COLON} {dashboard_top_items.BOT_DOWNLOADS}</span><!-- IF dashboard_top_items.UNKNOWN_DOWNLOADS --> &middot; <span class="unknown">{L_ACP_DOWNLOADCENTER_SOURCE_UNKNOWN_PLURAL}{L_COLON} {dashboard_top_items.UNKNOWN_DOWNLOADS}</span><!-- ENDIF --></span></td>
             <td>{dashboard_top_items.UPDATED}</td>
             <td><a href="{dashboard_top_items.U_EDIT}">{L_EDIT}</a></td>
         </tr>
@@ -176,7 +189,7 @@
             <td><strong>{dashboard_top_versions.VERSION_NUMBER}</strong><br><span>ID: {dashboard_top_versions.VERSION_ID}</span></td>
             <td>{dashboard_top_versions.ITEM_NAME}</td>
             <td>{dashboard_top_versions.PHPBB_VERSION}</td>
-            <td>{dashboard_top_versions.DOWNLOADS}</td>
+            <td><strong>{dashboard_top_versions.DOWNLOADS}</strong><br><span class="downloadcenter-source-split"><span class="human">{L_ACP_DOWNLOADCENTER_SOURCE_HUMAN_PLURAL}{L_COLON} {dashboard_top_versions.HUMAN_DOWNLOADS}</span> &middot; <span class="bot">{L_ACP_DOWNLOADCENTER_SOURCE_BOT_PLURAL}{L_COLON} {dashboard_top_versions.BOT_DOWNLOADS}</span><!-- IF dashboard_top_versions.UNKNOWN_DOWNLOADS --> &middot; <span class="unknown">{L_ACP_DOWNLOADCENTER_SOURCE_UNKNOWN_PLURAL}{L_COLON} {dashboard_top_versions.UNKNOWN_DOWNLOADS}</span><!-- ENDIF --></span></td>
             <td>{dashboard_top_versions.CREATED}</td>
             <td><a href="{dashboard_top_versions.U_EDIT}">{L_EDIT}</a></td>
         </tr>
@@ -201,7 +214,7 @@
     <!-- BEGIN dashboard_recent_downloads -->
         <tr>
             <td>{dashboard_recent_downloads.TIME}</td>
-            <td>{dashboard_recent_downloads.USERNAME} <!-- IF dashboard_recent_downloads.USER_ID --><br><span>ID: {dashboard_recent_downloads.USER_ID}</span><!-- ENDIF --></td>
+            <td>{dashboard_recent_downloads.USERNAME} <span class="downloadcenter-source-badge {dashboard_recent_downloads.SOURCE}"<!-- IF dashboard_recent_downloads.USER_AGENT --> title="{dashboard_recent_downloads.USER_AGENT}"<!-- ENDIF -->>{dashboard_recent_downloads.SOURCE_LABEL}</span><!-- IF dashboard_recent_downloads.USER_ID --><br><span>ID: {dashboard_recent_downloads.USER_ID}</span><!-- ENDIF --></td>
             <td>{dashboard_recent_downloads.ITEM_NAME}</td>
             <td>{dashboard_recent_downloads.VERSION_NUMBER}</td>
             <td>{dashboard_recent_downloads.USER_IP}</td>
@@ -515,6 +528,11 @@
         <dl>
             <dt><label for="downloadcenter_rate_limit_window">{L_ACP_DOWNLOADCENTER_RATE_LIMIT_WINDOW}{L_COLON}</label><br><span>{L_ACP_DOWNLOADCENTER_RATE_LIMIT_WINDOW_EXPLAIN}</span></dt>
             <dd><input type="number" name="downloadcenter_rate_limit_window" id="downloadcenter_rate_limit_window" value="{DOWNLOADCENTER_RATE_LIMIT_WINDOW}" min="10"></dd>
+        </dl>
+
+        <dl>
+            <dt><label for="downloadcenter_bot_patterns">{L_ACP_DOWNLOADCENTER_BOT_PATTERNS}{L_COLON}</label><br><span>{L_ACP_DOWNLOADCENTER_BOT_PATTERNS_EXPLAIN}</span></dt>
+            <dd><textarea name="downloadcenter_bot_patterns" id="downloadcenter_bot_patterns" rows="5" cols="40" spellcheck="false" placeholder="{L_ACP_DOWNLOADCENTER_BOT_PATTERNS_PLACEHOLDER}">{DOWNLOADCENTER_BOT_PATTERNS}</textarea></dd>
         </dl>
 
         <dl>
@@ -1235,6 +1253,17 @@
     </div>
 </div>
 
+<!-- IF S_LOG_SOURCE_SUMMARY -->
+<div class="downloadcenter-logs-summary downloadcenter-source-summary">
+    <strong>{L_ACP_DOWNLOADCENTER_SOURCE_LOG_SUMMARY}</strong>
+    <ul class="downloadcenter-logs-chips">
+    <!-- BEGIN log_source_stats -->
+        <li><a class="downloadcenter-logs-chip downloadcenter-source-chip {log_source_stats.KEY}<!-- IF log_source_stats.S_ACTIVE --> active<!-- ENDIF -->" href="{log_source_stats.U_FILTER}"<!-- IF log_source_stats.S_ACTIVE --> aria-current="true"<!-- ENDIF -->>{log_source_stats.LABEL}: {log_source_stats.TOTAL} ({log_source_stats.PERCENT}%)</a></li>
+    <!-- END log_source_stats -->
+    </ul>
+</div>
+<!-- ENDIF -->
+
 <!-- IF .log_action_stats -->
 <div class="downloadcenter-logs-summary">
     <strong>{L_ACP_DOWNLOADCENTER_LOGS_ACTION_SUMMARY}</strong>
@@ -1257,6 +1286,17 @@
                     <!-- BEGIN log_actions -->
                     <option value="{log_actions.VALUE}"<!-- IF log_actions.S_SELECTED --> selected="selected"<!-- ENDIF -->>{log_actions.LABEL}</option>
                     <!-- END log_actions -->
+                </select>
+            </dd>
+        </dl>
+        <dl>
+            <dt><label for="log_source">{L_ACP_DOWNLOADCENTER_SOURCE_FILTER}{L_COLON}</label><br><span>{L_ACP_DOWNLOADCENTER_SOURCE_FILTER_EXPLAIN}</span></dt>
+            <dd>
+                <select id="log_source" name="log_source">
+                    <option value="">{L_ACP_DOWNLOADCENTER_SOURCE_ALL}</option>
+                    <option value="human"<!-- IF LOG_SOURCE_FILTER == 'human' --> selected="selected"<!-- ENDIF -->>{L_ACP_DOWNLOADCENTER_SOURCE_HUMAN_PLURAL}</option>
+                    <option value="bot"<!-- IF LOG_SOURCE_FILTER == 'bot' --> selected="selected"<!-- ENDIF -->>{L_ACP_DOWNLOADCENTER_SOURCE_BOT_PLURAL}</option>
+                    <option value="unknown"<!-- IF LOG_SOURCE_FILTER == 'unknown' --> selected="selected"<!-- ENDIF -->>{L_ACP_DOWNLOADCENTER_SOURCE_UNKNOWN_PLURAL}</option>
                 </select>
             </dd>
         </dl>
@@ -1318,7 +1358,12 @@
     <!-- BEGIN logs -->
         <tr>
             <td>{logs.TIME}</td>
-            <td>{logs.USERNAME} <!-- IF logs.U_USER_LOGS --><a class="downloadcenter-log-user-id" href="{logs.U_USER_LOGS}">{L_ACP_DOWNLOADCENTER_LOG_USER_ID}{L_COLON} {logs.USER_ID}</a><!-- ENDIF --></td>
+            <td>{logs.USERNAME} <!-- IF logs.U_USER_LOGS --><a class="downloadcenter-log-user-id" href="{logs.U_USER_LOGS}">{L_ACP_DOWNLOADCENTER_LOG_USER_ID}{L_COLON} {logs.USER_ID}</a><!-- ENDIF -->
+                <!-- IF logs.S_SHOW_SOURCE -->
+                <br><a class="downloadcenter-source-badge {logs.SOURCE}" href="{logs.U_SOURCE_LOGS}">{logs.SOURCE_LABEL}</a>
+                <!-- IF logs.USER_AGENT --><span class="downloadcenter-log-user-agent">{logs.USER_AGENT}</span><!-- ENDIF -->
+                <!-- ENDIF -->
+            </td>
             <td><strong>{logs.ACTION_LABEL}</strong><br><span class="downloadcenter-log-action-code">{logs.ACTION}</span></td>
             <td><div class="downloadcenter-log-message">{logs.MESSAGE}</div></td>
             <td>

@@ -11,7 +11,10 @@ namespace mundophpbb\downloadcenter\service;
 
 class audit_log
 {
-	public static function add($db, $table, $user, $action, $message, $item_id = 0, $version_id = 0)
+	/**
+	 * @param int|null $source bot_detector::SOURCE_* constant; detected when null
+	 */
+	public static function add($db, $table, $user, $action, $message, $item_id = 0, $version_id = 0, $source = null)
 	{
 		$ip = (string) $user->ip;
 		$sql_ary = [
@@ -23,6 +26,8 @@ class audit_log
 			'log_message' => (string) $message,
 			'user_ip' => filter_var($ip, FILTER_VALIDATE_IP) !== false ? $ip : '',
 			'log_time' => time(),
+			'log_source' => $source === null ? bot_detector::classify($user) : (int) $source,
+			'user_agent' => bot_detector::user_agent($user),
 		];
 
 		$db->sql_query('INSERT INTO ' . $table . ' ' . $db->sql_build_array('INSERT', $sql_ary));

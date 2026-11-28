@@ -805,12 +805,24 @@ trait items
 			$download_url = '';
 		}
 
+		// An empty changelog is filled from the CHANGELOG file inside the ZIP, for a new
+		// version or when the file changes (an edit that keeps the file keeps it empty).
+		$version_changelog = $this->clean_utf8_for_storage(trim($request->variable('version_changelog', '', true)));
+		$changelog_source = '';
+		$file_changed = !$editing_existing_version || (string) $previous_version_row['download_file'] !== (string) $download_file;
+		if ($file_changed)
+		{
+			$from_archive = $this->changelog_from_archive($version_changelog, $download_type, $download_file, $version_number);
+			$version_changelog = $from_archive['changelog'];
+			$changelog_source = $from_archive['source'];
+		}
+
 		$version_data = [
 			'item_id' => $item_id,
 			'version_number' => $version_number,
 			'phpbb_version' => trim($request->variable('phpbb_version', '', true)),
 			'php_version' => trim($request->variable('php_version', '', true)),
-			'version_changelog' => $this->clean_utf8_for_storage(trim($request->variable('version_changelog', '', true))),
+			'version_changelog' => $version_changelog,
 			'download_type' => $download_type,
 			'download_url' => $download_url,
 			'download_file' => $download_file,
@@ -847,6 +859,11 @@ trait items
 				SET item_updated = ' . (int) $time . '
 				WHERE item_id = ' . (int) $item_id;
 			$db->sql_query($sql);
+		}
+
+		if ($changelog_source !== '')
+		{
+			$this->add_log($db, $user, 'version_changelog_updated', $user->lang('ACP_DOWNLOADCENTER_LOG_CHANGELOG_FROM_ARCHIVE', $version_number, $changelog_source), $item_id, $saved_version_id);
 		}
 
 		if ($sync_topic)

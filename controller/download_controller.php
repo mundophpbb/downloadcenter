@@ -3,6 +3,7 @@
 namespace mundophpbb\downloadcenter\controller;
 
 use mundophpbb\downloadcenter\service\audit_log;
+use mundophpbb\downloadcenter\service\bot_detector;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
@@ -442,6 +443,31 @@ class download_controller
 		$this->db->sql_freeresult($result);
 	}
 
+	/**
+	 * Whether a phpBB attachment is the file of a Download Center version.
+	 *
+	 * @param int $attach_id
+	 * @return bool
+	 */
+	public function is_downloadcenter_attachment($attach_id)
+	{
+		$attach_id = (int) $attach_id;
+		if ($attach_id <= 0)
+		{
+			return false;
+		}
+
+		$sql = 'SELECT version_id
+			FROM ' . $this->table('downloadcenter_versions') . '
+			WHERE download_type = \'local\'
+				AND download_file = \'attach:' . (int) $attach_id . '\'';
+		$result = $this->db->sql_query_limit($sql, 1);
+		$found = (bool) $this->db->sql_fetchfield('version_id');
+		$this->db->sql_freeresult($result);
+
+		return $found;
+	}
+
 	protected function access_allowed($mode)
 	{
 		switch ($mode)
@@ -507,18 +533,23 @@ class download_controller
 			return;
 		}
 
+		// Bots still count in the totals; the source only lets the ACP tell them apart.
+		$source = bot_detector::classify($this->user);
+
 		$sql_ary = [
-			'item_id'       => $item_id,
-			'version_id'    => $version_id,
-			'user_id'       => $user_id,
-			'user_ip'       => $user_ip,
-			'download_time' => $now,
+			'item_id'         => $item_id,
+			'version_id'      => $version_id,
+			'user_id'         => $user_id,
+			'user_ip'         => $user_ip,
+			'download_time'   => $now,
+			'download_source' => $source,
+			'user_agent'      => bot_detector::user_agent($this->user),
 		];
 
 		$this->db->sql_query('INSERT INTO ' . $this->table('downloadcenter_downloads') . ' ' . $this->db->sql_build_array('INSERT', $sql_ary));
 		$this->db->sql_query('UPDATE ' . $this->table('downloadcenter_versions') . ' SET version_downloads = version_downloads + 1 WHERE version_id = ' . (int) $version_id);
 		$this->db->sql_query('UPDATE ' . $this->table('downloadcenter_items') . ' SET item_downloads = item_downloads + 1 WHERE item_id = ' . (int) $item_id);
 		$message = $this->user->lang($message_key, $row['item_name'], $row['version_number'], ...$log_context);
-		audit_log::add($this->db, $this->table('downloadcenter_logs'), $this->user, 'download', $message, $item_id, $version_id);
+		audit_log::add($this->db, $this->table('downloadcenter_logs'), $this->user, 'download', $message, $item_id, $version_id, $source);
 	}
 }

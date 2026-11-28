@@ -18,6 +18,7 @@ class main_module
 	use \mundophpbb\downloadcenter\acp\section\support_topic;
 	use \mundophpbb\downloadcenter\acp\section\uploads;
 	use \mundophpbb\downloadcenter\concern\text_tools;
+	use \mundophpbb\downloadcenter\concern\archive_changelog_fill;
 	use \mundophpbb\downloadcenter\concern\upload_rules;
 	use \mundophpbb\downloadcenter\concern\upload_deduplication;
 

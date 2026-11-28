@@ -29,6 +29,10 @@ trait dashboard
 		$total_disabled_items = $this->count_table_rows($db, $items_table, 'item_enabled = 0');
 		$total_versions = $this->count_table_rows($db, $versions_table);
 		$total_downloads = $this->count_table_rows($db, $downloads_table);
+		$source_totals = $this->download_source_counts($db, $downloads_table);
+		$human_downloads = $source_totals[\mundophpbb\downloadcenter\service\bot_detector::SOURCE_HUMAN];
+		$bot_downloads = $source_totals[\mundophpbb\downloadcenter\service\bot_detector::SOURCE_BOT];
+		$unknown_downloads = $source_totals[\mundophpbb\downloadcenter\service\bot_detector::SOURCE_UNKNOWN];
 
 		$dashboard_status_counts = [
 			'ready' => 0,
@@ -91,6 +95,14 @@ trait dashboard
 			'DASHBOARD_TOTAL_DISABLED_ITEMS' => $total_disabled_items,
 			'DASHBOARD_TOTAL_VERSIONS' => $total_versions,
 			'DASHBOARD_TOTAL_DOWNLOADS' => $total_downloads,
+			'DASHBOARD_HUMAN_DOWNLOADS' => $human_downloads,
+			'DASHBOARD_BOT_DOWNLOADS' => $bot_downloads,
+			'DASHBOARD_UNKNOWN_DOWNLOADS' => $unknown_downloads,
+			'DASHBOARD_HUMAN_PERCENT' => $this->source_percent($human_downloads, $total_downloads, $user),
+			'DASHBOARD_BOT_PERCENT' => $this->source_percent($bot_downloads, $total_downloads, $user),
+			'S_DASHBOARD_HAS_UNKNOWN_DOWNLOADS' => $unknown_downloads > 0,
+			'U_DASHBOARD_HUMAN_LOGS' => $this->u_action_for_mode('logs') . '&amp;log_action=download&amp;log_source=human',
+			'U_DASHBOARD_BOT_LOGS' => $this->u_action_for_mode('logs') . '&amp;log_action=download&amp;log_source=bot',
 			'DASHBOARD_READY_ITEMS' => (int) $dashboard_status_counts['ready'],
 			'DASHBOARD_ITEMS_WITHOUT_VERSION' => (int) $dashboard_status_counts['no_version'],
 			'DASHBOARD_ITEMS_WITH_FILE_PROBLEMS' => $dashboard_files_attention,
@@ -108,9 +120,16 @@ trait dashboard
 			LEFT JOIN ' . USERS_TABLE . ' u ON u.user_id = i.user_id
 			ORDER BY i.item_downloads DESC, i.item_updated DESC, i.item_name ASC';
 		$result = $db->sql_query_limit($sql, 10);
-		while ($row = $db->sql_fetchrow($result))
+		$top_items = $db->sql_fetchrowset($result);
+		$db->sql_freeresult($result);
+		$item_sources = $this->download_source_counts($db, $downloads_table, 'item_id', array_column($top_items, 'item_id'));
+		foreach ($top_items as $row)
 		{
+			$split = isset($item_sources[(int) $row['item_id']]) ? $item_sources[(int) $row['item_id']] : $this->empty_source_counts();
 			$template->assign_block_vars('dashboard_top_items', [
+				'HUMAN_DOWNLOADS' => $split[\mundophpbb\downloadcenter\service\bot_detector::SOURCE_HUMAN],
+				'BOT_DOWNLOADS' => $split[\mundophpbb\downloadcenter\service\bot_detector::SOURCE_BOT],
+				'UNKNOWN_DOWNLOADS' => $split[\mundophpbb\downloadcenter\service\bot_detector::SOURCE_UNKNOWN],
 				'ITEM_ID' => (int) $row['item_id'],
 				'ITEM_NAME' => $row['item_name'],
 				'CATEGORY_NAME' => $row['category_name'] ?: '-',
@@ -120,16 +139,22 @@ trait dashboard
 				'U_EDIT' => $this->u_action_for_mode('items') . '&amp;action=edit&amp;item_id=' . (int) $row['item_id'],
 			]);
 		}
-		$db->sql_freeresult($result);
 
 		$sql = 'SELECT v.version_id, v.item_id, v.version_number, v.phpbb_version, v.version_downloads, v.version_created, i.item_name
 			FROM ' . $versions_table . ' v
 			LEFT JOIN ' . $items_table . ' i ON i.item_id = v.item_id
 			ORDER BY v.version_downloads DESC, v.version_created DESC, v.version_id DESC';
 		$result = $db->sql_query_limit($sql, 10);
-		while ($row = $db->sql_fetchrow($result))
+		$top_versions = $db->sql_fetchrowset($result);
+		$db->sql_freeresult($result);
+		$version_sources = $this->download_source_counts($db, $downloads_table, 'version_id', array_column($top_versions, 'version_id'));
+		foreach ($top_versions as $row)
 		{
+			$split = isset($version_sources[(int) $row['version_id']]) ? $version_sources[(int) $row['version_id']] : $this->empty_source_counts();
 			$template->assign_block_vars('dashboard_top_versions', [
+				'HUMAN_DOWNLOADS' => $split[\mundophpbb\downloadcenter\service\bot_detector::SOURCE_HUMAN],
+				'BOT_DOWNLOADS' => $split[\mundophpbb\downloadcenter\service\bot_detector::SOURCE_BOT],
+				'UNKNOWN_DOWNLOADS' => $split[\mundophpbb\downloadcenter\service\bot_detector::SOURCE_UNKNOWN],
 				'VERSION_ID' => (int) $row['version_id'],
 				'ITEM_ID' => (int) $row['item_id'],
 				'ITEM_NAME' => $row['item_name'] ?: '-',
@@ -140,9 +165,8 @@ trait dashboard
 				'U_EDIT' => $this->u_action_for_mode('items') . '&amp;action=edit&amp;item_id=' . (int) $row['item_id'],
 			]);
 		}
-		$db->sql_freeresult($result);
 
-		$sql = 'SELECT d.download_id, d.download_time, d.user_id, d.user_ip, i.item_name, v.version_number, u.username
+		$sql = 'SELECT d.download_id, d.download_time, d.user_id, d.user_ip, d.download_source, d.user_agent, i.item_name, v.version_number, u.username
 			FROM ' . $downloads_table . ' d
 			LEFT JOIN ' . $items_table . ' i ON i.item_id = d.item_id
 			LEFT JOIN ' . $versions_table . ' v ON v.version_id = d.version_id
@@ -158,6 +182,9 @@ trait dashboard
 				'USER_IP' => $row['user_ip'],
 				'ITEM_NAME' => $row['item_name'] ?: '-',
 				'VERSION_NUMBER' => $row['version_number'] ?: '-',
+				'SOURCE' => $this->download_source_key((int) $row['download_source']),
+				'SOURCE_LABEL' => $this->download_source_label((int) $row['download_source'], $user),
+				'USER_AGENT' => utf8_htmlspecialchars(htmlspecialchars_decode((string) $row['user_agent'], ENT_QUOTES)),
 			]);
 		}
 		$db->sql_freeresult($result);
@@ -183,6 +210,100 @@ trait dashboard
 			]);
 		}
 		$db->sql_freeresult($result);
+	}
+
+	/**
+	 * Count downloads per source, overall or per item/version.
+	 *
+	 * @param \phpbb\db\driver\driver_interface $db
+	 * @param string   $table
+	 * @param string   $group_column '' for overall totals, or item_id / version_id
+	 * @param int[]    $ids          Limit to these IDs when grouping
+	 * @return array   [source => total] overall, or [id => [source => total]]
+	 */
+	protected function download_source_counts($db, $table, $group_column = '', array $ids = [])
+	{
+		if ($group_column !== '' && empty($ids))
+		{
+			return [];
+		}
+
+		$select = $group_column !== '' ? $group_column . ', ' : '';
+		$sql = 'SELECT ' . $select . 'download_source, COUNT(download_id) AS total
+			FROM ' . $table .
+			($group_column !== '' ? ' WHERE ' . $db->sql_in_set($group_column, array_map('intval', $ids)) : '') . '
+			GROUP BY ' . $select . 'download_source';
+		$result = $db->sql_query($sql);
+
+		$counts = $group_column !== '' ? [] : $this->empty_source_counts();
+		while ($row = $db->sql_fetchrow($result))
+		{
+			$source = $this->normalise_download_source((int) $row['download_source']);
+			if ($group_column === '')
+			{
+				$counts[$source] += (int) $row['total'];
+				continue;
+			}
+
+			$id = (int) $row[$group_column];
+			if (!isset($counts[$id]))
+			{
+				$counts[$id] = $this->empty_source_counts();
+			}
+			$counts[$id][$source] += (int) $row['total'];
+		}
+		$db->sql_freeresult($result);
+
+		return $counts;
+	}
+
+	protected function empty_source_counts()
+	{
+		return [
+			\mundophpbb\downloadcenter\service\bot_detector::SOURCE_HUMAN => 0,
+			\mundophpbb\downloadcenter\service\bot_detector::SOURCE_BOT => 0,
+			\mundophpbb\downloadcenter\service\bot_detector::SOURCE_UNKNOWN => 0,
+		];
+	}
+
+	protected function normalise_download_source($source)
+	{
+		return in_array($source, [\mundophpbb\downloadcenter\service\bot_detector::SOURCE_BOT, \mundophpbb\downloadcenter\service\bot_detector::SOURCE_UNKNOWN], true)
+			? $source
+			: \mundophpbb\downloadcenter\service\bot_detector::SOURCE_HUMAN;
+	}
+
+	/**
+	 * @return string human|bot|unknown
+	 */
+	protected function download_source_key($source)
+	{
+		switch ($this->normalise_download_source($source))
+		{
+			case \mundophpbb\downloadcenter\service\bot_detector::SOURCE_BOT:
+				return 'bot';
+			case \mundophpbb\downloadcenter\service\bot_detector::SOURCE_UNKNOWN:
+				return 'unknown';
+			default:
+				return 'human';
+		}
+	}
+
+	protected function download_source_label($source, $user)
+	{
+		return $user->lang('ACP_DOWNLOADCENTER_SOURCE_' . strtoupper($this->download_source_key($source)));
+	}
+
+	protected function source_percent($part, $total, $user)
+	{
+		if ($total <= 0)
+		{
+			return '';
+		}
+
+		$percent = round($part * 100 / $total, 1);
+
+		return $user->lang('ACP_DOWNLOADCENTER_SOURCE_PERCENT', rtrim(rtrim(number_format($percent, 1, $user->lang('ACP_DOWNLOADCENTER_DECIMAL_SEPARATOR'), ''), '0'), $user->lang('ACP_DOWNLOADCENTER_DECIMAL_SEPARATOR')));
 	}
 
 	protected function count_table_rows($db, $table, $where = '')

@@ -18,6 +18,10 @@ $lang = array_merge($lang, [
 	'DOWNLOADCENTER_VIEW_DETAILS' => 'Ver detalhes',
 	'DOWNLOADCENTER_DOWNLOAD' => 'Baixar',
 	'DOWNLOADCENTER_DOWNLOADS' => 'downloads',
+	'DOWNLOADCENTER_NUMBER_THOUSAND' => '%s mil',
+	'DOWNLOADCENTER_NUMBER_MILLION' => '%s mi',
+	'DOWNLOADCENTER_NUMBER_BILLION' => '%s bi',
+	'DOWNLOADCENTER_NUMBER_DECIMAL_SEP' => ',',
 	'DOWNLOADCENTER_DOWNLOADS_THIS_VERSION' => 'downloads nesta versão',
 	'DOWNLOADCENTER_DOWNLOADS_TOTAL' => 'downloads no total',
 	'DOWNLOADCENTER_DESCRIPTION' => 'Descrição',
@@ -242,7 +246,7 @@ $lang = array_merge($lang, [
 	'DOWNLOADCENTER_PHP_VERSION_EXPLAIN' => 'Informe a versão mínima ou faixa recomendada do PHP, se souber.',
 	'DOWNLOADCENTER_DOWNLOAD_SOURCE_TITLE' => 'Origem do download',
 	'DOWNLOADCENTER_DOWNLOAD_SOURCE_EXPLAIN' => 'Escolha apenas uma origem: link externo ou arquivo local enviado ao fórum.',
-	'DOWNLOADCENTER_CHANGELOG_FIELD_EXPLAIN' => 'Liste as principais alterações, correções ou observações desta versão.',
+	'DOWNLOADCENTER_CHANGELOG_FIELD_EXPLAIN' => 'Liste as principais alterações, correções ou observações desta versão. Se enviar um ZIP com CHANGELOG.md, pode deixar vazio: as notas desta versão são lidas do arquivo.',
 	'DOWNLOADCENTER_CHANGELOG_PLACEHOLDER' => '- Primeira versão pública
 - Recursos principais
 - Requisitos conhecidos',

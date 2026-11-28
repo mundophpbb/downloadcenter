@@ -1,5 +1,37 @@
 # Changelog
 
+## 1.3.14
+
+* The changelog of a version can come from the file itself. When the changelog field is left empty and the version gets a ZIP file, the Download Center looks inside the ZIP for CHANGELOG.md (also CHANGELOG, CHANGELOG.txt, CHANGES.md, HISTORY.md or RELEASES.md), takes only the section of that version and stores it as BBCode. A changelog typed in the form always wins.
+* Works in the ACP (new version, or an existing version whose file changes) and on the public pages (new submissions, new versions and file replacements by authors). The ACP log records which file the notes came from.
+* Understands the usual formats: "## 1.3.14", "## [1.3.14] - 2026-11-26" (Keep a Changelog), "### Version 1.3.14", underlined headings and plain-text lines such as "Version 1.3.14 (2026-11-26)". Sub-headings, bullet and numbered lists (nested too), code blocks, bold, italic, inline code and links are converted to BBCode. A version such as 1.3.1 never takes the notes of 1.3.10.
+* The changelog closest to the root of the ZIP is used; vendor, node_modules and test folders are skipped. Changelog files over 1 MB are ignored.
+
+## 1.3.13
+
+* Downloads by people and by bots are told apart. Totals do not change: every download still counts. Each download and its log entry now record whether it came from a person or a bot, and the browser user agent.
+* A guest download is marked as bot when phpBB recognises a bot (ACP > General > Spiders/Robots), when its user agent contains a known search engine, AI crawler, link preview, monitor or script (curl, wget, Python, Go and others), or when it is not a browser. Registered members always count as people. Phones such as CUBOT and browsers such as DuckDuckGo or Yandex Browser are not mistaken for bots.
+* Dashboard: new "Downloads by people and by bots" tiles with percentages, the people/bots split for the most downloaded items and versions, and a person/bot badge (with the user agent on hover) in recent downloads.
+* Logs: new "Downloaded by" filter, a people/bots/not classified summary for the current filters, and a badge plus the user agent on every download entry.
+* Settings: new "Extra bot identifiers" box to treat more user agents as bots, one per line.
+* Upgrade: existing downloads by phpBB bot accounts are marked as bots and those by registered members as people. Older guest downloads are shown as "Not classified", because their browser was not recorded before this version.
+* Packaging: every file now uses Unix (LF) line endings. The phpBB Extension Pre Validator (EPV) rejected the Windows (CRLF) endings of 46 files as fatal errors; the extension now passes EPV with no errors or warnings. No code changed.
+* The attachment lookup casts the attachment ID inside the SQL query, as EPV expects.
+
+## 1.3.12
+
+* Public pages now take their colours from the active board style. The page reads the colours the style gives to standard phpBB elements (category bar and its text, forum rows, panels, text, headings and links) and uses them for the Download Center icons, pills, buttons, tinted cards, tables and stat tiles. Child styles and appearance extensions such as prosilver SE Appearance are followed automatically, including their custom themes.
+* Every colour taken from the style is checked for contrast (4.5:1 for text); a colour that would be unreadable keeps the Download Center default. With plain prosilver the pages look the same as before.
+* New `--dc-on-link` token for text on primary buttons, the active category and the current page, so it stays readable when the style's link and category colours differ.
+* Fixed: style rules that colour every forum link (such as prosilver SE Appearance's link colour) no longer hide the text of the active category pill and other filled links.
+* A style can keep the built-in palette by setting `data-dc-palette="off"` on the `<html>` element.
+
+## 1.3.11
+
+* Fixed: the support topic no longer piles up the files of every version. Publishing a new file links only the current version's attachment to the first post; older files leave the topic but stay downloadable from the Download Center page. Existing topics are cleaned up the next time the item is saved.
+* Fixed: approving an item from the Pending queue now updates its support topic, as approving from the item list already did. New versions sent by authors from the public pages reach the topic as soon as they are approved, and approved new submissions get their topic created when a support forum is set.
+* Download counters on public pages use a compact format from 1,000 on (1.2K, 15K, 3.4M; pt_br: 1,2 mil, 15 mil, 3,4 mi). The "Downloaded N times" line of Download Center files in topics follows the same format. ACP figures stay exact.
+
 ## 1.3.10
 
 * Fixed: deleting an old version after uploading a new one no longer lowers the item's download total. Download records are kept as part of the item history.
